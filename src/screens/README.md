@@ -1,0 +1,1 @@
+Cada pantalla completa de tu app va aquí. Por ejemplo: HomeScreen.js, MapScreen.js y OfflineScreen.js.

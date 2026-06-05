@@ -1,0 +1,1 @@
+Funciones de apoyo que usas en todos lados, como un formateador de tiempo para convertir los datos a "Minutos restantes" o validadores de red.Solo para UI reutilizable. Aquí irán tus botones personalizados, tarjetas de información estática y modales de alerta de conectividad.

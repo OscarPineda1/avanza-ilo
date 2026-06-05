@@ -1,0 +1,1 @@
+Para tus estilos globales. Aquí definirás tus colores corporativos, tamaños de letra de alto contraste y la paleta del "minimalismo cognitivo

@@ -1,0 +1,1 @@
+Solo para UI reutilizable. Aquí irán tus botones personalizados, tarjetas de información estática y modales de alerta de conectividad.

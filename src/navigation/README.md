@@ -1,0 +1,1 @@
+Contendrá la configuración de tus rutas y el flujo entre pantallas (React Navigation
