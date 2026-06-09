@@ -1,59 +1,101 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+
+// Importaciones de tu arquitectura limpia
+import { globalStyles, theme } from '../styles/global-styles';
 import { ruta1A_Coordenadas } from '../utils/rutasData';
-import { globalStyles } from '../styles/global-styles';
+import MapInfoCard from '../components/MapInfoCard'; // <-- Tu nuevo componente
+
+const { width, height } = Dimensions.get('window');
+
+// Datos maestros temporales
+const infoRutas = {
+    '1A': { horario: '6:00 AM - 9:00 PM', tarifa: 'S/. 1.50', frecuencia: '10 min', color: theme.colors.ruta1A, empresa: 'Consorcio Ilo 1A' },
+    'D': { horario: '6:15 AM - 8:45 PM', tarifa: 'S/. 1.50', frecuencia: '12 min', color: theme.colors.rutaD, empresa: 'Transportes Pampa I.' },
+    '14': { horario: '6:00 AM - 9:00 PM', tarifa: 'S/. 1.70', frecuencia: '15 min', color: theme.colors.ruta14, empresa: 'Ruta Troncal 14' },
+};
 
 export default function MapScreen({ route, navigation }) {
-    // Recibimos los datos de la ruta seleccionada desde el HomeScreen
-    const { ruta } = route.params;
+    const { routeName } = route.params || { routeName: '1A' };
+    const datosRuta = infoRutas[routeName] || infoRutas['1A'];
 
-    // Coordenadas aproximadas de Ilo, Moquegua
+    const [isFavorite, setIsFavorite] = useState(false);
+
     const regionIlo = {
         latitude: -17.6433,
         longitude: -71.3444,
-        latitudeDelta: 0.05, // Nivel de zoom
-        longitudeDelta: 0.05,
+        latitudeDelta: 0.04,
+        longitudeDelta: 0.04,
     };
 
     return (
-
-        <View style={globalStyles.container}>
-            {/* El Mapa a pantalla completa */}
+        <View style={globalStyles.safeArea}>
+            {/* 1. MAPA EN ÁREA SUPERIOR */}
             <MapView
-                style={globalStyles.map}
+                style={styles.map}
                 initialRegion={regionIlo}
+                showsUserLocation={true}
             >
-                {/* Tu ruta dibujada */}
-                <Polyline
-                    coordinates={ruta1A_Coordenadas}
-                    strokeColor="#2B6CB0" // El azul corporativo
-                    strokeWidth={5} // Grosor visible y claro
-                />
-
-                {/* El marcador que ya tenías */}
+                {routeName === '1A' && (
+                    <Polyline
+                        coordinates={ruta1A_Coordenadas}
+                        strokeColor={datosRuta.color}
+                        strokeWidth={5}
+                    />
+                )}
                 <Marker
-                    coordinate={{ latitude: -17.6603, longitude: -71.35431 }} // Inicio de la ruta
-                    title={`Paradero Inicial y final de la ${ruta.nombre}`}
-                    pinColor="#E53E3E"
+                    coordinate={{ latitude: -17.6603, longitude: -71.35431 }}
+                    title={`Paradero Inicial/Final - Ruta ${routeName}`}
+                    pinColor={theme.colors.danger}
                 />
             </MapView>
 
-            {/* Tarjeta inferior flotante (Minimalismo Cognitivo) */}
-            <SafeAreaView style={globalStyles.infoCard} edges={['bottom']}>
-                <View style={globalStyles.cardContent}>
-                    <Text style={globalStyles.routeTitle}>{ruta.nombre}</Text>
-                    <Text style={globalStyles.routeDesc}>{ruta.descripcion}</Text>
-
-                    <TouchableOpacity
-                        style={globalStyles.backButton}
-                        onPress={() => navigation.goBack()}
-                    >
-                        <Text style={globalStyles.backButtonText}>Volver al buscador</Text>
-                    </TouchableOpacity>
+            {/* BOTÓN DE RETORNO FLOTANTE SUPERIOR */}
+            <SafeAreaView style={styles.topOverlay}>
+                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back" size={24} color={theme.colors.textDark} />
+                </TouchableOpacity>
+                <View style={styles.routeHeader}>
+                    <View style={[styles.colorIndicator, { backgroundColor: datosRuta.color }]} />
+                    <Text style={styles.routeTitle}>Ruta {routeName}</Text>
                 </View>
             </SafeAreaView>
+
+            {/* 2. TARJETA INFERIOR (LLAMANDO AL COMPONENTE REUTILIZABLE) */}
+            <MapInfoCard
+                routeName={routeName}
+                datosRuta={datosRuta}
+                isFavorite={isFavorite}
+                onToggleFavorite={() => setIsFavorite(!isFavorite)}
+            />
         </View>
     );
-};
+}
+
+// Únicamente los estilos locales que controlan el mapa y los botones flotantes superiores
+const styles = StyleSheet.create({
+    map: {
+        width: width,
+        height: height * 0.58, // Deja espacio exacto para la tarjeta
+    },
+    topOverlay: {
+        position: 'absolute', top: 0, left: 20, right: 20,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
+    backButton: {
+        backgroundColor: theme.colors.surface,
+        padding: 12, borderRadius: 50,
+        ...theme.shadows.base,
+    },
+    routeHeader: {
+        backgroundColor: theme.colors.surface,
+        flexDirection: 'row', alignItems: 'center',
+        paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20,
+        ...theme.shadows.base,
+    },
+    colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
+    routeTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
+});

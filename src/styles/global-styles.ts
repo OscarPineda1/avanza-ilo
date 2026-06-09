@@ -1,109 +1,77 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
+// 1. PALETA DE COLORES CORPORATIVA Y ALTO CONTRASTE
+export const theme = {
+    colors: {
+        background: '#F8F9FA', // Fondo principal relajante
+        surface: '#FFFFFF',    // Tarjetas y modales
+        primary: '#1267FF',    // Azul Avanza Ilo (Acciones principales)
+        textDark: '#1A1A1A',   // Texto principal (Alta legibilidad)
+        textMuted: '#666666',  // Subtítulos
+        textLight: '#A0A0A0',  // Textos deshabilitados o placeholders
+        border: '#E5E5E5',     // Divisores
+
+        // Alertas y Resiliencia
+        danger: '#E74C3C',     // Modo offline / Errores
+        warningBg: '#FFF5EC',  // Fondo de banner informativo
+        warningText: '#D35400',// Texto de banner informativo
+        warningBorder: '#FFE0C2',
+
+        // Colores de Rutas (Directorio)
+        ruta1A: '#1267FF',
+        rutaD: '#FF3644',
+        ruta14: '#2ECC71',
+    },
+    shadows: {
+        base: {
+            elevation: 4,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        heavy: {
+            elevation: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+        }
+    }
+};
+
+// 2. CLASES GLOBALES REUTILIZABLES
 export const globalStyles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+    },
     container: {
         flex: 1,
-        backgroundColor: '#F7F9FC',
+        paddingHorizontal: 20,
+        paddingTop: 20,
     },
-    content: {
-        flex: 1,
-        paddingHorizontal: 25,
-        paddingTop: 60,
-    },
-    title: {
+    headerTitle: {
         fontSize: 32,
         fontWeight: '800',
-        color: '#1A202C',
-        marginBottom: 8,
-        textAlign: 'center',
+        color: theme.colors.textDark,
+        letterSpacing: -0.5,
     },
     subtitle: {
         fontSize: 16,
-        color: '#718096',
-        marginBottom: 40,
-        textAlign: 'center',
-    },
-    searchContainer: {
-        width: '100%',
-        position: 'relative',
-    },
-    searchInput: {
-        height: 55,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        paddingHorizontal: 20,
-        fontSize: 18,
-        color: '#2D3748',
-        borderColor: '#E2E8F0',
-        borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2, // Sombra sutil en Android
-    },
-    listContainer: {
-        marginTop: 10,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        borderColor: '#E2E8F0',
-        borderWidth: 1,
-        maxHeight: 200,
-        overflow: 'hidden',
-    },
-    routeItem: {
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EDF2F7',
-    },
-    routeName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#2B6CB0', // Azul corporativo intuitivo
-    },
-    routeDesc: {
-        fontSize: 14,
-        color: '#A0AEC0',
+        color: theme.colors.textMuted,
         marginTop: 4,
+        fontWeight: '500',
     },
-    map: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: theme.colors.textDark,
+        marginBottom: 16,
     },
-    infoCard: {
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        elevation: 10,
-    },
-    cardContent: {
-        padding: 25,
-        alignItems: 'center',
-    },
-    routeTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1A202C',
-    },
-    backButton: {
-        backgroundColor: '#E2E8F0',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        width: '100%',
-        alignItems: 'center',
-    },
-    backButtonText: {
-        color: '#2D3748',
-        fontSize: 16,
-        fontWeight: '600',
+    divider: {
+        height: 1,
+        backgroundColor: theme.colors.border,
+        marginVertical: 10,
     }
 });
