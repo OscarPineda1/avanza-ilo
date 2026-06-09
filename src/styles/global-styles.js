@@ -42,36 +42,32 @@ export const theme = {
 
 // 2. CLASES GLOBALES REUTILIZABLES
 export const globalStyles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
+    safeArea: { flex: 1, backgroundColor: theme.colors.background },
+    container: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
+
+    // Header
+    header: { padding: 20, paddingTop: 40 },
+    title: { fontSize: 24, fontWeight: '800', color: theme.colors.textDark },
+    subtitle: { fontSize: 16, color: theme.colors.textMuted, marginTop: 4 },
+
+    // Filtros
+    filterPill: {
+        paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
+        backgroundColor: '#EEE', marginRight: 10, borderWidth: 1, borderColor: '#DDD'
     },
-    container: {
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 20,
+    filterPillActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+    filterText: { color: theme.colors.textMuted, fontWeight: '600' },
+    filterTextActive: { color: '#FFF' },
+
+    // Tarjetas de Rutas
+    routeCardDetail: {
+        backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12,
+        marginBottom: 12, ...theme.shadows.base
     },
-    headerTitle: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: theme.colors.textDark,
-        letterSpacing: -0.5,
+    routeBadge: {
+        flexDirection: 'row', alignItems: 'center', padding: 8,
+        borderRadius: 8, marginBottom: 8, alignSelf: 'flex-start'
     },
-    subtitle: {
-        fontSize: 16,
-        color: theme.colors.textMuted,
-        marginTop: 4,
-        fontWeight: '500',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: theme.colors.textDark,
-        marginBottom: 16,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: theme.colors.border,
-        marginVertical: 10,
-    }
+    empresaText: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
+    trajectoryLabel: { fontSize: 14, color: theme.colors.textMuted, marginTop: 2 }
 });
