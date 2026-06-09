@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Importaciones de tu arquitectura limpia
 import { globalStyles, theme } from '../styles/global-styles';
-import { ruta1A_Coordenadas } from '../utils/rutasData';
+import { ruta1A_Coordenadas } from '../utils/ruta1A.js';
 import MapInfoCard from '../components/MapInfoCard'; // <-- Tu nuevo componente
 
 const { width, height } = Dimensions.get('window');
