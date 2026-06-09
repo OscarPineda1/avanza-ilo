@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
-import {
-    StyleSheet,
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView
-} from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { globalStyles } from '../styles/global-styles';
 
-// IMPORTAMOS TUS COMPONENTES REUTILIZABLES Y ESTILOS
-import { globalStyles, theme } from '../styles/global-styles';
-import BottomNavbar from '../components/BottomNavbar';
-import RouteDetailCard from '../components/RouteDetailCard';
-
-// Datos extendidos para la exploración de rutas (RF-03)
+// Directorio de rutas (Datos maestros para tu tesis)
 const rutasDirectorio = [
     { id: '1', nombre: '1A', origen: 'Alto Ilo', destino: 'Pampa Inalámbrica', color: '#1267FF', empresa: 'Consorcio Ilo 1A', zona: 'Pampa' },
     { id: '2', nombre: 'D', origen: 'Plaza de Armas', destino: 'Ciudad Nueva', color: '#FF3644', empresa: 'Transportes Pampa I.', zona: 'Centro' },
@@ -26,103 +17,67 @@ const filtros = ['Todas', 'Pampa', 'Centro', 'Sur'];
 export default function ExploreRoutesScreen({ navigation }) {
     const [filtroActivo, setFiltroActivo] = useState('Todas');
 
-    // Filtrado de rutas según la zona seleccionada
     const rutasMostradas = rutasDirectorio.filter(ruta =>
         filtroActivo === 'Todas' ? true : ruta.zona === filtroActivo
     );
 
-    const irAlMapa = (rutaName) => {
-        navigation.navigate('MapScreen', { routeName: rutaName });
-    };
-
     return (
-        <SafeAreaView style={globalStyles.safeArea}>
-
-            {/* HEADER PRINCIPAL (Usando estilos globales combinados con locales) */}
-            <View style={styles.header}>
-                <Text style={globalStyles.headerTitle}>Directorio de Rutas</Text>
+        <SafeAreaView style={styles.safeArea}>
+            <View style={globalStyles.header}>
+                <Text style={globalStyles.title}>Directorio de Rutas</Text>
                 <Text style={globalStyles.subtitle}>Conoce los recorridos de Ilo</Text>
             </View>
 
-            {/* FILTROS POR ZONA */}
+            {/* Filtros */}
             <View style={styles.filterContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-                    {filtros.map((filtro, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={[
-                                styles.filterPill,
-                                filtroActivo === filtro && styles.filterPillActive
-                            ]}
-                            onPress={() => setFiltroActivo(filtro)}
-                        >
-                            <Text style={[
-                                styles.filterText,
-                                filtroActivo === filtro && styles.filterTextActive
-                            ]}>
-                                {filtro}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                {filtros.map((filtro, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        style={[globalStyles.filterPill, filtroActivo === filtro && globalStyles.filterPillActive]}
+                        onPress={() => setFiltroActivo(filtro)}
+                    >
+                        <Text style={[globalStyles.filterText, filtroActivo === filtro && globalStyles.filterTextActive]}>
+                            {filtro}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
             </View>
 
-            {/* LISTA DE RUTAS DETALLADA (Usando tu componente limpio) */}
-            <ScrollView
-                style={globalStyles.container}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 110 }}
-            >
-                <Text style={globalStyles.sectionTitle}>
+            {/* Lista de Rutas */}
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <Text style={styles.countText}>
                     {rutasMostradas.length} {rutasMostradas.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}
                 </Text>
 
                 {rutasMostradas.map((item) => (
-                    <RouteDetailCard
+                    <TouchableOpacity
                         key={item.id}
-                        item={item}
-                        onPress={() => irAlMapa(item.nombre)}
-                    />
+                        style={globalStyles.routeCardDetail}
+                        onPress={() => navigation.navigate('MapScreen', { routeName: item.nombre })}
+                        activeOpacity={0.8}
+                    >
+                        <View style={[globalStyles.routeBadge, { backgroundColor: item.color }]}>
+                            <Ionicons name="bus" size={16} color="#FFF" />
+                            <Text style={styles.badgeText}>Ruta {item.nombre}</Text>
+                        </View>
+
+                        <Text style={globalStyles.empresaText}>{item.empresa}</Text>
+                        <Text style={globalStyles.trajectoryLabel}>Desde: {item.origen}</Text>
+                        <Text style={globalStyles.trajectoryLabel}>Hacia: {item.destino}</Text>
+
+                        <Text style={styles.actionText}>Ver recorrido en mapa</Text>
+                    </TouchableOpacity>
                 ))}
             </ScrollView>
         </SafeAreaView>
     );
 }
 
-// ESTILOS LOCALES (Solo guardamos aquí lo que es EXCLUSIVO de esta pantalla, como las píldoras de filtro)
 const styles = StyleSheet.create({
-    header: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 10,
-        backgroundColor: theme.colors.surface,
-    },
-    filterContainer: {
-        backgroundColor: theme.colors.surface,
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
-        marginBottom: 10,
-    },
-    filterScroll: {
-        paddingHorizontal: 20
-    },
-    filterPill: {
-        paddingHorizontal: 18,
-        paddingVertical: 8,
-        backgroundColor: '#F0F0F0',
-        borderRadius: 20,
-        marginRight: 10,
-    },
-    filterPillActive: {
-        backgroundColor: theme.colors.textDark
-    },
-    filterText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: theme.colors.textMuted
-    },
-    filterTextActive: {
-        color: theme.colors.surface
-    },
+    safeArea: { flex: 1, backgroundColor: '#F9F9F9' },
+    filterContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15 },
+    scrollContent: { paddingHorizontal: 20, paddingBottom: 110 },
+    countText: { marginBottom: 10, color: '#666', fontSize: 14 },
+    badgeText: { color: '#FFF', fontWeight: 'bold', marginLeft: 6 },
+    actionText: { color: '#1267FF', fontWeight: '700', marginTop: 12 }
 });

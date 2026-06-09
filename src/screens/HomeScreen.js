@@ -20,7 +20,7 @@ import LiveMapCard from '../components/LiveMapCard'; // Asegúrate de tener este
 const rutasDisponibles = [
     { id: '1', nombre: '1A', descripcion: 'Consorcio Ilo 1A', color: '#1267FF' },
     { id: '2', nombre: 'D', descripcion: 'Transportes Pampa I.', color: '#FF3644' },
-    { id: '3', nombre: '14', descripcion: 'Ruta Troncal 14', color: '#2ECC71' },
+    { id: '3', nombre: '12', descripcion: 'Ruta Troncal 12', color: '#2ECC71' },
 ];
 
 export default function HomeScreen({ navigation }) {

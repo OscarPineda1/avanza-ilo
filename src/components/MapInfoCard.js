@@ -53,7 +53,6 @@ export default function MapInfoCard({ routeName, datosRuta, isFavorite, onToggle
                     <Text style={styles.detailValue}>{datosRuta.frecuencia}</Text>
                 </View>
             </View>
-
             <View style={styles.instructionBanner}>
                 <Ionicons name="hand-left" size={18} color={theme.colors.warningText} style={{ marginRight: 6 }} />
                 <Text style={styles.instructionText}>

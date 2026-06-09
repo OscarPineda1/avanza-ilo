@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 // Importaciones de tu arquitectura limpia
 import { globalStyles, theme } from '../styles/global-styles';
 import { ruta1A_Coordenadas } from '../utils/ruta1A.js';
+import { ruta12_Coordenadas } from '../utils/ruta12.js';
 import MapInfoCard from '../components/MapInfoCard'; // <-- Tu nuevo componente
 
 const { width, height } = Dimensions.get('window');
@@ -14,6 +15,7 @@ const { width, height } = Dimensions.get('window');
 // Datos maestros temporales
 const infoRutas = {
     '1A': { horario: '6:00 AM - 9:00 PM', tarifa: 'S/. 1.50', frecuencia: '10 min', color: theme.colors.ruta1A, empresa: 'Consorcio Ilo 1A' },
+    '12': { horario: '6:00 AM - 9:00 PM', tarifa: 'S/. 1.50', frecuencia: '10 min', color: theme.colors.ruta12, empresa: 'Consorcio Ilo 12' },
     'D': { horario: '6:15 AM - 8:45 PM', tarifa: 'S/. 1.50', frecuencia: '12 min', color: theme.colors.rutaD, empresa: 'Transportes Pampa I.' },
     '14': { horario: '6:00 AM - 9:00 PM', tarifa: 'S/. 1.70', frecuencia: '15 min', color: theme.colors.ruta14, empresa: 'Ruta Troncal 14' },
 };
@@ -46,11 +48,38 @@ export default function MapScreen({ route, navigation }) {
                         strokeWidth={5}
                     />
                 )}
-                <Marker
-                    coordinate={{ latitude: -17.6603, longitude: -71.35431 }}
-                    title={`Paradero Inicial/Final - Ruta ${routeName}`}
-                    pinColor={theme.colors.danger}
-                />
+
+                {routeName === '12' && (
+                    <Polyline
+                        coordinates={ruta12_Coordenadas}
+                        strokeColor={datosRuta.color}
+                        strokeWidth={5}
+                    />
+                )}
+
+                {/* Validar si es la ruta 1A o la 12 para mostrar el marcador del paradero inicial/final */}
+
+                {routeName === '1A' && (
+                    <Marker
+                        coordinate={{ latitude: -17.6603, longitude: -71.35431 }}
+                        pinColor={theme.colors.danger}
+                    >
+                        <Callout>
+                            <Text>Paradero Inicial/Final - Ruta {routeName}</Text>
+                        </Callout>
+                    </Marker>
+                )}
+
+                {routeName === '12' && (
+                    <Marker
+                        coordinate={{ latitude: -17.66082, longitude: -71.33231 }}
+                        pinColor={theme.colors.danger}
+                    >
+                        <Callout>
+                            <Text>Paradero Inicial/Final - Ruta {routeName}</Text>
+                        </Callout>
+                    </Marker>
+                )}
             </MapView>
 
             {/* BOTÓN DE RETORNO FLOTANTE SUPERIOR */}
