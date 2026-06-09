@@ -1,4 +1,5 @@
 Avanza Ilo: Sistema de Predicción ETA (Software-Centric)
+
 📌 Introducción
 Este proyecto nace como una solución de ingeniería de computación para la asimetría de información en el transporte público de Ilo. A diferencia de las soluciones tradicionales que requieren sensores GPS (IoT) en cada vehículo, Avanza Ilo utiliza un modelo de inferencia basado en Teoría de Grafos y el algoritmo de Dijkstra, permitiendo calcular tiempos de arribo (ETA) predictivos mediante datos maestros de frecuencia y topología vial. Es una propuesta Software-Centric que garantiza escalabilidad, bajo costo de implementación y alta disponibilidad.
 
