@@ -103,12 +103,10 @@ export default function MapScreen({ route, navigation }) {
         </View>
     );
 }
-
-// Únicamente los estilos locales que controlan el mapa y los botones flotantes superiores
 const styles = StyleSheet.create({
     map: {
         width: width,
-        height: height * 0.58, // Deja espacio exacto para la tarjeta
+        height: height * 0.58,
     },
     topOverlay: {
         position: 'absolute', top: 0, left: 20, right: 20,
