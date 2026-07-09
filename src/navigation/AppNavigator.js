@@ -18,7 +18,7 @@ function MainTabs() {
         <Tab.Navigator
             tabBar={(props) => <BottomNavbar {...props} />}
             tabBarPosition="bottom"
-            screenOptions={{ swipeEnabled: true }} // ¡Aquí activas el deslizamiento con el dedo!
+            screenOptions={{ swipeEnabled: true }} // Funcion deslizamiento con el dedo
         >
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="ExploreRoutes" component={ExploreRoutesScreen} />
