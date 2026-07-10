@@ -1,0 +1,15 @@
+# https://docs.devin.ai/onboard-devin/environment-yaml
+maintenance: |
+  npm install
+  (cd functions && npm install)
+
+knowledge:
+  - name: typecheck
+    contents: |
+      npm run typecheck
+  - name: expo-doctor
+    contents: |
+      npx expo-doctor
+  - name: backend build
+    contents: |
+      cd functions && npm run build
