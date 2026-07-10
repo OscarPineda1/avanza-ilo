@@ -53,6 +53,9 @@ export function buildStops(
     (lastStop.coordinate.latitude !== last.latitude ||
       lastStop.coordinate.longitude !== last.longitude)
   ) {
+    // The previous sampled stop was incorrectly marked as the destination.
+    lastStop.isDestination = false;
+    lastStop.name = `Paradero ${result.length}`;
     result.push({
       id: `${routeName.toLowerCase()}-stop-${result.length + 1}`,
       routeName,

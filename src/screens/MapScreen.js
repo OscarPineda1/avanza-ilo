@@ -50,9 +50,11 @@ export default function MapScreen({ route, navigation }) {
 
     useEffect(() => {
         let subscriber = null;
+        let unmounted = false;
 
         async function requestLocation() {
             const { status } = await Location.requestForegroundPermissionsAsync();
+            if (unmounted) return;
             if (status !== 'granted') {
                 Alert.alert('Permiso denegado', 'No se pudo acceder a la ubicación. Puedes seleccionar un paradero manualmente.');
                 return;
@@ -61,19 +63,28 @@ export default function MapScreen({ route, navigation }) {
             const initial = await Location.getCurrentPositionAsync({
                 accuracy: Location.Accuracy.High,
             });
+            if (unmounted) return;
             setUserLocation(initial.coords);
 
-            subscriber = await Location.watchPositionAsync(
+            const watcher = await Location.watchPositionAsync(
                 { accuracy: Location.Accuracy.High, distanceInterval: 50, timeInterval: 5000 },
                 (location) => {
-                    setUserLocation(location.coords);
+                    if (!unmounted) {
+                        setUserLocation(location.coords);
+                    }
                 }
             );
+            if (unmounted) {
+                watcher.remove();
+                return;
+            }
+            subscriber = watcher;
         }
 
         requestLocation();
 
         return () => {
+            unmounted = true;
             if (subscriber) {
                 subscriber.remove();
             }
