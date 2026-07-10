@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert } from 'react-native';
-import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
+import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
+import MapView, { Marker, Polyline, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -132,6 +132,7 @@ export default function MapScreen({ route, navigation }) {
     return (
         <View style={globalStyles.safeArea}>
             <MapView
+                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                 style={styles.map}
                 initialRegion={regionIlo}
                 showsUserLocation={true}
