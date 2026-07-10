@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { globalStyles, theme } from '../styles/global-styles';
-import BottomNavbar from '../components/BottomNavbar';
 import SettingOption from '../components/SettingOption';
 
 export default function ProfileScreen({ navigation }) {

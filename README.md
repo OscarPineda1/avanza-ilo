@@ -7,7 +7,7 @@ Este proyecto nace como una solución de ingeniería de computación para la asi
 1. Requisitos Previos
 Para evitar errores de compatibilidad, asegúrate de tener instalado:
 
-Node.js: Versión LTS (se recomienda v18+).
+Node.js: Versión LTS (se recomienda v20.19.4+).
 
 Expo CLI: npm install -g expo-cli
 
