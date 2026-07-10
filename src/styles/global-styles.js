@@ -3,21 +3,21 @@ import { StyleSheet, Platform } from 'react-native';
 // 1. PALETA DE COLORES CORPORATIVA Y ALTO CONTRASTE
 export const theme = {
     colors: {
-        background: '#F8F9FA', // Fondo principal relajante
-        surface: '#FFFFFF',    // Tarjetas y modales
-        primary: '#1267FF',    // Azul Avanza Ilo (Acciones principales)
-        textDark: '#1A1A1A',   // Texto principal (Alta legibilidad)
-        textMuted: '#666666',  // Subtítulos
-        textLight: '#A0A0A0',  // Textos deshabilitados o placeholders
-        border: '#E5E5E5',     // Divisores
+        background: '#F8F9FA',
+        surface: '#FFFFFF',
+        primary: '#1267FF',
+        textDark: '#1A1A1A',
+        textMuted: '#666666',
+        textLight: '#A0A0A0',
+        border: '#E5E5E5',
 
         // Alertas y Resiliencia
-        danger: '#E74C3C',     // Modo offline / Errores
-        warningBg: '#FFF5EC',  // Fondo de banner informativo
-        warningText: '#D35400',// Texto de banner informativo
+        danger: '#E74C3C',
+        warningBg: '#FFF5EC',
+        warningText: '#D35400',
         warningBorder: '#FFE0C2',
 
-        // Colores de Rutas (Directorio)
+        // Colores de Rutas
         ruta1A: '#1267FF',
         rutaD: '#FF3644',
         ruta12: '#2ECC71',
