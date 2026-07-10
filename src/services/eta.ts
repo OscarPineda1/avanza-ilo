@@ -1,39 +1,55 @@
-import { buildGraphFromStops, dijkstra } from './graph';
-import { getRouteByName } from './routes';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
-export type EtaResult = {
-  minutes: number;
-} | null;
+import { getFirebaseApp } from './firebase';
+import { computeEta, EtaResult } from './eta-core';
+
+export type { EtaResult } from './eta-core';
+export { computeEta } from './eta-core';
 
 export async function getEta(
   routeName: string,
   originStopId: string,
   destinationStopId: string
 ): Promise<EtaResult> {
-  const route = getRouteByName(routeName);
-  if (!route || !route.stops || route.stops.length === 0) {
-    return null;
+  const firebaseApp = getFirebaseApp();
+  if (firebaseApp) {
+    try {
+      const functions = getFunctions(firebaseApp);
+      const callGetEta = httpsCallable(functions, 'getEta');
+      const response = await callGetEta({
+        routeName,
+        originStopId,
+        destinationStopId,
+      });
+      const data = response.data as EtaResult;
+      if (data && typeof data.minutes === 'number') {
+        return data;
+      }
+    } catch {
+      // If the cloud function is not available, fall back to the local engine.
+    }
   }
 
-  const originIndex = route.stops.findIndex((s) => s.id === originStopId);
-  const destinationIndex = route.stops.findIndex(
-    (s) => s.id === destinationStopId
-  );
+  return computeEta(routeName, originStopId, destinationStopId);
+}
 
-  if (originIndex === -1 || destinationIndex === -1) {
-    return null;
+export async function getRemoteFrequency(
+  routeName: string
+): Promise<number | null> {
+  const firebaseApp = getFirebaseApp();
+  if (!firebaseApp) return null;
+
+  try {
+    const functions = getFunctions(firebaseApp);
+    const callGetFrequency = httpsCallable(functions, 'getFrequency');
+    const response = await callGetFrequency({ routeName });
+    const data = response.data as { minutes?: number } | null;
+    if (data && typeof data.minutes === 'number') {
+      return data.minutes;
+    }
+  } catch {
+    // Fallback to local data is handled by callers.
   }
 
-  // In a real deployment this would be an async HTTPS call to the backend.
-  // Here we compute locally in the same shape to keep the UI contract intact.
-  const graph = buildGraphFromStops(route.stops);
-  const distances = dijkstra(graph, originIndex);
-  const seconds = distances[destinationIndex];
-
-  if (!Number.isFinite(seconds)) {
-    return null;
-  }
-
-  const minutes = Math.max(1, Math.round(seconds / 60));
-  return { minutes };
+  return null;
 }

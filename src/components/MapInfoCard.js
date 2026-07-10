@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
+import { getRemoteFrequency } from '../services/eta';
 
 const { width } = Dimensions.get('window');
 
@@ -16,10 +17,26 @@ export default function MapInfoCard({
     destinationName,
 }) {
     const [etaResult, setEtaResult] = useState(eta);
+    const [remoteFrequency, setRemoteFrequency] = useState(null);
 
     useEffect(() => {
         setEtaResult(eta);
     }, [eta]);
+
+    useEffect(() => {
+        if (!datosRuta?.nombre || isOffline) return;
+
+        let cancelled = false;
+        getRemoteFrequency(datosRuta.nombre)
+            .then((minutes) => {
+                if (!cancelled && minutes) {
+                    setRemoteFrequency(`${minutes} min`);
+                }
+            })
+            .catch(() => {});
+
+        return () => { cancelled = true; };
+    }, [datosRuta?.nombre, isOffline]);
 
     const etaVisible = !isOffline && hasCoordinates && etaResult;
     const etaFallback = !etaVisible;
@@ -86,7 +103,7 @@ export default function MapInfoCard({
                 <View style={styles.detailBox}>
                     <Ionicons name="git-network-outline" size={18} color={theme.colors.textMuted} />
                     <Text style={styles.detailTitle}>Frecuencia</Text>
-                    <Text style={styles.detailValue}>{datosRuta.frecuencia || 'Por definir'}</Text>
+                    <Text style={styles.detailValue}>{remoteFrequency || datosRuta.frecuencia || 'Por definir'}</Text>
                 </View>
             </View>
 

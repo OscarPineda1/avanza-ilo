@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "lib": ["es2020"],
+    "outDir": "lib",
+    "rootDir": "..",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "../src/services/eta-core.ts",
+    "../src/services/graph.ts",
+    "../src/services/haversine.ts",
+    "../src/services/routes.ts",
+    "../src/services/stops.ts",
+    "../src/utils/ruta*.js",
+    "../src/styles/theme.ts"
+  ],
+  "exclude": ["lib", "node_modules"]
+}

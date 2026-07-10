@@ -1,4 +1,4 @@
-import { theme } from '../styles/global-styles';
+import { theme } from '../styles/theme';
 import { ruta1A_Coordenadas } from '../utils/ruta1A';
 import { ruta12_Coordenadas } from '../utils/ruta12';
 import { buildStops, Stop } from './stops';
