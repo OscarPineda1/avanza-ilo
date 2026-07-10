@@ -5,7 +5,7 @@ import { theme } from '../styles/global-styles';
 
 const { width } = Dimensions.get('window');
 
-export default function MapInfoCard({ routeName, datosRuta, isFavorite, onToggleFavorite }) {
+export default function MapInfoCard({ datosRuta, isFavorite, onToggleFavorite, hasCoordinates = true }) {
     return (
         <View style={styles.cardContainer}>
             <View style={styles.cardHeader}>
@@ -28,29 +28,37 @@ export default function MapInfoCard({ routeName, datosRuta, isFavorite, onToggle
                     <Text style={styles.etaLabel}>Próximo Arribo Predictivo</Text>
                 </View>
                 <View style={styles.etaTimeRow}>
-                    <Text style={styles.etaMinutes}>12</Text>
-                    <Text style={styles.etaUnit}> min restantes</Text>
+                    {hasCoordinates ? (
+                        <>
+                            <Text style={styles.etaMinutes}>12</Text>
+                            <Text style={styles.etaUnit}> min restantes</Text>
+                        </>
+                    ) : (
+                        <Text style={styles.etaUnavailable} numberOfLines={1}>ETA predictivo no disponible</Text>
+                    )}
                 </View>
-                <Text style={styles.toleranceText}>Margen de tolerancia aproximado: ±5 min</Text>
+                {hasCoordinates && (
+                    <Text style={styles.toleranceText}>Margen de tolerancia aproximado: ±5 min</Text>
+                )}
             </View>
 
             <View style={styles.detailsGrid}>
                 <View style={styles.detailBox}>
                     <Ionicons name="cash-outline" size={18} color={theme.colors.textMuted} />
                     <Text style={styles.detailTitle}>Tarifa</Text>
-                    <Text style={styles.detailValue}>{datosRuta.tarifa}</Text>
+                    <Text style={styles.detailValue}>{datosRuta.tarifa || 'Por definir'}</Text>
                 </View>
 
                 <View style={styles.detailBox}>
                     <Ionicons name="calendar-outline" size={18} color={theme.colors.textMuted} />
                     <Text style={styles.detailTitle}>Horario</Text>
-                    <Text style={styles.detailValue} numberOfLines={1}>{datosRuta.horario}</Text>
+                    <Text style={styles.detailValue} numberOfLines={1}>{datosRuta.horario || 'Por definir'}</Text>
                 </View>
 
                 <View style={styles.detailBox}>
                     <Ionicons name="git-network-outline" size={18} color={theme.colors.textMuted} />
                     <Text style={styles.detailTitle}>Frecuencia</Text>
-                    <Text style={styles.detailValue}>{datosRuta.frecuencia}</Text>
+                    <Text style={styles.detailValue}>{datosRuta.frecuencia || 'Por definir'}</Text>
                 </View>
             </View>
             <View style={styles.instructionBanner}>
@@ -83,6 +91,7 @@ const styles = StyleSheet.create({
     etaTimeRow: { flexDirection: 'row', alignItems: 'baseline' },
     etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
+    etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },
     toleranceText: { fontSize: 11, color: theme.colors.textMuted, fontStyle: 'italic' },
     detailsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
     detailBox: {

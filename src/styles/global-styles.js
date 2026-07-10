@@ -20,7 +20,9 @@ export const theme = {
         // Colores de Rutas (Directorio)
         ruta1A: '#1267FF',
         rutaD: '#FF3644',
+        ruta12: '#2ECC71',
         ruta14: '#2ECC71',
+        ruta10: '#9B59B6',
     },
     shadows: {
         base: {
@@ -48,7 +50,9 @@ export const globalStyles = StyleSheet.create({
     // Header
     header: { padding: 20, paddingTop: 40 },
     title: { fontSize: 24, fontWeight: '800', color: theme.colors.textDark },
+    headerTitle: { fontSize: 24, fontWeight: '800', color: theme.colors.textDark },
     subtitle: { fontSize: 16, color: theme.colors.textMuted, marginTop: 4 },
+    sectionTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, marginTop: 24, marginBottom: 12 },
 
     // Filtros
     filterPill: {
@@ -59,15 +63,4 @@ export const globalStyles = StyleSheet.create({
     filterText: { color: theme.colors.textMuted, fontWeight: '600' },
     filterTextActive: { color: '#FFF' },
 
-    // Tarjetas de Rutas
-    routeCardDetail: {
-        backgroundColor: theme.colors.surface, padding: 16, borderRadius: 12,
-        marginBottom: 12, ...theme.shadows.base
-    },
-    routeBadge: {
-        flexDirection: 'row', alignItems: 'center', padding: 8,
-        borderRadius: 8, marginBottom: 8, alignSelf: 'flex-start'
-    },
-    empresaText: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
-    trajectoryLabel: { fontSize: 14, color: theme.colors.textMuted, marginTop: 2 }
 });

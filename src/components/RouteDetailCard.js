@@ -19,8 +19,8 @@ export default function RouteDetailCard({ item, onPress }) {
                 <View style={styles.nodeLine} />
                 <View style={styles.nodePoint} />
                 <View style={styles.trajectoryTexts}>
-                    <Text style={styles.trajectoryLabel}>Desde: <Text style={styles.trajectoryValue}>{item.origen}</Text></Text>
-                    <Text style={[styles.trajectoryLabel, { marginTop: 12 }]}>Hacia: <Text style={styles.trajectoryValue}>{item.destino}</Text></Text>
+                    <Text style={styles.trajectoryLabel}>Desde: <Text style={styles.trajectoryValue}>{item.origen || 'Por definir'}</Text></Text>
+                    <Text style={[styles.trajectoryLabel, { marginTop: 12 }]}>Hacia: <Text style={styles.trajectoryValue}>{item.destino || 'Por definir'}</Text></Text>
                 </View>
             </View>
 

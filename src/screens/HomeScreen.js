@@ -12,16 +12,12 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Importamos tus Estilos Globales y tus Componentes Reutilizables
 import { globalStyles, theme } from '../styles/global-styles';
-import BottomNavbar from '../components/BottomNavbar';
+import { getAvailableRoutes } from '../services/routes';
 import RouteCard from '../components/RouteCard';
 import LiveMapCard from '../components/LiveMapCard'; // Asegúrate de tener este componente creado
 
-// Datos estáticos de las rutas piloto
-const rutasDisponibles = [
-    { id: '1', nombre: '1A', descripcion: 'Consorcio Ilo 1A', color: '#1267FF' },
-    { id: '2', nombre: 'D', descripcion: 'Transportes Pampa I.', color: '#FF3644' },
-    { id: '3', nombre: '12', descripcion: 'Ruta Troncal 12', color: '#2ECC71' },
-];
+// Datos centralizados de las rutas piloto
+const rutasDisponibles = getAvailableRoutes();
 
 export default function HomeScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +27,10 @@ export default function HomeScreen({ navigation }) {
         ruta.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ruta.descripcion.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const irAlMapaVivo = () => {
+        navigation.navigate('MapScreen');
+    };
 
     const irAlMapa = (rutaName) => {
         navigation.navigate('MapScreen', { routeName: rutaName });
@@ -87,7 +87,7 @@ export default function HomeScreen({ navigation }) {
                 )}
 
                 {/* TARJETA: EXPLORAR MAPA EN VIVO (Componente Reutilizable) */}
-                <LiveMapCard onPress={() => irAlMapa('General')} />
+                <LiveMapCard onPress={irAlMapaVivo} />
 
             </ScrollView>
 
