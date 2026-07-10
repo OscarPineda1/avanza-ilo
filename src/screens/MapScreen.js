@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 import { globalStyles, theme } from '../styles/global-styles';
 import { getRouteByName, getRouteCoordinates } from '../services/routes';
+import { getEta } from '../services/eta';
+import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
+import { useNetwork } from '../context/NetworkContext';
 import MapInfoCard from '../components/MapInfoCard';
 
 const { width, height } = Dimensions.get('window');
@@ -21,18 +25,106 @@ export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
     const routeData = routeName ? getRouteByName(routeName) : undefined;
     const coordinates = routeData ? getRouteCoordinates(routeData.nombre) : null;
+    const { isOffline } = useNetwork();
 
     const [isFavorite, setIsFavorite] = useState(false);
+    const [selectedStop, setSelectedStop] = useState(null);
+    const [destinationStop, setDestinationStop] = useState(null);
+    const [userLocation, setUserLocation] = useState(null);
+    const [eta, setEta] = useState(null);
+
+    const stops = routeData?.stops || [];
+
+    useEffect(() => {
+        if (routeData) {
+            isFavoriteRoute(routeData.nombre).then(setIsFavorite);
+        }
+    }, [routeData]);
+
+    useEffect(() => {
+        if (stops.length > 0) {
+            setDestinationStop(stops[stops.length - 1]);
+            setSelectedStop(stops[0]);
+        }
+    }, [stops]);
+
+    useEffect(() => {
+        let subscriber = null;
+
+        async function requestLocation() {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permiso denegado', 'No se pudo acceder a la ubicación. Puedes seleccionar un paradero manualmente.');
+                return;
+            }
+
+            const initial = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.High,
+            });
+            setUserLocation(initial.coords);
+
+            subscriber = await Location.watchPositionAsync(
+                { accuracy: Location.Accuracy.High, distanceInterval: 50, timeInterval: 5000 },
+                (location) => {
+                    setUserLocation(location.coords);
+                }
+            );
+        }
+
+        requestLocation();
+
+        return () => {
+            if (subscriber) {
+                subscriber.remove();
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!selectedStop || !destinationStop || !routeData || isOffline) {
+            setEta(null);
+            return;
+        }
+
+        let cancelled = false;
+        setEta({ minutes: 0, loading: true });
+
+        getEta(routeData.nombre, selectedStop.id, destinationStop.id)
+            .then((result) => {
+                if (!cancelled) {
+                    setEta(result ? { ...result, loading: false } : null);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setEta(null);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedStop, destinationStop, routeData, isOffline]);
+
+    const handleToggleFavorite = useCallback(async () => {
+        if (!routeData) return;
+        const next = await toggleFavoriteRoute(routeData.nombre);
+        setIsFavorite(next);
+    }, [routeData]);
+
+    const handleSelectStop = useCallback((stop) => {
+        setSelectedStop(stop);
+    }, []);
 
     const startCoordinate = coordinates?.[0];
 
     return (
         <View style={globalStyles.safeArea}>
-            {/* 1. MAPA EN ÁREA SUPERIOR */}
             <MapView
                 style={styles.map}
                 initialRegion={regionIlo}
                 showsUserLocation={true}
+                followsUserLocation={true}
             >
                 {coordinates && (
                     <Polyline
@@ -42,7 +134,20 @@ export default function MapScreen({ route, navigation }) {
                     />
                 )}
 
-                {startCoordinate && (
+                {stops.map((stop) => (
+                    <Marker
+                        key={stop.id}
+                        coordinate={stop.coordinate}
+                        pinColor={selectedStop?.id === stop.id ? theme.colors.primary : theme.colors.danger}
+                        onPress={() => handleSelectStop(stop)}
+                    >
+                        <Callout>
+                            <Text>{stop.name} - Ruta {stop.routeName}</Text>
+                        </Callout>
+                    </Marker>
+                ))}
+
+                {startCoordinate && stops.length === 0 && (
                     <Marker
                         coordinate={startCoordinate}
                         pinColor={theme.colors.danger}
@@ -54,7 +159,6 @@ export default function MapScreen({ route, navigation }) {
                 )}
             </MapView>
 
-            {/* BOTÓN DE RETORNO FLOTANTE SUPERIOR */}
             <SafeAreaView style={styles.topOverlay}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                     <Ionicons name="arrow-back" size={24} color={theme.colors.textDark} />
@@ -71,13 +175,16 @@ export default function MapScreen({ route, navigation }) {
                 )}
             </SafeAreaView>
 
-            {/* 2. TARJETA INFERIOR (LLAMANDO AL COMPONENTE REUTILIZABLE) */}
             {routeData && (
                 <MapInfoCard
                     datosRuta={routeData}
-                    hasCoordinates={!!coordinates}
+                    hasCoordinates={stops.length > 0 || !!coordinates}
+                    isOffline={isOffline}
+                    eta={eta}
+                    originName={selectedStop?.name}
+                    destinationName={destinationStop?.name}
                     isFavorite={isFavorite}
-                    onToggleFavorite={() => setIsFavorite(!isFavorite)}
+                    onToggleFavorite={handleToggleFavorite}
                 />
             )}
         </View>

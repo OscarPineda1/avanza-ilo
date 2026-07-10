@@ -1,11 +1,29 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
 
 const { width } = Dimensions.get('window');
 
-export default function MapInfoCard({ datosRuta, isFavorite, onToggleFavorite, hasCoordinates = true }) {
+export default function MapInfoCard({
+    datosRuta,
+    isFavorite,
+    onToggleFavorite,
+    hasCoordinates,
+    isOffline,
+    eta,
+    originName,
+    destinationName,
+}) {
+    const [etaResult, setEtaResult] = useState(eta);
+
+    useEffect(() => {
+        setEtaResult(eta);
+    }, [eta]);
+
+    const etaVisible = !isOffline && hasCoordinates && etaResult;
+    const etaFallback = !etaVisible;
+
     return (
         <View style={styles.cardContainer}>
             <View style={styles.cardHeader}>
@@ -28,17 +46,27 @@ export default function MapInfoCard({ datosRuta, isFavorite, onToggleFavorite, h
                     <Text style={styles.etaLabel}>Próximo Arribo Predictivo</Text>
                 </View>
                 <View style={styles.etaTimeRow}>
-                    {hasCoordinates ? (
+                    {etaVisible ? (
                         <>
-                            <Text style={styles.etaMinutes}>12</Text>
-                            <Text style={styles.etaUnit}> min restantes</Text>
+                            {etaResult.loading ? (
+                                <ActivityIndicator size="small" color={theme.colors.primary} />
+                            ) : (
+                                <>
+                                    <Text style={styles.etaMinutes}>{etaResult.minutes}</Text>
+                                    <Text style={styles.etaUnit}> min restantes</Text>
+                                </>
+                            )}
                         </>
                     ) : (
-                        <Text style={styles.etaUnavailable} numberOfLines={1}>ETA predictivo no disponible</Text>
+                        <Text style={styles.etaUnavailable} numberOfLines={1}>
+                            {isOffline ? 'ETA no disponible offline' : 'ETA predictivo no disponible'}
+                        </Text>
                     )}
                 </View>
-                {hasCoordinates && (
-                    <Text style={styles.toleranceText}>Margen de tolerancia aproximado: ±5 min</Text>
+                {!etaFallback && etaResult && etaResult.minutes && (
+                    <Text style={styles.toleranceText}>
+                        Desde {originName || 'origen'} hasta {destinationName || 'destino'} · Margen ±5 min
+                    </Text>
                 )}
             </View>
 
@@ -61,12 +89,15 @@ export default function MapInfoCard({ datosRuta, isFavorite, onToggleFavorite, h
                     <Text style={styles.detailValue}>{datosRuta.frecuencia || 'Por definir'}</Text>
                 </View>
             </View>
-            <View style={styles.instructionBanner}>
-                <Ionicons name="hand-left" size={18} color={theme.colors.warningText} style={{ marginRight: 6 }} />
-                <Text style={styles.instructionText}>
-                    Combi sin paradero fijo en esta zona. Levanta la mano para abordar.
-                </Text>
-            </View>
+
+            {isOffline && (
+                <View style={[styles.instructionBanner, { backgroundColor: theme.colors.danger + '15' }]}>
+                    <Ionicons name="wifi" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
+                    <Text style={[styles.instructionText, { color: theme.colors.danger }]}>
+                        Modo offline: información estática en caché.
+                    </Text>
+                </View>
+            )}
         </View>
     );
 }
@@ -88,7 +119,7 @@ const styles = StyleSheet.create({
     },
     etaBadge: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
     etaLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.primary, marginLeft: 6, textTransform: 'uppercase' },
-    etaTimeRow: { flexDirection: 'row', alignItems: 'baseline' },
+    etaTimeRow: { flexDirection: 'row', alignItems: 'baseline', minHeight: 46, justifyContent: 'center' },
     etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
     etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },

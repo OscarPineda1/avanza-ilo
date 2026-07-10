@@ -1,32 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     StyleSheet,
     View,
     Text,
     TextInput,
     TouchableOpacity,
-    ScrollView
+    ScrollView,
+    FlatList
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-// Importamos tus Estilos Globales y tus Componentes Reutilizables
 import { globalStyles, theme } from '../styles/global-styles';
-import { getAvailableRoutes } from '../services/routes';
+import { getPilotRoutes } from '../services/routes';
 import RouteCard from '../components/RouteCard';
-import LiveMapCard from '../components/LiveMapCard'; // Asegúrate de tener este componente creado
+import LiveMapCard from '../components/LiveMapCard';
 
-// Datos centralizados de las rutas piloto
-const rutasDisponibles = getAvailableRoutes();
+const pilotRoutes = getPilotRoutes();
 
 export default function HomeScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Filtrado de rutas
-    const rutasFiltradas = rutasDisponibles.filter(ruta =>
-        ruta.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ruta.descripcion.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const suggestions = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        if (!query) return [];
+        return pilotRoutes.filter(
+            (ruta) =>
+                ruta.nombre.toLowerCase().includes(query) ||
+                ruta.descripcion.toLowerCase().includes(query)
+        );
+    }, [searchQuery]);
+
+    const rutasFiltradas = searchQuery.trim().length > 0 ? suggestions : pilotRoutes;
 
     const irAlMapaVivo = () => {
         navigation.navigate('MapScreen');
@@ -36,21 +41,32 @@ export default function HomeScreen({ navigation }) {
         navigation.navigate('MapScreen', { routeName: rutaName });
     };
 
+    const renderSuggestion = ({ item }) => (
+        <TouchableOpacity
+            style={styles.suggestionItem}
+            onPress={() => irAlMapa(item.nombre)}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.suggestionBadge, { backgroundColor: item.color }]}>
+                <Text style={styles.suggestionBadgeText}>Ruta {item.nombre}</Text>
+            </View>
+            <Text style={styles.suggestionText}>{item.descripcion}</Text>
+        </TouchableOpacity>
+    );
+
     return (
         <SafeAreaView style={globalStyles.safeArea}>
-
             <ScrollView
                 style={globalStyles.container}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
+                keyboardShouldPersistTaps="handled"
             >
-                {/* ENCABEZADO (Usando estilos globales) */}
                 <View style={styles.header}>
                     <Text style={globalStyles.headerTitle}>Avanza Ilo</Text>
                     <Text style={globalStyles.subtitle}>¿A dónde te diriges hoy?</Text>
                 </View>
 
-                {/* BARRA DE BÚSQUEDA (Estilo local porque es único de esta pantalla) */}
                 <View style={styles.searchContainer}>
                     <Ionicons name="search" size={24} color={theme.colors.primary} style={styles.searchIcon} />
                     <TextInput
@@ -69,7 +85,17 @@ export default function HomeScreen({ navigation }) {
                     )}
                 </View>
 
-                {/* LISTA DE RUTAS (Mapeada con tu Componente Reutilizable RouteCard) */}
+                {suggestions.length > 0 && (
+                    <View style={styles.suggestionsContainer}>
+                        <FlatList
+                            data={suggestions}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderSuggestion}
+                            scrollEnabled={false}
+                        />
+                    </View>
+                )}
+
                 <Text style={globalStyles.sectionTitle}>Rutas Piloto Disponibles</Text>
 
                 {rutasFiltradas.length > 0 ? (
@@ -86,16 +112,12 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 )}
 
-                {/* TARJETA: EXPLORAR MAPA EN VIVO (Componente Reutilizable) */}
                 <LiveMapCard onPress={irAlMapaVivo} />
-
             </ScrollView>
-
         </SafeAreaView>
     );
 }
 
-// Estos son LOS ÚNICOS estilos que se quedan aquí, porque pertenecen solo al buscador
 const styles = StyleSheet.create({
     header: {
         marginBottom: 24,
@@ -108,8 +130,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingHorizontal: 16,
         height: 60,
-        marginBottom: 24,
-        ...theme.shadows.base, // Reutilizando la sombra global
+        ...theme.shadows.base,
     },
     searchIcon: {
         marginRight: 12,
@@ -122,6 +143,37 @@ const styles = StyleSheet.create({
     },
     clearIcon: {
         padding: 4,
+    },
+    suggestionsContainer: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: 12,
+        marginBottom: 24,
+        ...theme.shadows.base,
+        overflow: 'hidden',
+    },
+    suggestionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
+    },
+    suggestionBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        marginRight: 10,
+    },
+    suggestionBadgeText: {
+        color: '#FFF',
+        fontWeight: '700',
+        fontSize: 13,
+    },
+    suggestionText: {
+        flex: 1,
+        fontSize: 16,
+        color: theme.colors.textDark,
+        fontWeight: '500',
     },
     emptyContainer: {
         alignItems: 'center',
