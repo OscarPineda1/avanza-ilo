@@ -1,6 +1,7 @@
 import { theme } from '../styles/global-styles';
 import { ruta1A_Coordenadas } from '../utils/ruta1A';
 import { ruta12_Coordenadas } from '../utils/ruta12';
+import { buildStops, Stop } from './stops';
 
 export type LatLng = {
   latitude: number;
@@ -20,7 +21,9 @@ export type Route = {
   tarifa: string;
   frecuencia: string;
   coordinates: LatLng[] | null;
+  stops: Stop[];
   available: boolean;
+  pilot: boolean;
 };
 
 const routes: Route[] = [
@@ -37,7 +40,9 @@ const routes: Route[] = [
     tarifa: 'S/. 1.50',
     frecuencia: '10 min',
     coordinates: ruta1A_Coordenadas as LatLng[],
+    stops: buildStops('1A', ruta1A_Coordenadas as LatLng[], 8),
     available: true,
+    pilot: true,
   },
   {
     id: '2',
@@ -52,7 +57,9 @@ const routes: Route[] = [
     tarifa: 'S/. 1.50',
     frecuencia: '12 min',
     coordinates: null,
+    stops: [],
     available: true,
+    pilot: true,
   },
   {
     id: '3',
@@ -67,7 +74,9 @@ const routes: Route[] = [
     tarifa: 'S/. 1.50',
     frecuencia: '10 min',
     coordinates: ruta12_Coordenadas as LatLng[],
+    stops: buildStops('12', ruta12_Coordenadas as LatLng[], 8),
     available: true,
+    pilot: false,
   },
   {
     id: '4',
@@ -82,7 +91,9 @@ const routes: Route[] = [
     tarifa: 'S/. 1.70',
     frecuencia: '15 min',
     coordinates: null,
+    stops: [],
     available: true,
+    pilot: true,
   },
   {
     id: '5',
@@ -97,7 +108,9 @@ const routes: Route[] = [
     tarifa: '',
     frecuencia: '',
     coordinates: null,
+    stops: [],
     available: false,
+    pilot: false,
   },
 ];
 
@@ -105,8 +118,13 @@ export const getAllRoutes = (): Route[] => routes;
 
 export const getAvailableRoutes = (): Route[] => routes.filter((r) => r.available);
 
+export const getPilotRoutes = (): Route[] => routes.filter((r) => r.pilot);
+
 export const getRouteByName = (nombre: string): Route | undefined =>
   routes.find((r) => r.nombre.toLowerCase() === nombre.toLowerCase());
 
 export const getRouteCoordinates = (nombre: string): LatLng[] | null =>
   getRouteByName(nombre)?.coordinates ?? null;
+
+export const getRouteStops = (nombre: string): Stop[] =>
+  getRouteByName(nombre)?.stops ?? [];
