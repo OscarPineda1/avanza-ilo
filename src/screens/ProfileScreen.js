@@ -10,8 +10,6 @@ import { getRouteByName } from '../services/routes';
 import SettingOption from '../components/SettingOption';
 
 export default function ProfileScreen({ navigation }) {
-    const [isOfflineMode, setIsOfflineMode] = useState(false);
-    const [notifications, setNotifications] = useState(true);
     const [favorites, setFavorites] = useState([]);
 
     const loadFavorites = useCallback(async () => {
@@ -31,7 +29,7 @@ export default function ProfileScreen({ navigation }) {
     return (
         <SafeAreaView style={globalStyles.safeArea}>
             <View style={styles.header}>
-                <Text style={globalStyles.headerTitle}>Mi Perfil</Text>
+                        <Text style={globalStyles.headerTitle}>Tu espacio</Text>
             </View>
 
             <ScrollView
@@ -44,8 +42,8 @@ export default function ProfileScreen({ navigation }) {
                         <Ionicons name="person" size={40} color={theme.colors.primary} />
                     </View>
                     <View style={styles.userInfo}>
-                        <Text style={styles.userName}>Pasajero Frecuente</Text>
-                        <Text style={styles.userEmail}>usuario@avanzailo.com</Text>
+                        <Text style={styles.userName}>Viaja sin cuenta</Text>
+                        <Text style={styles.userEmail}>Tus favoritos se guardan en este dispositivo</Text>
                     </View>
                 </View>
 
@@ -68,26 +66,23 @@ export default function ProfileScreen({ navigation }) {
                         ))}
                     </View>
                 ) : (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No tienes rutas favoritas aún.</Text>
-                    </View>
+                    <TouchableOpacity onPress={() => navigation.navigate('MainTabs', { screen: 'ExploreRoutes' })} style={styles.emptyContainer}>
+                        <Ionicons name="heart-outline" size={23} color={theme.colors.primary} />
+                        <Text style={styles.emptyText}>Aún no tienes rutas favoritas. Explora las rutas.</Text>
+                    </TouchableOpacity>
                 )}
 
-                <Text style={globalStyles.sectionTitle}>Preferencias</Text>
+                <Text style={globalStyles.sectionTitle}>Herramientas</Text>
                 <View style={styles.menuCard}>
                     <SettingOption
-                        icon="cloud-offline" iconBg="#FFF0F0" iconColor={theme.colors.danger}
-                        title="Modo Offline (Caché)" subtitle="Ahorra datos usando rutas guardadas"
-                        hasSwitch={true} switchValue={isOfflineMode} onSwitchChange={setIsOfflineMode}
+                        icon="location" iconBg={theme.colors.primarySoft} iconColor={theme.colors.primary}
+                        title="Elegir mi paradero" subtitle="Calcula el ETA sin usar GPS"
+                        onPress={() => navigation.navigate('StopSelection')}
                     />
-                    <SettingOption
-                        icon="notifications" iconBg="#F0F0F0" iconColor="#555"
-                        title="Alertas de Paradero"
-                        hasSwitch={true} switchValue={notifications} onSwitchChange={setNotifications}
-                    />
+                    <SettingOption icon="map" iconBg="#EAF8F1" iconColor={theme.colors.success} title="Ver mapa de rutas" subtitle="Colores, sentido y paraderos" onPress={() => navigation.navigate('MainTabs', { screen: 'Map' })} />
                 </View>
 
-                <Text style={globalStyles.sectionTitle}>Acerca de la App</Text>
+                <Text style={globalStyles.sectionTitle}>Información</Text>
                 <View style={styles.menuCard}>
                     <SettingOption
                         icon="information-circle" iconBg="#F0F6FF" iconColor={theme.colors.primary}
@@ -95,7 +90,7 @@ export default function ProfileScreen({ navigation }) {
                     />
                     <SettingOption
                         icon="document-text" iconBg="#F0F6FF" iconColor={theme.colors.primary}
-                        title="Términos y Condiciones" onPress={() => navigation.navigate('About')}
+                        title="Privacidad y uso de datos" subtitle="Ubicación solo durante el uso" onPress={() => navigation.navigate('About')}
                     />
                 </View>
 
@@ -132,7 +127,7 @@ const styles = StyleSheet.create({
     },
     userInfo: { flex: 1 },
     userName: { fontSize: 20, fontWeight: '700', color: theme.colors.textDark, marginBottom: 4 },
-    userEmail: { fontSize: 14, color: theme.colors.textMuted },
+    userEmail: { fontSize: 14, color: theme.colors.textMuted, lineHeight: 20 },
     menuCard: {
         backgroundColor: theme.colors.surface,
         borderRadius: 20,
@@ -155,8 +150,8 @@ const styles = StyleSheet.create({
     },
     favoriteBadgeText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
     favoriteText: { flex: 1, fontSize: 16, color: theme.colors.textDark, fontWeight: '500' },
-    emptyContainer: { alignItems: 'center', paddingVertical: 20, marginBottom: 24 },
-    emptyText: { color: theme.colors.textLight, fontSize: 16 },
+    emptyContainer: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 16, marginBottom: 24, borderRadius: 14, backgroundColor: theme.colors.primarySoft },
+    emptyText: { flex: 1, color: theme.colors.primary, fontSize: 15, lineHeight: 20, fontWeight: '700' },
     versionText: {
         textAlign: 'center',
         color: theme.colors.textLight,

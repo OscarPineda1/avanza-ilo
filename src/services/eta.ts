@@ -1,10 +1,13 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { getFirebaseApp } from './firebase';
+import { fetchRouteFrequency, getFirebaseApp } from './firebase';
 import { computeEta, EtaResult } from './eta-core';
 
 export type { EtaResult } from './eta-core';
 export { computeEta } from './eta-core';
+
+const cloudFunctionsEnabled =
+  process.env.EXPO_PUBLIC_ENABLE_CLOUD_FUNCTIONS === 'true';
 
 export async function getEta(
   routeName: string,
@@ -12,7 +15,7 @@ export async function getEta(
   destinationStopId: string
 ): Promise<EtaResult> {
   const firebaseApp = getFirebaseApp();
-  if (firebaseApp) {
+  if (cloudFunctionsEnabled && firebaseApp) {
     try {
       const functions = getFunctions(firebaseApp);
       const callGetEta = httpsCallable(functions, 'getEta');
@@ -36,6 +39,15 @@ export async function getEta(
 export async function getRemoteFrequency(
   routeName: string
 ): Promise<number | null> {
+  const firestoreFrequency = await fetchRouteFrequency(routeName);
+  if (typeof firestoreFrequency === 'number') {
+    return firestoreFrequency;
+  }
+
+  if (!cloudFunctionsEnabled) {
+    return null;
+  }
+
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) return null;
 

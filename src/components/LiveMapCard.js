@@ -14,8 +14,8 @@ export default function LiveMapCard({ onPress }) {
                 <Ionicons name="map" size={28} color={theme.colors.surface} />
             </View>
             <View style={styles.liveMapInfo}>
-                <Text style={styles.liveMapTitle}>Explorar mapa en vivo</Text>
-                <Text style={styles.liveMapDesc}>Ver mi ubicación y paraderos cercanos</Text>
+                <Text style={styles.liveMapTitle}>Explorar recorridos en el mapa</Text>
+                <Text style={styles.liveMapDesc}>Ubica rutas, paraderos y sentido de viaje</Text>
             </View>
             <View style={styles.liveMapGoBtn}>
                 <Ionicons name="arrow-forward" size={20} color={theme.colors.surface} />

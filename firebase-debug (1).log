@@ -1,0 +1,54 @@
+[debug] [2026-08-19T21:07:58.305Z] ----------------------------------------------------------------------
+[debug] [2026-08-19T21:07:58.307Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\rene_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules --project avanza-ilo
+[debug] [2026-08-19T21:07:58.307Z] CLI Version:   15.23.0
+[debug] [2026-08-19T21:07:58.307Z] Platform:      win32
+[debug] [2026-08-19T21:07:58.307Z] Node Version:  v24.15.0
+[debug] [2026-08-19T21:07:58.308Z] Detected Agent: codex_cli
+[debug] [2026-08-19T21:07:58.308Z] Time:          Wed Aug 19 2026 16:07:58 GMT-0500 (hora estándar de Colombia)
+[debug] [2026-08-19T21:07:58.308Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-19T21:07:59.343Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-19T21:07:59.343Z] > authorizing via signed-in user (rene_1234rpf@hotmail.com)
+[debug] [2026-08-19T21:07:59.343Z] [iam] checking project avanza-ilo for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-08-19T21:07:59.353Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:07:59.353Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:07:59.354Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/avanza-ilo:testIamPermissions [none]
+[debug] [2026-08-19T21:07:59.354Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/avanza-ilo:testIamPermissions  x-goog-user-project=avanza-ilo
+[debug] [2026-08-19T21:07:59.354Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/avanza-ilo:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-08-19T21:08:00.544Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/avanza-ilo:testIamPermissions 200
+[debug] [2026-08-19T21:08:00.544Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/avanza-ilo:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'avanza-ilo'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-08-19T21:08:00.548Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:00.548Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:00.548Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/avanza-ilo/databases/(default) [none]
+[debug] [2026-08-19T21:08:01.802Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/avanza-ilo/databases/(default) 200
+[debug] [2026-08-19T21:08:01.802Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/avanza-ilo/databases/(default) {"name":"projects/avanza-ilo/databases/(default)","uid":"6ea63a3c-75b1-4e0a-808f-f056cdd74883","createTime":"2026-07-11T06:51:14.270074Z","updateTime":"2026-07-11T06:51:14.270074Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-08-19T20:08:02.447500Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"INeC+uPMrZYDMIyU7sWEypUD"}
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-08-19T21:08:01.803Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:01.803Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:01.803Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/avanza-ilo:test [none]
+[debug] [2026-08-19T21:08:01.804Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/avanza-ilo:test [omitted]
+[debug] [2026-08-19T21:08:02.981Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/avanza-ilo:test 200
+[debug] [2026-08-19T21:08:02.981Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/avanza-ilo:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-08-19T21:08:02.981Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:02.981Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:02.982Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/releases pageSize=10&pageToken=
+[debug] [2026-08-19T21:08:03.460Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/releases 200
+[debug] [2026-08-19T21:08:03.460Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/releases {"releases":[{"name":"projects/avanza-ilo/releases/cloud.firestore","rulesetName":"projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16","createTime":"2026-07-11T06:51:19.379841Z","updateTime":"2026-08-19T21:05:30.810964Z"}]}
+[debug] [2026-08-19T21:08:03.460Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:03.460Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:03.461Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16 [none]
+[debug] [2026-08-19T21:08:04.528Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16 200
+[debug] [2026-08-19T21:08:04.528Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16 [omitted]
+[info] i  firestore: latest version of firestore.rules already up to date, skipping upload... 
+[debug] [2026-08-19T21:08:04.529Z] [rules] releasing cloud.firestore with ruleset projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16
+[debug] [2026-08-19T21:08:04.529Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:04.529Z] Checked if tokens are valid: true, expires at: 1787176649462
+[debug] [2026-08-19T21:08:04.530Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/avanza-ilo/releases/cloud.firestore [none]
+[debug] [2026-08-19T21:08:04.530Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/avanza-ilo/releases/cloud.firestore {"release":{"name":"projects/avanza-ilo/releases/cloud.firestore","rulesetName":"projects/avanza-ilo/rulesets/cae5e808-6eb0-4ac0-9bef-250c78c2ab16"}}

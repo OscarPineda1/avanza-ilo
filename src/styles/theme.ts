@@ -16,10 +16,10 @@ export const theme = {
     warningBorder: '#FFE0C2',
 
     success: '#16A36A',
-    ruta1A: '#006FAE',
-    rutaD: '#3179C9',
-    ruta12: '#22A06B',
-    ruta14: '#D69A00',
+    ruta1A: '#1677C8',
+    rutaD: '#D84A5B',
+    ruta12: '#169B62',
+    ruta14: '#D98716',
     ruta10: '#9B59B6',
   },
   shadows: {

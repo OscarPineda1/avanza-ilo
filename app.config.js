@@ -13,15 +13,17 @@ module.exports = {
       backgroundColor: "#ffffff",
     },
     ios: {
+      bundleIdentifier: "com.avanzailo.app",
       supportsTablet: true,
       infoPlist: {
         NSLocationWhenInUseUsageDescription: "Avanza Ilo necesita acceder a tu ubicación para mostrar tu posición en el mapa y calcular tiempos de arribo.",
       },
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY",
+        googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY || "AIzaSyBUwuGHIiPDjzEcI9Jwmd-a2TbwjrEADSM",
       },
     },
     android: {
+      package: "com.avanzailo.app",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
@@ -30,7 +32,7 @@ module.exports = {
       permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       config: {
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY",
+          apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY || "AIzaSyBUwuGHIiPDjzEcI9Jwmd-a2TbwjrEADSM",
         },
       },
     },

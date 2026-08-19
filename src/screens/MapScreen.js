@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
-import MapView, { Marker, Polyline, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
+import { StyleSheet, View, Text, TouchableOpacity, Alert, Platform } from 'react-native';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -11,8 +11,7 @@ import { getEta } from '../services/eta';
 import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
 import { useNetwork } from '../context/NetworkContext';
 import MapInfoCard from '../components/MapInfoCard';
-
-const { width, height } = Dimensions.get('window');
+import RouteMapLayers from '../components/RouteMapLayers';
 
 const regionIlo = {
     latitude: -17.6433,
@@ -124,8 +123,6 @@ export default function MapScreen({ route, navigation }) {
         }
     }, [coordinates]);
 
-    const startCoordinate = coordinates?.[0];
-
     return (
         <View style={globalStyles.safeArea}>
             <MapView
@@ -137,37 +134,7 @@ export default function MapScreen({ route, navigation }) {
                 followsUserLocation={true}
                 onMapReady={fitRouteToMap}
             >
-                {coordinates && (
-                    <Polyline
-                        coordinates={coordinates}
-                        strokeColor={routeData.color}
-                        strokeWidth={5}
-                    />
-                )}
-
-                {stops.map((stop) => (
-                    <Marker
-                        key={stop.id}
-                        coordinate={stop.coordinate}
-                        pinColor={selectedStop?.id === stop.id ? theme.colors.primary : theme.colors.danger}
-                        onPress={() => handleSelectStop(stop)}
-                    >
-                        <Callout>
-                            <Text>{stop.name} - Ruta {stop.routeName}</Text>
-                        </Callout>
-                    </Marker>
-                ))}
-
-                {startCoordinate && stops.length === 0 && (
-                    <Marker
-                        coordinate={startCoordinate}
-                        pinColor={theme.colors.danger}
-                    >
-                        <Callout>
-                            <Text>Paradero Inicial - Ruta {routeData.nombre}</Text>
-                        </Callout>
-                    </Marker>
-                )}
+                <RouteMapLayers route={routeData} selectedStopId={selectedStop?.id} onStopPress={handleSelectStop} />
             </MapView>
 
             <SafeAreaView style={styles.topOverlay}>
@@ -189,6 +156,11 @@ export default function MapScreen({ route, navigation }) {
                 </TouchableOpacity>}
             </SafeAreaView>
 
+            {routeData?.coordinates?.length > 1 && <View pointerEvents="none" style={styles.directionHint}>
+                <View style={[styles.directionIcon, { backgroundColor: routeData.color }]}><Ionicons name="navigate" size={15} color={theme.colors.surface} /></View>
+                <Text style={styles.directionText}>Sigue las flechas: indican el sentido de la ruta</Text>
+            </View>}
+
             {routeData && (
                 <MapInfoCard
                     datosRuta={routeData}
@@ -207,8 +179,7 @@ export default function MapScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
     map: {
-        width: width,
-        height: height * 0.58,
+        ...StyleSheet.absoluteFillObject,
     },
     topOverlay: {
         position: 'absolute', top: 0, left: 20, right: 20,
@@ -231,6 +202,16 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         ...theme.shadows.base,
     },
+    directionHint: {
+        position: 'absolute', top: 75, alignSelf: 'center',
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: theme.colors.surface, borderRadius: 20,
+        paddingVertical: 8, paddingHorizontal: 12,
+        borderWidth: 1, borderColor: theme.colors.border,
+        ...theme.shadows.base,
+    },
+    directionIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    directionText: { fontSize: 14, fontWeight: '700', color: theme.colors.textDark },
     colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
     routeTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
 });

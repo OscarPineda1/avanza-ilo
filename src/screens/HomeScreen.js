@@ -64,10 +64,10 @@ export default function HomeScreen({ navigation }) {
             >
                 <View style={styles.header}>
                     <View style={styles.brandRow}>
-                        <Text style={globalStyles.headerTitle}>Avanza Ilo</Text>
-                        <TouchableOpacity accessibilityLabel="Activar ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={23} color={theme.colors.primary} /></TouchableOpacity>
+                        <View><Text style={globalStyles.headerTitle}>Avanza Ilo</Text><View style={styles.statusRow}><View style={styles.statusDot} /><Text style={styles.statusText}>Rutas y paraderos disponibles</Text></View></View>
+                        <TouchableOpacity style={styles.locationButton} accessibilityRole="button" accessibilityLabel="Usar mi ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /></TouchableOpacity>
                     </View>
-                    <Text style={globalStyles.subtitle}>¿A dónde te diriges hoy?</Text>
+                    <Text style={globalStyles.subtitle}>Encuentra tu ruta y conoce por dónde pasa.</Text>
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -105,7 +105,7 @@ export default function HomeScreen({ navigation }) {
                     </TouchableOpacity>
                 )}
 
-                <Text style={globalStyles.sectionTitle}>Rutas Piloto Disponibles</Text>
+                <View style={styles.sectionHeading}><Text style={globalStyles.sectionTitle}>Rutas disponibles</Text><Text style={styles.routeCount}>{pilotRoutes.length} rutas</Text></View>
 
                 {rutasFiltradas.length > 0 ? (
                     rutasFiltradas.map((item) => (
@@ -133,6 +133,10 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 },
+    statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.success },
+    statusText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '600' },
+    locationButton: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primarySoft, borderWidth: 1, borderColor: '#CBEAF5' },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -195,4 +199,6 @@ const styles = StyleSheet.create({
     },
     noResults: { marginTop: 10, padding: 12, borderRadius: 10, backgroundColor: theme.colors.primarySoft },
     noResultsText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '700' },
+    sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    routeCount: { marginTop: 24, color: theme.colors.textMuted, fontSize: 14, fontWeight: '700' },
 });

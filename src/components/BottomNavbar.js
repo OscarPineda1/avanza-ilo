@@ -33,6 +33,9 @@ export default function BottomNavbar({ state, navigation }) {
                     <TouchableOpacity
                         key={index}
                         style={styles.navItem}
+                        accessibilityRole="tab"
+                        accessibilityLabel={label}
+                        accessibilityState={{ selected: isFocused }}
                         onPress={() => {
                             // Navegar al tocar el botón
                             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });

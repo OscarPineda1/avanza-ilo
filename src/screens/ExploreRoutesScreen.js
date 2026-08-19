@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles } from '../styles/global-styles';
 import { getAllRoutes } from '../services/routes';
 import RouteDetailCard from '../components/RouteDetailCard';
+import EmptyState from '../components/EmptyState';
 
 const filtros = ['Todas', 'Pampa', 'Centro', 'Sur'];
 
@@ -19,7 +20,7 @@ export default function ExploreRoutesScreen({ navigation }) {
         <SafeAreaView style={styles.safeArea}>
             <View style={globalStyles.header}>
                 <Text style={globalStyles.title}>Directorio de Rutas</Text>
-                <Text style={globalStyles.subtitle}>Conoce los recorridos de Ilo</Text>
+                <Text style={globalStyles.subtitle}>Compara recorridos, horarios y tarifas antes de salir.</Text>
             </View>
 
             {/* Filtros */}
@@ -43,13 +44,13 @@ export default function ExploreRoutesScreen({ navigation }) {
                     {rutasMostradas.length} {rutasMostradas.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}
                 </Text>
 
-                {rutasMostradas.map((item) => (
+                {rutasMostradas.length ? rutasMostradas.map((item) => (
                     <RouteDetailCard
                         key={item.id}
                         item={item}
                         onPress={() => navigation.navigate(item.coordinates?.length ? 'RouteDetails' : 'Status', item.coordinates?.length ? { routeName: item.nombre } : { type: 'offline', routeName: item.nombre })}
                     />
-                ))}
+                )) : <EmptyState icon="bus-outline" title="No hay rutas en esta zona" message="Prueba con otro filtro para ver los recorridos disponibles." actionLabel="Ver todas" onAction={() => setFiltroActivo('Todas')} />}
             </ScrollView>
         </SafeAreaView>
     );
