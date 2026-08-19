@@ -34,11 +34,11 @@ export default function HomeScreen({ navigation }) {
     const rutasFiltradas = searchQuery.trim().length > 0 ? suggestions : pilotRoutes;
 
     const irAlMapaVivo = () => {
-        navigation.navigate('MapScreen');
+        navigation.navigate('Map');
     };
 
     const irAlMapa = (rutaName) => {
-        navigation.navigate('MapScreen', { routeName: rutaName });
+        navigation.navigate('RouteDetails', { routeName: rutaName });
     };
 
     const renderSuggestion = ({ item }) => (
@@ -63,7 +63,10 @@ export default function HomeScreen({ navigation }) {
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.header}>
-                    <Text style={globalStyles.headerTitle}>Avanza Ilo</Text>
+                    <View style={styles.brandRow}>
+                        <Text style={globalStyles.headerTitle}>Avanza Ilo</Text>
+                        <TouchableOpacity accessibilityLabel="Activar ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={23} color={theme.colors.primary} /></TouchableOpacity>
+                    </View>
                     <Text style={globalStyles.subtitle}>¿A dónde te diriges hoy?</Text>
                 </View>
 
@@ -96,6 +99,12 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 )}
 
+                {searchQuery.trim().length > 0 && suggestions.length === 0 && (
+                    <TouchableOpacity style={styles.noResults} onPress={() => navigation.navigate('SearchResults', { query: searchQuery })}>
+                        <Text style={styles.noResultsText}>Ver resultados para “{searchQuery}”</Text>
+                    </TouchableOpacity>
+                )}
+
                 <Text style={globalStyles.sectionTitle}>Rutas Piloto Disponibles</Text>
 
                 {rutasFiltradas.length > 0 ? (
@@ -123,6 +132,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         marginTop: 10,
     },
+    brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -183,4 +193,6 @@ const styles = StyleSheet.create({
         color: theme.colors.textLight,
         fontSize: 16,
     },
+    noResults: { marginTop: 10, padding: 12, borderRadius: 10, backgroundColor: theme.colors.primarySoft },
+    noResultsText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '700' },
 });

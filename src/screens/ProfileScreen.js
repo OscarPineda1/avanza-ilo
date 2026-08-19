@@ -49,14 +49,14 @@ export default function ProfileScreen({ navigation }) {
                     </View>
                 </View>
 
-                <Text style={globalStyles.sectionTitle}>Mis Rutas Favoritas</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Favorites')} style={styles.sectionHeader}><Text style={globalStyles.sectionTitle}>Mis Rutas Favoritas</Text><Text style={styles.link}>Ver todas</Text></TouchableOpacity>
                 {favorites.length > 0 ? (
                     <View style={styles.menuCard}>
                         {favorites.map((route) => (
                             <TouchableOpacity
                                 key={route.id}
                                 style={styles.favoriteItem}
-                                onPress={() => navigation.navigate('MapScreen', { routeName: route.nombre })}
+                                onPress={() => navigation.navigate('RouteDetails', { routeName: route.nombre })}
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.favoriteBadge, { backgroundColor: route.color }]}>
@@ -91,11 +91,11 @@ export default function ProfileScreen({ navigation }) {
                 <View style={styles.menuCard}>
                     <SettingOption
                         icon="information-circle" iconBg="#F0F6FF" iconColor={theme.colors.primary}
-                        title="Acerca de Avanza Ilo"
+                        title="Acerca de Avanza Ilo" onPress={() => navigation.navigate('About')}
                     />
                     <SettingOption
                         icon="document-text" iconBg="#F0F6FF" iconColor={theme.colors.primary}
-                        title="Términos y Condiciones"
+                        title="Términos y Condiciones" onPress={() => navigation.navigate('About')}
                     />
                 </View>
 
@@ -113,6 +113,8 @@ const styles = StyleSheet.create({
         paddingBottom: 15,
         backgroundColor: theme.colors.background
     },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    link: { color: theme.colors.primary, fontSize: 12, fontWeight: '700', marginTop: 14 },
     userCard: {
         flexDirection: 'row',
         alignItems: 'center',

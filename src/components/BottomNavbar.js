@@ -21,6 +21,9 @@ export default function BottomNavbar({ state, navigation }) {
                 } else if (route.name === 'ExploreRoutes') {
                     iconName = isFocused ? 'bus' : 'bus-outline';
                     label = 'Explorar';
+                } else if (route.name === 'Map') {
+                    iconName = isFocused ? 'map' : 'map-outline';
+                    label = 'Mapa';
                 } else if (route.name === 'Profile') {
                     iconName = isFocused ? 'person' : 'person-outline';
                     label = 'Perfil';
