@@ -2,7 +2,8 @@ import { theme } from '../styles/theme';
 import { ruta1A_Coordenadas } from '../utils/ruta1a-my-maps';
 import { rutaD_Coordenadas } from '../utils/ruta-d-my-maps';
 import { ruta12_Coordenadas } from '../utils/ruta12-my-maps';
-import { buildStops, Stop } from './stops';
+import { buildStops } from './stops';
+import type { Stop } from './stops';
 
 export type LatLng = {
   latitude: number;
@@ -77,7 +78,7 @@ const routes: Route[] = [
     coordinates: ruta12_Coordenadas as LatLng[],
     stops: buildStops('12', ruta12_Coordenadas as LatLng[], 8),
     available: true,
-    pilot: false,
+    pilot: true,
   },
   {
     id: '4',
@@ -94,23 +95,8 @@ const routes: Route[] = [
     coordinates: null,
     stops: [],
     available: true,
-    pilot: true,
-  },
-  {
-    id: '5',
-    nombre: '10',
-    descripcion: 'Expreso Ilo',
-    origen: 'Miramar',
-    destino: 'Nuevo Ilo',
-    color: theme.colors.ruta10,
-    empresa: 'Expreso Ilo',
-    zona: 'Pampa',
-    horario: '',
-    tarifa: '',
-    frecuencia: '',
-    coordinates: null,
-    stops: [],
-    available: false,
+    // The route remains visible as static information until its official
+    // geometric trace is supplied. It is not offered in the map quick list.
     pilot: false,
   },
 ];

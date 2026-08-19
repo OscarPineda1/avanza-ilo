@@ -1,19 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Public read access for route master data (coordinates, stops, frequencies).
-    match /routes/{routeId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    match /frequencies/{routeId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    match /stops/{stopId} {
-      allow read: if true;
+    // Master data is public and cacheable for anonymous passengers.
+    match /{collection}/{document} {
+      allow read: if collection in [
+        'routes', 'routeDirections', 'nodes', 'stops', 'edges',
+        'routeStops', 'routeSegments', 'frequencies', 'dispatchProfiles'
+      ];
+      // The client never writes operational or master data. Administrative
+      // writes go through trusted backend tooling (Admin SDK bypasses rules).
       allow write: if false;
     }
   }

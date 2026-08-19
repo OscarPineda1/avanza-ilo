@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { getAllRoutes } from '../services/routes';
 import { theme } from '../styles/global-styles';
@@ -9,11 +9,11 @@ import RouteBadge from '../components/RouteBadge';
 
 const iloRegion = { latitude: -17.6428, longitude: -71.3452, latitudeDelta: 0.035, longitudeDelta: 0.035 };
 export default function MapOverviewScreen({ navigation }) {
-    const routes = useMemo(() => getAllRoutes().filter((item) => item.available), []);
+    const routes = useMemo(() => getAllRoutes().filter((item) => item.available && item.coordinates?.length), []);
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
             <MapView provider={PROVIDER_GOOGLE} initialRegion={iloRegion} style={styles.map} showsUserLocation>
-                {routes.slice(0, 3).map((item, index) => <Marker key={item.id} coordinate={{ latitude: iloRegion.latitude + index * .004, longitude: iloRegion.longitude + index * .003 }} pinColor={item.color} />)}
+                {routes.map((item) => <React.Fragment key={item.id}><Polyline coordinates={item.coordinates} strokeColor={item.color} strokeWidth={4} /><Marker coordinate={item.coordinates[0]} pinColor={item.color} title={`Ruta ${item.nombre}`} description={item.empresa} /></React.Fragment>)}
             </MapView>
             <View style={styles.top}><View style={styles.brand}><Ionicons name="menu-outline" size={20} color={theme.colors.primary} /><Text style={styles.brandText}>Avanza Ilo</Text></View><TouchableOpacity onPress={() => navigation.navigate('SearchResults')} style={styles.searchButton}><Ionicons name="search-outline" size={21} color={theme.colors.textDark} /></TouchableOpacity></View>
             <View style={styles.sheet}><View style={styles.handle} /><Text style={styles.sheetTitle}>Explora el mapa</Text><Text style={styles.sheetSub}>Selecciona una ruta para ver paraderos y tiempos estimados.</Text><View style={styles.routeRow}>{routes.slice(0, 3).map((item) => <TouchableOpacity key={item.id} onPress={() => navigation.navigate('RouteDetails', { routeName: item.nombre })} style={styles.routeChip}><RouteBadge route={item.nombre} color={item.color} size="small" /><Text style={styles.routeName}>Ruta {item.nombre}</Text></TouchableOpacity>)}</View><TouchableOpacity onPress={() => navigation.navigate('NearbyStops')} style={styles.nearby}><Ionicons name="location-outline" size={19} color={theme.colors.primary} /><Text style={styles.nearbyText}>Ver paraderos cercanos</Text><Ionicons name="chevron-forward" size={17} color={theme.colors.textLight} /></TouchableOpacity></View>

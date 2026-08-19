@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
 import MapView, { Marker, Polyline, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,14 +23,15 @@ const regionIlo = {
 
 export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
+    const requestedOriginStopId = route.params?.originStopId;
     const routeData = routeName ? getRouteByName(routeName) : undefined;
     const coordinates = routeData ? getRouteCoordinates(routeData.nombre) : null;
     const { isOffline } = useNetwork();
+    const mapRef = useRef(null);
 
     const [isFavorite, setIsFavorite] = useState(false);
     const [selectedStop, setSelectedStop] = useState(null);
     const [destinationStop, setDestinationStop] = useState(null);
-    const [userLocation, setUserLocation] = useState(null);
     const [eta, setEta] = useState(null);
 
     const stops = routeData?.stops || [];
@@ -43,10 +44,11 @@ export default function MapScreen({ route, navigation }) {
 
     useEffect(() => {
         if (stops.length > 0) {
+            const requestedOrigin = stops.find((stop) => stop.id === requestedOriginStopId);
             setDestinationStop(stops[stops.length - 1]);
-            setSelectedStop(stops[0]);
+            setSelectedStop(requestedOrigin || stops[0]);
         }
-    }, [stops]);
+    }, [routeData?.nombre, requestedOriginStopId]);
 
     useEffect(() => {
         let subscriber = null;
@@ -64,15 +66,9 @@ export default function MapScreen({ route, navigation }) {
                 accuracy: Location.Accuracy.High,
             });
             if (unmounted) return;
-            setUserLocation(initial.coords);
-
             const watcher = await Location.watchPositionAsync(
                 { accuracy: Location.Accuracy.High, distanceInterval: 50, timeInterval: 5000 },
-                (location) => {
-                    if (!unmounted) {
-                        setUserLocation(location.coords);
-                    }
-                }
+                () => {}
             );
             if (unmounted) {
                 watcher.remove();
@@ -127,16 +123,27 @@ export default function MapScreen({ route, navigation }) {
         setSelectedStop(stop);
     }, []);
 
+    const fitRouteToMap = useCallback(() => {
+        if (coordinates?.length > 1) {
+            mapRef.current?.fitToCoordinates(coordinates, {
+                animated: false,
+                edgePadding: { top: 110, right: 45, bottom: 280, left: 45 },
+            });
+        }
+    }, [coordinates]);
+
     const startCoordinate = coordinates?.[0];
 
     return (
         <View style={globalStyles.safeArea}>
             <MapView
+                ref={mapRef}
                 provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                 style={styles.map}
                 initialRegion={regionIlo}
                 showsUserLocation={true}
                 followsUserLocation={true}
+                onMapReady={fitRouteToMap}
             >
                 {coordinates && (
                     <Polyline
@@ -185,6 +192,9 @@ export default function MapScreen({ route, navigation }) {
                         <Text style={styles.routeTitle}>Mapa en vivo</Text>
                     </View>
                 )}
+                {routeData?.stops?.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir paradero manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre })}>
+                    <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>}
             </SafeAreaView>
 
             {routeData && (
@@ -221,6 +231,12 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface,
         flexDirection: 'row', alignItems: 'center',
         paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20,
+        ...theme.shadows.base,
+    },
+    manualStopButton: {
+        backgroundColor: theme.colors.surface,
+        width: 48, height: 48, borderRadius: 24,
+        alignItems: 'center', justifyContent: 'center',
         ...theme.shadows.base,
     },
     colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },

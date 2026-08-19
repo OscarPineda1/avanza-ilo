@@ -74,7 +74,7 @@ export default function HomeScreen({ navigation }) {
                     <Ionicons name="search" size={24} color={theme.colors.primary} style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Buscar ruta (ej. 1A, D, 14)..."
+                        placeholder="Buscar ruta (ej. 1A, D, 12)..."
                         placeholderTextColor={theme.colors.textLight}
                         value={searchQuery}
                         onChangeText={setSearchQuery}

@@ -60,7 +60,7 @@ export default function MapInfoCard({
             <View style={styles.etaContainer}>
                 <View style={styles.etaBadge}>
                     <Ionicons name="time" size={20} color={theme.colors.primary} />
-                    <Text style={styles.etaLabel}>Próximo Arribo Predictivo</Text>
+                    <Text style={styles.etaLabel}>ETA inferido</Text>
                 </View>
                 <View style={styles.etaTimeRow}>
                     {etaVisible ? (
@@ -76,7 +76,7 @@ export default function MapInfoCard({
                         </>
                     ) : (
                         <Text style={styles.etaUnavailable} numberOfLines={1}>
-                            {isOffline ? 'ETA no disponible offline' : 'ETA predictivo no disponible'}
+                            {isOffline ? 'ETA no disponible sin conexión' : 'ETA inferido no disponible'}
                         </Text>
                     )}
                 </View>
@@ -135,22 +135,22 @@ const styles = StyleSheet.create({
         alignItems: 'center', marginBottom: 14, borderWidth: 1, borderColor: '#D0E3FF',
     },
     etaBadge: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-    etaLabel: { fontSize: 12, fontWeight: '600', color: theme.colors.primary, marginLeft: 6, textTransform: 'uppercase' },
+    etaLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.primary, marginLeft: 6, textTransform: 'uppercase' },
     etaTimeRow: { flexDirection: 'row', alignItems: 'baseline', minHeight: 46, justifyContent: 'center' },
     etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
     etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },
-    toleranceText: { fontSize: 11, color: theme.colors.textMuted, fontStyle: 'italic' },
+    toleranceText: { fontSize: 14, color: theme.colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
     detailsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
     detailBox: {
         flex: 1, backgroundColor: theme.colors.background, borderRadius: 12,
         padding: 8, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: theme.colors.border,
     },
-    detailTitle: { fontSize: 11, color: theme.colors.textMuted, fontWeight: '600', marginTop: 4 },
-    detailValue: { fontSize: 13, fontWeight: '700', color: theme.colors.textDark, marginTop: 2 },
+    detailTitle: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600', marginTop: 4 },
+    detailValue: { fontSize: 14, fontWeight: '700', color: theme.colors.textDark, marginTop: 2 },
     instructionBanner: {
         flexDirection: 'row', backgroundColor: theme.colors.warningBg, borderRadius: 10,
         padding: 10, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.warningBorder,
     },
-    instructionText: { flex: 1, fontSize: 12, color: theme.colors.warningText, fontWeight: '600', lineHeight: 16 },
+    instructionText: { flex: 1, fontSize: 14, color: theme.colors.warningText, fontWeight: '600', lineHeight: 19 },
 });
