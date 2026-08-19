@@ -1,6 +1,7 @@
 import { theme } from '../styles/theme';
-import { ruta1A_Coordenadas } from '../utils/ruta1A';
-import { ruta12_Coordenadas } from '../utils/ruta12';
+import { ruta1A_Coordenadas } from '../utils/ruta1a-my-maps';
+import { rutaD_Coordenadas } from '../utils/ruta-d-my-maps';
+import { ruta12_Coordenadas } from '../utils/ruta12-my-maps';
 import { buildStops, Stop } from './stops';
 
 export type LatLng = {
@@ -56,8 +57,8 @@ const routes: Route[] = [
     horario: '6:15 AM - 8:45 PM',
     tarifa: 'S/. 1.50',
     frecuencia: '12 min',
-    coordinates: null,
-    stops: [],
+    coordinates: rutaD_Coordenadas as LatLng[],
+    stops: buildStops('D', rutaD_Coordenadas as LatLng[], 8),
     available: true,
     pilot: true,
   },
