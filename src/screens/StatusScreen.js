@@ -7,7 +7,7 @@ import AppButton from '../components/AppButton';
 
 const content = {
     server: { icon: 'cloud-offline-outline', title: 'No pudimos calcular tu ETA', message: 'Estamos verificando la conexión con nuestro servidor. Inténtalo nuevamente en unos segundos.', action: 'Reintentar' },
-    offline: { icon: 'time-outline', title: 'Ruta 14: El Algarrobal', message: 'No hay información ETA disponible para esta ruta en este momento.', action: 'Actualizar ETA' },
+    offline: { icon: 'map-outline', title: 'Recorrido pendiente de publicar', message: 'Esta ruta está registrada, pero aún no cuenta con un trazo oficial ni paraderos georreferenciados para calcular su ETA.', action: 'Volver' },
 };
 
 export default function StatusScreen({ navigation, route }) {

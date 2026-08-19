@@ -47,7 +47,7 @@ export default function ExploreRoutesScreen({ navigation }) {
                     <RouteDetailCard
                         key={item.id}
                         item={item}
-                        onPress={() => navigation.navigate(item.available ? 'RouteDetails' : 'Status', item.available ? { routeName: item.nombre } : { type: 'offline' })}
+                        onPress={() => navigation.navigate(item.coordinates?.length ? 'RouteDetails' : 'Status', item.coordinates?.length ? { routeName: item.nombre } : { type: 'offline', routeName: item.nombre })}
                     />
                 ))}
             </ScrollView>
