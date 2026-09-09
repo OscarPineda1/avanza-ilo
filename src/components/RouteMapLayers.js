@@ -15,10 +15,10 @@ function getBearing(from, to) {
     return (toDegrees(Math.atan2(y, x)) + 360) % 360;
 }
 
-function getDirectionMarkers(coordinates) {
+function getDirectionMarkers(coordinates, isCircuit) {
     if (coordinates.length < 3) return [];
 
-    const count = coordinates.length > 25 ? 3 : 2;
+    const count = isCircuit ? 1 : coordinates.length > 25 ? 2 : 1;
     const indices = Array.from({ length: count }, (_, index) => Math.round(((index + 1) * (coordinates.length - 1)) / (count + 1)));
 
     return indices
@@ -35,48 +35,58 @@ function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onS
     const coordinates = selectedSequence?.coordinates || route?.coordinates || [];
     const layers = selectedSequence?.layers || [{ id: 'legacy', coordinates }];
     const stops = selectedSequence?.stops || route?.stops || [];
-    const directionMarkers = useMemo(() => getDirectionMarkers(coordinates), [coordinates]);
+    const isCircuit = selectedSequence?.kind === 'circuit';
+    const directionMarkers = useMemo(() => getDirectionMarkers(coordinates, isCircuit), [coordinates, isCircuit]);
     const firstCoordinate = coordinates[0];
     const lastCoordinate = coordinates[coordinates.length - 1];
+    const returnCoordinate = isCircuit && layers.length > 1
+        ? layers[layers.length - 2]?.coordinates?.at(-1)
+        : null;
 
     if (!route || coordinates.length === 0) return null;
 
     return <>
         {layers.map((layer) => <React.Fragment key={layer.id}>
-            <Polyline coordinates={layer.coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 14 : 12} lineCap="round" lineJoin="round" />
-            <Polyline coordinates={layer.coordinates} strokeColor={route.color} strokeWidth={showStops ? 7 : 6} lineCap="round" lineJoin="round" />
+            <Polyline coordinates={layer.coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 10 : 9} lineCap="round" lineJoin="round" />
+            <Polyline coordinates={layer.coordinates} strokeColor={route.color} strokeWidth={showStops ? 5 : 4} lineCap="round" lineJoin="round" />
         </React.Fragment>)}
 
         {directionMarkers.map((marker, index) => <Marker key={`direction-${index}`} coordinate={marker.coordinate} anchor={{ x: .5, y: .5 }} flat rotation={marker.bearing} tracksViewChanges>
-            <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={18} color="#FFFFFF" /></View>
+            <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={13} color="#FFFFFF" /></View>
         </Marker>)}
 
         {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
             const isSelected = stop.id === selectedStopId;
-            return <Marker key={stop.id} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={false}>
+            return <Marker key={stop.id} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>
                 <StopCallout title={stop.name} subtitle={`Ruta ${route.nombre} · Toca para elegir este origen`} />
             </Marker>;
         })}
 
-        <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={false}>
-            <View style={[styles.endpointMarker, { backgroundColor: route.color }]}><Ionicons name="flag" size={17} color="#FFFFFF" /></View>
-            <StopCallout title={`Inicio · Ruta ${route.nombre}`} subtitle={route.origen} />
+        <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
+            <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, isCircuit && styles.circuitEndpointText, { color: route.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
+            <StopCallout title={`${isCircuit ? 'Inicio y fin' : 'Inicio'} · Ruta ${route.nombre}`} subtitle={route.origen} />
         </Marker>
-        <Marker coordinate={lastCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={false}>
-            <View style={[styles.endpointMarker, styles.destinationMarker, { borderColor: route.color }]}><Ionicons name="checkmark" size={18} color={route.color} /></View>
+        {isCircuit && returnCoordinate ? <Marker coordinate={returnCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
+            <View style={[styles.returnMarker, { borderColor: route.color }]}><Text style={[styles.returnMarkerText, { color: route.color }]}>R</Text></View>
+            <StopCallout title={`Regreso · Ruta ${route.nombre}`} subtitle={`Desde aquí vuelve hacia ${route.origen}`} />
+        </Marker> : <Marker coordinate={lastCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
+            <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, { color: route.color }]}>B</Text></View>
             <StopCallout title={`Final · Ruta ${route.nombre}`} subtitle={route.destino} />
-        </Marker>
+        </Marker>}
     </>;
 }
 
 const styles = StyleSheet.create({
-    directionMarker: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#FFFFFF', elevation: 3, shadowColor: '#000', shadowOpacity: .18, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } },
+    directionMarker: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', opacity: .82, elevation: 2 },
     stopMarker: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#FFFFFF', borderWidth: 3, alignItems: 'center', justifyContent: 'center', elevation: 2 },
     stopMarkerText: { color: '#24313A', fontSize: 12, fontWeight: '800' },
     stopMarkerTextSelected: { color: '#FFFFFF' },
-    endpointMarker: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#FFFFFF', elevation: 4, shadowColor: '#000', shadowOpacity: .22, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
-    destinationMarker: { backgroundColor: '#FFFFFF', borderWidth: 3 },
+    endpointMarker: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, elevation: 3 },
+    endpointMarkerText: { fontSize: 14, fontWeight: '900' },
+    circuitEndpointText: { fontSize: 11 },
+    returnMarker: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, elevation: 3 },
+    returnMarkerText: { fontSize: 12, fontWeight: '900' },
     callout: { minWidth: 150, padding: 4 },
     calloutTitle: { color: '#1B2730', fontSize: 14, fontWeight: '800' },
     calloutSubtitle: { color: '#63717A', fontSize: 13, marginTop: 2 },

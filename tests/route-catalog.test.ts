@@ -8,7 +8,10 @@ import {
 } from '../src/services/routes';
 import { validateRouteCatalog } from '../src/services/route-catalog-validation';
 import { buildGraphFromStops, dijkstra } from '../src/services/graph';
-import { computeEta } from '../src/services/eta-core';
+import {
+  canTravelInSequence,
+  computeEta,
+} from '../src/services/eta-core';
 import type { Stop } from '../src/services/stops';
 import {
   readValidatedRouteDataset,
@@ -52,7 +55,7 @@ test('el catalogo maestro cumple IDs, referencias, coordenadas, orden, sentido y
   assert.equal(result.valid, true, JSON.stringify(result.issues, null, 2));
   assert.equal(result.summary.pilots, 3);
   assert.equal(result.summary.sequences, 3);
-  assert.equal(result.summary.layers, 5);
+  assert.equal(result.summary.layers, 8);
   assert.ok(result.summary.coordinates > 0);
   assert.ok(result.summary.references > 0);
   assert.ok(result.summary.weights > 0);
@@ -67,11 +70,11 @@ test('el catalogo maestro cumple IDs, referencias, coordenadas, orden, sentido y
     });
 });
 
-test('cada secuencia conserva las capas de My Maps en su orden publicado', () => {
+test('cada secuencia conserva sus capas declaradas en orden', () => {
   const expectedLayers = new Map([
-    ['1A', ['1a-tramo-1', '1a-tramo-2']],
-    ['D', ['d-trazo-publicado']],
-    ['14', ['14-tramo-1', '14-tramo-2']],
+    ['1A', ['1a-tramo-1', '1a-tramo-2', '1a-retorno-tramo-compartido']],
+    ['D', ['d-trazo-publicado', 'd-retorno-tramo-compartido']],
+    ['14', ['14-tramo-1', '14-tramo-2', '14-retorno-tramo-compartido']],
   ]);
 
   getAllRoutes().forEach((route) => {
@@ -93,6 +96,29 @@ test('cada secuencia conserva las capas de My Maps en su orden publicado', () =>
   });
 });
 
+test('las tres rutas cierran en su inicio despues del lazo y el tramo compartido de regreso', () => {
+  getAllRoutes().forEach((route) => {
+    const sequence = route.sequences[0];
+
+    assert.equal(sequence.kind, 'circuit');
+    assert.deepEqual(sequence.coordinates[0], sequence.coordinates.at(-1));
+    assert.match(sequence.layers.at(-1)!.id, /retorno-tramo-compartido$/);
+  });
+
+  const route1A = getAllRoutes().find((route) => route.nombre === '1A')!;
+  const sequence = route1A.sequences[0];
+  const [outboundLayer, loopClosingLayer, returnLayer] = sequence.layers;
+
+  assert.equal(sequence.kind, 'circuit');
+  assert.deepEqual(sequence.coordinates[0], sequence.coordinates.at(-1));
+  assert.deepEqual(outboundLayer.coordinates[324], loopClosingLayer.coordinates.at(-1));
+  assert.deepEqual(
+    returnLayer.coordinates,
+    outboundLayer.coordinates.slice(0, 324).reverse()
+  );
+  assert.deepEqual(returnLayer.coordinates.at(-1), outboundLayer.coordinates[0]);
+});
+
 test('el calculo conserva ruta y sentido y no inventa el recorrido inverso', () => {
   const route1A = getAllRoutes().find((route) => route.nombre === '1A')!;
   const routeD = getAllRoutes().find((route) => route.nombre === 'D')!;
@@ -108,6 +134,14 @@ test('el calculo conserva ruta y sentido y no inventa el recorrido inverso', () 
     )
   );
   assert.equal(
+    canTravelInSequence(
+      sequence,
+      sequence.stops[0].id,
+      sequence.stops.at(-1)!.id
+    ),
+    true
+  );
+  assert.equal(
     computeEta(
       route1A.nombre,
       sequence.stops.at(-1)!.id,
@@ -116,6 +150,24 @@ test('el calculo conserva ruta y sentido y no inventa el recorrido inverso', () 
       sequence.id
     ),
     null
+  );
+  assert.equal(
+    computeEta(
+      route1A.nombre,
+      sequence.stops.at(-1)!.id,
+      sequence.stops.at(-1)!.id,
+      undefined,
+      sequence.id
+    ),
+    null
+  );
+  assert.equal(
+    canTravelInSequence(
+      sequence,
+      sequence.stops.at(-1)!.id,
+      sequence.stops[0].id
+    ),
+    false
   );
   assert.equal(
     computeEta(
@@ -190,7 +242,12 @@ test('el grafo rechaza conexiones entre rutas o secuencias', () => {
 
 test('el validador rechaza un circuito sin cierre explicito', () => {
   const routes = cloneRoutes();
-  routes[0].sequences[0].kind = 'circuit';
+  const sequence = routes[1].sequences[0];
+  const lastIndex = sequence.coordinates.length - 1;
+  sequence.coordinates[lastIndex] = {
+    ...sequence.coordinates[lastIndex],
+    latitude: sequence.coordinates[lastIndex].latitude + 0.001,
+  };
 
   const result = validateRouteCatalog(routes, ROUTE_CATALOG_METADATA);
 
@@ -246,7 +303,7 @@ test('un conjunto invalido no reemplaza al ultimo catalogo integro', async () =>
   assert.equal(firstWrite.saved, true);
   assert.equal(rejectedWrite.saved, false);
   assert.equal(storage.value, lastValidValue);
-  assert.equal(recovered?.metadata.version, '2026-09-09-hu20');
+  assert.equal(recovered?.metadata.version, '2026-09-09-hu20-circuitos');
   assert.deepEqual(
     recovered?.routes.filter((route) => route.pilot).map((route) => route.nombre),
     ['1A', 'D', '14']

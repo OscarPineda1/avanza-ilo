@@ -1,5 +1,6 @@
 import { buildGraphFromStops, dijkstra } from './graph';
 import { getRouteByName, getRouteSequence } from './routes';
+import type { RouteSequence } from './route-sequences';
 
 export type EtaResult = {
   minutes: number;
@@ -13,6 +14,23 @@ export function parseFrequencyMinutes(
   return match ? parseInt(match[1], 10) : undefined;
 }
 
+export function canTravelInSequence(
+  sequence: RouteSequence | undefined,
+  originStopId: string | undefined,
+  destinationStopId: string | undefined
+): boolean {
+  if (!sequence || !originStopId || !destinationStopId) return false;
+
+  const originIndex = sequence.stops.findIndex(
+    (stop) => stop.id === originStopId
+  );
+  const destinationIndex = sequence.stops.findIndex(
+    (stop) => stop.id === destinationStopId
+  );
+
+  return originIndex >= 0 && destinationIndex > originIndex;
+}
+
 export function computeEta(
   routeName: string,
   originStopId: string,
@@ -23,6 +41,10 @@ export function computeEta(
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
   if (!route || !sequence || sequence.stops.length === 0) {
+    return null;
+  }
+
+  if (!canTravelInSequence(sequence, originStopId, destinationStopId)) {
     return null;
   }
 

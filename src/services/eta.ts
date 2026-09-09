@@ -4,7 +4,7 @@ import { fetchRouteFrequency, getFirebaseApp } from './firebase';
 import { computeEta, EtaResult } from './eta-core';
 
 export type { EtaResult } from './eta-core';
-export { computeEta } from './eta-core';
+export { canTravelInSequence, computeEta } from './eta-core';
 
 const cloudFunctionsEnabled =
   process.env.EXPO_PUBLIC_ENABLE_CLOUD_FUNCTIONS === 'true';

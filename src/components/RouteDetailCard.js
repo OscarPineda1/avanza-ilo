@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
 
 export default function RouteDetailCard({ item, onPress }) {
+    const isCircuit = item.sequences?.some((sequence) => sequence.id === item.defaultSequenceId && sequence.kind === 'circuit');
+
     return (
         <TouchableOpacity style={styles.routeCardDetail} onPress={onPress} activeOpacity={0.8}>
             <View style={styles.cardTopRow}>
@@ -19,8 +21,8 @@ export default function RouteDetailCard({ item, onPress }) {
                 <View style={[styles.nodeLine, { backgroundColor: `${item.color}55` }]} />
                 <View style={[styles.nodePoint, { backgroundColor: item.color }]} />
                 <View style={styles.trajectoryTexts}>
-                    <Text style={styles.trajectoryLabel}>Desde: <Text style={styles.trajectoryValue}>{item.origen || 'Por definir'}</Text></Text>
-                    <Text style={[styles.trajectoryLabel, { marginTop: 12 }]}>Hacia: <Text style={styles.trajectoryValue}>{item.destino || 'Por definir'}</Text></Text>
+                    <Text style={styles.trajectoryLabel}>{isCircuit ? 'Inicio y fin: ' : 'Desde: '}<Text style={styles.trajectoryValue}>{item.origen || 'Por definir'}</Text></Text>
+                    <Text style={[styles.trajectoryLabel, { marginTop: 12 }]}>{isCircuit ? 'Punto de retorno: ' : 'Hacia: '}<Text style={styles.trajectoryValue}>{item.destino || 'Por definir'}</Text></Text>
                 </View>
             </View>
 

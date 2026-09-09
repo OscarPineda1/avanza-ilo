@@ -7,7 +7,7 @@ import * as Location from 'expo-location';
 
 import { globalStyles, theme } from '../styles/global-styles';
 import { getRouteByName, getRouteCoordinates, getRouteSequence } from '../services/routes';
-import { getEta } from '../services/eta';
+import { canTravelInSequence, getEta } from '../services/eta';
 import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
 import { useNetwork } from '../context/NetworkContext';
 import MapInfoCard from '../components/MapInfoCard';
@@ -26,6 +26,7 @@ export default function MapScreen({ route, navigation }) {
     const requestedOriginStopId = route.params?.originStopId;
     const routeData = routeName ? getRouteByName(routeName) : undefined;
     const selectedSequence = routeData ? getRouteSequence(routeData.nombre, requestedSequenceId) : undefined;
+    const isCircuit = selectedSequence?.kind === 'circuit';
     const coordinates = routeData ? getRouteCoordinates(routeData.nombre, selectedSequence?.id) : null;
     const { isOffline } = useNetwork();
     const mapRef = useRef(null);
@@ -36,6 +37,11 @@ export default function MapScreen({ route, navigation }) {
     const [eta, setEta] = useState(null);
 
     const stops = selectedSequence?.stops || [];
+    const directionUnavailable = Boolean(
+        selectedStop &&
+        destinationStop &&
+        !canTravelInSequence(selectedSequence, selectedStop.id, destinationStop.id)
+    );
 
     useEffect(() => {
         if (routeData) {
@@ -158,9 +164,17 @@ export default function MapScreen({ route, navigation }) {
                 </TouchableOpacity>}
             </SafeAreaView>
 
-            {routeData?.coordinates?.length > 1 && <View pointerEvents="none" style={styles.directionHint}>
-                <View style={[styles.directionIcon, { backgroundColor: routeData.color }]}><Ionicons name="navigate" size={15} color={theme.colors.surface} /></View>
-                <Text style={styles.directionText}>Sigue las flechas: indican el sentido de la ruta</Text>
+            {routeData?.coordinates?.length > 1 && <View pointerEvents="none" style={styles.endpointLegend}>
+                <View style={styles.endpointItem}>
+                    <View style={[styles.endpointLetter, { borderColor: routeData.color }]}><Text style={[styles.endpointLetterText, isCircuit && styles.circuitEndpointLetterText, { color: routeData.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
+                    <Text style={[styles.endpointKey, isCircuit && styles.circuitEndpointKey]}>{isCircuit ? 'Inicio y fin' : 'Inicio'}</Text>
+                    <Text style={styles.endpointValue} numberOfLines={1}>{routeData.origen}</Text>
+                </View>
+                <View style={styles.endpointItem}>
+                    <View style={[styles.endpointLetter, isCircuit && styles.returnLetter, { borderColor: routeData.color }]}><Text style={[styles.endpointLetterText, { color: routeData.color }]}>{isCircuit ? 'R' : 'B'}</Text></View>
+                    <Text style={[styles.endpointKey, isCircuit && styles.circuitEndpointKey]}>{isCircuit ? 'Regreso' : 'Final'}</Text>
+                    <Text style={styles.endpointValue} numberOfLines={1}>{isCircuit ? `hacia ${routeData.origen}` : routeData.destino}</Text>
+                </View>
             </View>}
 
             {routeData && (
@@ -171,7 +185,7 @@ export default function MapScreen({ route, navigation }) {
                     eta={eta}
                     originName={selectedStop?.name}
                     destinationName={destinationStop?.name}
-                    directionLabel={selectedSequence?.label}
+                    directionUnavailable={directionUnavailable}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}
                 />
@@ -205,16 +219,21 @@ const styles = StyleSheet.create({
         alignItems: 'center', justifyContent: 'center',
         ...theme.shadows.base,
     },
-    directionHint: {
-        position: 'absolute', top: 75, alignSelf: 'center',
-        flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: theme.colors.surface, borderRadius: 20,
-        paddingVertical: 8, paddingHorizontal: 12,
+    endpointLegend: {
+        position: 'absolute', top: 112, left: 20,
+        gap: 5, maxWidth: '72%', backgroundColor: theme.colors.surface,
+        borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10,
         borderWidth: 1, borderColor: theme.colors.border,
         ...theme.shadows.base,
     },
-    directionIcon: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    directionText: { fontSize: 14, fontWeight: '700', color: theme.colors.textDark },
+    endpointItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    endpointLetter: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1.5 },
+    endpointLetterText: { fontSize: 10, fontWeight: '900' },
+    circuitEndpointLetterText: { fontSize: 8 },
+    returnLetter: { width: 18, height: 18, borderRadius: 9, marginHorizontal: 1 },
+    endpointKey: { color: theme.colors.textMuted, fontSize: 10, fontWeight: '800', width: 30 },
+    circuitEndpointKey: { width: 54 },
+    endpointValue: { color: theme.colors.textDark, fontSize: 11, fontWeight: '700', flexShrink: 1 },
     colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
     routeTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
 });

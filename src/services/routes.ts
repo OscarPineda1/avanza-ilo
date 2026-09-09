@@ -53,19 +53,35 @@ export type RouteCatalogMetadata = {
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   id: 'avanza-ilo-rutas-piloto',
-  version: '2026-09-09-hu20',
-  source: 'Google My Maps y correccion del responsable de datos en HU-19',
+  version: '2026-09-09-hu20-circuitos',
+  source:
+    'Google My Maps, correccion del responsable de datos en HU-19 y aclaracion funcional de HU-20',
   sourceDate: '2026-09-09',
   geometrySourceDate: '2026-08-19',
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
-    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Cada recorrido conserva las capas y el sentido publicados en Google My Maps; no se generan recorridos inversos ni conexiones entre rutas.',
+    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Cada retorno se declara dentro de su secuencia; no se generan conexiones automaticas entre rutas.',
 };
+
+const RUTA_1A_CRUCE_REGRESO_INDEX = 324;
+const ruta1A_RetornoTramoCompartido = ruta1A_Tramo1_Coordenadas
+  .slice(0, RUTA_1A_CRUCE_REGRESO_INDEX)
+  .reverse() as LatLng[];
+
+const RUTA_D_CRUCE_REGRESO_INDEX = 410;
+const rutaD_RetornoTramoCompartido = rutaD_Coordenadas
+  .slice(0, RUTA_D_CRUCE_REGRESO_INDEX + 1)
+  .reverse() as LatLng[];
+
+const RUTA_14_CRUCE_REGRESO_INDEX = 386;
+const ruta14_RetornoTramoCompartido = ruta14_Tramo1_Coordenadas
+  .slice(0, RUTA_14_CRUCE_REGRESO_INDEX)
+  .reverse() as LatLng[];
 
 const ruta1ASequence = createRouteSequence('1A', 8, {
   id: '1a-publicado',
-  label: 'Alto Ilo hacia Pampa Inalámbrica',
-  kind: 'direction',
+  label: 'Circuito Alto Ilo · vía Pampa Inalámbrica',
+  kind: 'circuit',
   layers: [
     {
       id: '1a-tramo-1',
@@ -79,13 +95,19 @@ const ruta1ASequence = createRouteSequence('1A', 8, {
       order: 1,
       coordinates: ruta1A_Tramo2_Coordenadas as LatLng[],
     },
+    {
+      id: '1a-retorno-tramo-compartido',
+      sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Alto Ilo',
+      order: 2,
+      coordinates: ruta1A_RetornoTramoCompartido,
+    },
   ],
 });
 
 const rutaDSequence = createRouteSequence('D', 8, {
   id: 'd-publicado',
-  label: 'Plaza de Armas hacia Ciudad Nueva',
-  kind: 'direction',
+  label: 'Circuito Plaza de Armas · vía Ciudad Nueva',
+  kind: 'circuit',
   layers: [
     {
       id: 'd-trazo-publicado',
@@ -93,13 +115,19 @@ const rutaDSequence = createRouteSequence('D', 8, {
       order: 0,
       coordinates: rutaD_Coordenadas as LatLng[],
     },
+    {
+      id: 'd-retorno-tramo-compartido',
+      sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Plaza de Armas',
+      order: 1,
+      coordinates: rutaD_RetornoTramoCompartido,
+    },
   ],
 });
 
 const ruta14Sequence = createRouteSequence('14', 8, {
   id: '14-publicado',
-  label: 'Mercado Pacocha hacia Tren al Sur',
-  kind: 'direction',
+  label: 'Circuito Mercado Pacocha · vía Tren al Sur',
+  kind: 'circuit',
   layers: [
     {
       id: '14-tramo-1',
@@ -112,6 +140,12 @@ const ruta14Sequence = createRouteSequence('14', 8, {
       sourceName: 'Google My Maps · Ruta 14 · Tramo 2',
       order: 1,
       coordinates: ruta14_Tramo2_Coordenadas as LatLng[],
+    },
+    {
+      id: '14-retorno-tramo-compartido',
+      sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Mercado Pacocha',
+      order: 2,
+      coordinates: ruta14_RetornoTramoCompartido,
     },
   ],
 });

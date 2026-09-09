@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
 import { getRemoteFrequency } from '../services/eta';
-
-const { width } = Dimensions.get('window');
+import RouteDirectionBadge from './RouteDirectionBadge';
 
 export default function MapInfoCard({
     datosRuta,
@@ -15,7 +14,7 @@ export default function MapInfoCard({
     eta,
     originName,
     destinationName,
-    directionLabel,
+    directionUnavailable = false,
 }) {
     const [etaResult, setEtaResult] = useState(eta);
     const [remoteFrequency, setRemoteFrequency] = useState(null);
@@ -39,8 +38,9 @@ export default function MapInfoCard({
         return () => { cancelled = true; };
     }, [datosRuta?.nombre, isOffline]);
 
-    const etaVisible = !isOffline && hasCoordinates && etaResult;
+    const etaVisible = !isOffline && !directionUnavailable && hasCoordinates && etaResult;
     const etaFallback = !etaVisible;
+    const isCircuit = datosRuta.sequences?.some((sequence) => sequence.id === datosRuta.defaultSequenceId && sequence.kind === 'circuit');
 
     return (
         <View style={styles.cardContainer}>
@@ -48,7 +48,6 @@ export default function MapInfoCard({
                 <View>
                     <Text style={styles.empresaText}>{datosRuta.empresa}</Text>
                     <Text style={styles.subtext}>Servicio Urbano de Ilo</Text>
-                    <Text style={styles.directionText}>{directionLabel || datosRuta.sentido}</Text>
                 </View>
                 <TouchableOpacity onPress={onToggleFavorite} activeOpacity={0.7}>
                     <Ionicons
@@ -59,7 +58,19 @@ export default function MapInfoCard({
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.etaContainer}>
+            <RouteDirectionBadge origin={datosRuta.origen} destination={datosRuta.destino} color={datosRuta.color} isCircuit={isCircuit} />
+
+            {directionUnavailable && (
+                <View style={styles.directionWarning}>
+                    <Ionicons name="alert-circle" size={20} color={theme.colors.warningText} />
+                    <View style={styles.warningCopy}>
+                        <Text style={styles.warningTitle}>No disponible en este recorrido</Text>
+                        <Text style={styles.warningText}>Elige un punto anterior para viajar hacia {datosRuta.destino}.</Text>
+                    </View>
+                </View>
+            )}
+
+            <View style={[styles.etaContainer, directionUnavailable && styles.etaUnavailableContainer]}>
                 <View style={styles.etaBadge}>
                     <Ionicons name="time" size={20} color={theme.colors.primary} />
                     <Text style={styles.etaLabel}>ETA inferido</Text>
@@ -78,13 +89,15 @@ export default function MapInfoCard({
                         </>
                     ) : (
                         <Text style={styles.etaUnavailable} numberOfLines={1}>
-                            {isOffline ? 'ETA no disponible sin conexión' : 'ETA inferido no disponible'}
+                            {directionUnavailable ? 'Cambia el punto de partida' : isOffline ? 'ETA no disponible sin conexión' : 'ETA inferido no disponible'}
                         </Text>
                     )}
                 </View>
                 {!etaFallback && etaResult && etaResult.minutes && (
                     <Text style={styles.toleranceText}>
-                        Desde {originName || 'origen'} hasta {destinationName || 'destino'} · Margen ±5 min
+                        {isCircuit
+                            ? `Vuelta completa desde y hasta ${datosRuta.origen}`
+                            : `Desde ${originName || 'origen'} hasta ${destinationName || 'destino'}`} · Margen ±5 min
                     </Text>
                 )}
             </View>
@@ -123,7 +136,7 @@ export default function MapInfoCard({
 
 const styles = StyleSheet.create({
     cardContainer: {
-        position: 'absolute', bottom: 0, width: width,
+        position: 'absolute', bottom: 0, left: 0, right: 0,
         backgroundColor: theme.colors.surface,
         borderTopLeftRadius: 28, borderTopRightRadius: 28,
         paddingHorizontal: 20, paddingTop: 20, paddingBottom: 25,
@@ -132,18 +145,22 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     empresaText: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark },
     subtext: { fontSize: 13, color: theme.colors.textMuted },
-    directionText: { fontSize: 13, color: theme.colors.primary, fontWeight: '700', marginTop: 2 },
     etaContainer: {
-        backgroundColor: '#F0F6FF', borderRadius: 16, padding: 12,
-        alignItems: 'center', marginBottom: 14, borderWidth: 1, borderColor: '#D0E3FF',
+        backgroundColor: theme.colors.background, borderRadius: 16, padding: 12,
+        alignItems: 'center', marginTop: 8, marginBottom: 14, borderWidth: 1, borderColor: theme.colors.border,
     },
+    etaUnavailableContainer: { backgroundColor: theme.colors.warningBg, borderColor: theme.colors.warningBorder },
     etaBadge: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-    etaLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.primary, marginLeft: 6, textTransform: 'uppercase' },
+    etaLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.textMuted, marginLeft: 6, textTransform: 'uppercase' },
     etaTimeRow: { flexDirection: 'row', alignItems: 'baseline', minHeight: 46, justifyContent: 'center' },
     etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
     etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },
     toleranceText: { fontSize: 14, color: theme.colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
+    directionWarning: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginTop: 10, padding: 11, borderRadius: 12, backgroundColor: theme.colors.warningBg, borderWidth: 1, borderColor: theme.colors.warningBorder },
+    warningCopy: { flex: 1 },
+    warningTitle: { color: theme.colors.warningText, fontSize: 14, fontWeight: '900' },
+    warningText: { color: theme.colors.warningText, fontSize: 13, lineHeight: 18, marginTop: 2 },
     detailsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
     detailBox: {
         flex: 1, backgroundColor: theme.colors.background, borderRadius: 12,

@@ -2,7 +2,7 @@
 
 - Fecha de validacion: **2026-09-09**
 - Catalogo: `avanza-ilo-rutas-piloto`
-- Version: `2026-09-09-hu20`
+- Version: `2026-09-09-hu20-circuitos`
 
 ## Decision de alcance
 
@@ -10,15 +10,17 @@ La HU-20 se absorbe en las capacidades de consulta, seleccion y calculo existent
 
 Cada recorrido publicado se representa como una secuencia dirigida. Una secuencia conserva por separado las capas recibidas de Google My Maps y solo une dos capas consecutivas cuando sus extremos forman una continuidad validada. El grafo usa la posicion dentro de la secuencia como identidad del nodo: compartir una coordenada en un cruce no crea una conexion adicional.
 
+La aclaracion funcional confirma que las rutas 1A, D y 14 empiezan y terminan en el mismo punto. La interseccion antes marcada como final corresponde al inicio del regreso: aparece al completar el lazo local y desde alli se vuelve por el tramo compartido. Por ello cada retorno se declara en su secuencia, reutilizando las coordenadas publicadas en orden inverso solo para el tramo expresamente confirmado.
+
 ## Tabla de secuencias
 
-| Ruta | Secuencia | Sentido publicado | Tipo | Capas My Maps, en orden | Coordenadas | Referencias | Aristas inversas |
+| Ruta | Secuencia | Sentido publicado | Tipo | Capas de secuencia, en orden | Coordenadas | Referencias | Aristas inversas |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: |
-| 1A | `1a-publicado` | Alto Ilo hacia Pampa Inalambrica | Dirigido | `1a-tramo-1` -> `1a-tramo-2` | 590 | 9 | 0 |
-| D | `d-publicado` | Plaza de Armas hacia Ciudad Nueva | Dirigido | `d-trazo-publicado` | 659 | 8 | 0 |
-| 14 | `14-publicado` | Mercado Pacocha hacia Tren al Sur | Dirigido | `14-tramo-1` -> `14-tramo-2` | 663 | 9 | 0 |
+| 1A | `1a-publicado` | Alto Ilo -> Pampa Inalambrica -> Alto Ilo | Circuito | `1a-tramo-1` -> `1a-tramo-2` -> `1a-retorno-tramo-compartido` | 914 | 9 | 0 |
+| D | `d-publicado` | Plaza de Armas -> Ciudad Nueva -> Plaza de Armas | Circuito | `d-trazo-publicado` -> `d-retorno-tramo-compartido` | 1070 | 9 | 0 |
+| 14 | `14-publicado` | Mercado Pacocha -> Tren al Sur -> Mercado Pacocha | Circuito | `14-tramo-1` -> `14-tramo-2` -> `14-retorno-tramo-compartido` | 1049 | 9 | 0 |
 
-No se deduce un sentido de retorno. Si posteriormente se obtiene otro sentido desde una fuente aprobada, debe incorporarse con un identificador y una secuencia independientes.
+Los tres retornos quedan respaldados por la aclaracion funcional de HU-20. Cualquier recorrido diferente que se obtenga posteriormente desde otra fuente aprobada debera incorporarse con un identificador y una secuencia independientes.
 
 ## Prueba de circuito y cruce
 
@@ -38,8 +40,17 @@ El validador tambien rechaza como circuito cualquier secuencia cuyo cierre no ap
 - Cada referencia incluye `routeName` y `sequenceId`.
 - La navegacion conserva `sequenceId` desde el listado o mapa hasta la seleccion manual y el detalle.
 - El calculo de ETA busca origen y destino dentro de la misma secuencia.
-- Consultar desde el ultimo nodo hacia el primero devuelve un resultado inalcanzable; no se inventa el recorrido inverso.
+- Consultar desde el cierre posicional hacia el primer nodo devuelve un resultado inalcanzable; el cierre fisico del circuito no crea una arista automatica.
 - El constructor del grafo rechaza referencias que pertenezcan a rutas o secuencias distintas.
+
+## Evidencia visible en la aplicacion
+
+- Las tarjetas del inicio, el directorio, los resultados de busqueda y favoritos muestran origen, una flecha discreta y destino, usando el color de la ruta solo como acento.
+- El detalle del mapa repite el recorrido antes del ETA sin agregar rotulos tecnicos que no forman parte del diseno base.
+- En las rutas 1A, D y 14, el mapa relaciona **I/F · Inicio y fin** con el punto inicial y **R · Regreso** con la interseccion donde comienza el tramo compartido de vuelta. Cada circuito conserva una sola flecha discreta para evitar superposiciones en las calles compartidas.
+- La seleccion manual muestra una sola referencia fisica para el inicio y fin del circuito; el nodo de cierre se mantiene en el modelo para calcular la vuelta completa sin duplicarlo en la lista.
+
+No se agrega una segunda ruta de vuelta: ida, lazo local y regreso forman un solo circuito en cada caso. Los retornos confirmados reutilizan el tramo comun y terminan exactamente en la coordenada inicial; no se añaden calles ni conexiones entre rutas.
 
 ## Resultado reproducible
 
@@ -47,11 +58,11 @@ Comando de validacion:
 
 ```text
 npm run validate:catalog
-Resumen: 3 rutas, 3 pilotos, 3 secuencias, 5 capas, 1912 coordenadas, 26 referencias y 23 pesos verificados.
+Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 24 pesos verificados.
 Resultado: VALIDO
 ```
 
-Pruebas ejecutadas con `npm test`: **9 aprobadas, 0 fallidas**. Incluyen conservacion de capas, calculo dirigido, ausencia de reversos, circuito/cruce, aislamiento entre rutas y rechazo de circuitos sin cierre explicito.
+Pruebas ejecutadas con `npm test`: **10 aprobadas, 0 fallidas**. Incluyen el cierre real de las tres rutas piloto, conservacion de capas, calculo dirigido, ausencia de reversos automaticos, circuito/cruce, aislamiento entre rutas y rechazo de circuitos sin cierre explicito.
 
 ## Trazabilidad
 

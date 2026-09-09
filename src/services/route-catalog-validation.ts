@@ -313,7 +313,7 @@ export function validateRouteCatalog(
       if (!coordinatesMatch(sequence.coordinates, flattenedCoordinates)) {
         issues.push({
           code: 'sequence.layer-order',
-          message: `La secuencia ${sequence.id} no respeta el orden de sus capas de My Maps.`,
+          message: `La secuencia ${sequence.id} no respeta el orden declarado de sus capas.`,
           routeId: route.id,
           sequenceId: sequence.id,
         });
@@ -372,7 +372,7 @@ export function validateRouteCatalog(
       ) {
         issues.push({
           code: 'sequence.circuit-open',
-          message: `El circuito ${sequence.id} no incluye un cierre explicito en la fuente.`,
+          message: `El circuito ${sequence.id} no incluye un cierre explicito en su secuencia.`,
           routeId: route.id,
           sequenceId: sequence.id,
         });
