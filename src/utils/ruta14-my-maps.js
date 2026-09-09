@@ -1,7 +1,8 @@
-// Trazado obtenido de Google My Maps el 2026-08-19.
+// Trazado de la ruta 14 obtenido de Google My Maps el 2026-08-19.
+// En HU-19 se corrigio la etiqueta inicial "12" sin alterar las coordenadas.
 // Formato compatible con react-native-maps.
 
-export const ruta12_Tramo1_Coordenadas = [
+export const ruta14_Tramo1_Coordenadas = [
   { latitude: -17.64297, longitude: -71.31219 },
   { latitude: -17.64288, longitude: -71.31229 },
   { latitude: -17.64232, longitude: -71.31289 },
@@ -630,7 +631,7 @@ export const ruta12_Tramo1_Coordenadas = [
   { latitude: -17.64048, longitude: -71.3403 },
 ];
 
-export const ruta12_Tramo2_Coordenadas = [
+export const ruta14_Tramo2_Coordenadas = [
   { latitude: -17.6405, longitude: -71.34031 },
   { latitude: -17.64089, longitude: -71.34045 },
   { latitude: -17.64105, longitude: -71.34051 },
@@ -670,8 +671,8 @@ export const ruta12_Tramo2_Coordenadas = [
   { latitude: -17.64748, longitude: -71.3441 },
 ];
 
-export const ruta12_Coordenadas = [
-  ...ruta12_Tramo1_Coordenadas,
-  ...ruta12_Tramo2_Coordenadas,
+export const ruta14_Coordenadas = [
+  ...ruta14_Tramo1_Coordenadas,
+  ...ruta14_Tramo2_Coordenadas,
 ];
 

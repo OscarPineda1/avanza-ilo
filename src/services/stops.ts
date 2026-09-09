@@ -31,10 +31,10 @@ export function buildStops(
       id: `${routeName.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
       name: isOrigin
-        ? `Paradero Inicial`
+        ? 'Punto de referencia inicial'
         : isDestination
-        ? `Paradero Final`
-        : `Paradero ${result.length + 1}`,
+        ? 'Punto de referencia final'
+        : `Punto de referencia ${result.length + 1}`,
       coordinate,
       isOrigin,
       isDestination,
@@ -55,11 +55,11 @@ export function buildStops(
   ) {
     // The previous sampled stop was incorrectly marked as the destination.
     lastStop.isDestination = false;
-    lastStop.name = `Paradero ${result.length}`;
+    lastStop.name = `Punto de referencia ${result.length}`;
     result.push({
       id: `${routeName.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
-      name: 'Paradero Final',
+      name: 'Punto de referencia final',
       coordinate: last,
       isOrigin: false,
       isDestination: true,

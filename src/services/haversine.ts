@@ -1,4 +1,4 @@
-import { LatLng } from './routes';
+import type { LatLng } from './routes';
 
 const EARTH_RADIUS_METERS = 6371000;
 

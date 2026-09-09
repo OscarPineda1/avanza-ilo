@@ -1,5 +1,5 @@
-import { LatLng } from './routes';
-import { Stop } from './stops';
+import type { LatLng } from './routes';
+import type { Stop } from './stops';
 import { haversineDistance } from './haversine';
 
 export type Edge = {
@@ -27,8 +27,6 @@ export function buildGraphFromStops(stops: Stop[]): Graph {
     const distance = haversineDistance(nodes[i], nodes[i + 1]);
     const weight = distance / AVERAGE_BUS_SPEED_MS;
     adjacency.push({ from: i, to: i + 1, weight, distance });
-    // Assumes route can be traversed in both directions for manual origin flexibility.
-    adjacency.push({ from: i + 1, to: i, weight, distance });
   }
 
   return { nodes, stopIndexes, adjacency };

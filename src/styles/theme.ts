@@ -18,7 +18,6 @@ export const theme = {
     success: '#16A36A',
     ruta1A: '#1677C8',
     rutaD: '#D84A5B',
-    ruta12: '#169B62',
     ruta14: '#D98716',
     ruta10: '#9B59B6',
   },

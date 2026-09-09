@@ -1,9 +1,10 @@
 import { theme } from '../styles/theme';
 import { ruta1A_Coordenadas } from '../utils/ruta1a-my-maps';
 import { rutaD_Coordenadas } from '../utils/ruta-d-my-maps';
-import { ruta12_Coordenadas } from '../utils/ruta12-my-maps';
+import { ruta14_Coordenadas } from '../utils/ruta14-my-maps';
 import { buildStops } from './stops';
 import type { Stop } from './stops';
+import { validateRouteCatalog } from './route-catalog-validation';
 
 export type LatLng = {
   latitude: number;
@@ -26,6 +27,28 @@ export type Route = {
   stops: Stop[];
   available: boolean;
   pilot: boolean;
+  sentido: string;
+};
+
+export type RouteCatalogMetadata = {
+  id: string;
+  version: string;
+  source: string;
+  sourceDate: string;
+  geometrySourceDate: string;
+  approvedPilotRouteNames: string[];
+  decision: string;
+};
+
+export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
+  id: 'avanza-ilo-rutas-piloto',
+  version: '2026-09-09',
+  source: 'Google My Maps y correccion del responsable de datos en HU-19',
+  sourceDate: '2026-09-09',
+  geometrySourceDate: '2026-08-19',
+  approvedPilotRouteNames: ['1A', 'D', '14'],
+  decision:
+    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Se conserva el ID 4 que ya identificaba a la ruta 14 y se retira la entrada 12 del catalogo aprobado.',
 };
 
 const routes: Route[] = [
@@ -45,6 +68,7 @@ const routes: Route[] = [
     stops: buildStops('1A', ruta1A_Coordenadas as LatLng[], 8),
     available: true,
     pilot: true,
+    sentido: 'Secuencia completa publicada en Google My Maps',
   },
   {
     id: '2',
@@ -62,23 +86,7 @@ const routes: Route[] = [
     stops: buildStops('D', rutaD_Coordenadas as LatLng[], 8),
     available: true,
     pilot: true,
-  },
-  {
-    id: '3',
-    nombre: '12',
-    descripcion: 'Ruta Troncal 12',
-    origen: 'Por definir',
-    destino: 'Por definir',
-    color: theme.colors.ruta12,
-    empresa: 'Consorcio Ilo 12',
-    zona: 'Sur',
-    horario: '6:00 AM - 9:00 PM',
-    tarifa: 'S/. 1.50',
-    frecuencia: '10 min',
-    coordinates: ruta12_Coordenadas as LatLng[],
-    stops: buildStops('12', ruta12_Coordenadas as LatLng[], 8),
-    available: true,
-    pilot: true,
+    sentido: 'Secuencia completa publicada en Google My Maps',
   },
   {
     id: '4',
@@ -92,14 +100,26 @@ const routes: Route[] = [
     horario: '6:00 AM - 9:00 PM',
     tarifa: 'S/. 1.70',
     frecuencia: '15 min',
-    coordinates: null,
-    stops: [],
+    coordinates: ruta14_Coordenadas as LatLng[],
+    stops: buildStops('14', ruta14_Coordenadas as LatLng[], 8),
     available: true,
-    // The route remains visible as static information until its official
-    // geometric trace is supplied. It is not offered in the map quick list.
-    pilot: false,
+    pilot: true,
+    sentido: 'Secuencia completa publicada en Google My Maps',
   },
 ];
+
+const bundledCatalogValidation = validateRouteCatalog(
+  routes,
+  ROUTE_CATALOG_METADATA
+);
+
+if (!bundledCatalogValidation.valid) {
+  throw new Error(
+    `El catalogo de rutas incluido no es valido: ${bundledCatalogValidation.issues
+      .map((issue) => issue.message)
+      .join('; ')}`
+  );
+}
 
 export const getAllRoutes = (): Route[] => routes;
 
