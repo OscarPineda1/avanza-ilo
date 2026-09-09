@@ -2,29 +2,30 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getRouteByName } from '../services/routes';
+import { getRouteByName, getRouteSequence } from '../services/routes';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
 import AppButton from '../components/AppButton';
 
 export default function StopSelectionScreen({ navigation, route }) {
     const selectedRoute = getRouteByName(route.params?.routeName || '1A');
+    const selectedSequence = getRouteSequence(selectedRoute?.nombre || '1A', route.params?.sequenceId);
     const [selected, setSelected] = useState(null);
     const [query, setQuery] = useState('');
     const stops = useMemo(() => (
-        selectedRoute?.stops || []
-    ).filter((item) => item.name.toLowerCase().includes(query.trim().toLowerCase())), [query, selectedRoute]);
+        selectedSequence?.stops || []
+    ).filter((item) => item.name.toLowerCase().includes(query.trim().toLowerCase())), [query, selectedSequence]);
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <ScreenHeader title="Elige tu paradero" onBack={() => navigation.goBack()} />
+            <ScreenHeader title="Elige tu paradero" subtitle={selectedSequence?.label} onBack={() => navigation.goBack()} />
             <View style={styles.tip}><Ionicons name="bulb-outline" color="#C28100" size={18} /><Text style={styles.tipText}>No necesitas activar ubicación. Elige el punto de partida que prefieras.</Text></View>
             <View style={styles.search}><Ionicons name="search-outline" size={19} color={theme.colors.textMuted} /><TextInput value={query} onChangeText={setQuery} placeholder="Busca un paradero por nombre" style={styles.input} /></View>
             <ScrollView contentContainerStyle={styles.list}>
                 {stops.map((item) => <TouchableOpacity key={item.id} onPress={() => setSelected(item)} style={[styles.stop, selected?.id === item.id && styles.selectedStop]}><View style={[styles.radio, selected?.id === item.id && styles.selectedRadio]} /> <Text style={styles.stopText}>{item.name}</Text></TouchableOpacity>)}
                 {!stops.length && <Text style={styles.emptyText}>Esta ruta aún no tiene paraderos georreferenciados.</Text>}
             </ScrollView>
-            <View style={styles.footer}><AppButton disabled={!selected} label="Confirmar paradero" onPress={() => navigation.navigate('RouteDetails', { routeName: selectedRoute?.nombre || '1A', originStopId: selected.id, originName: selected.name })} /></View>
+            <View style={styles.footer}><AppButton disabled={!selected} label="Confirmar paradero" onPress={() => navigation.navigate('RouteDetails', { routeName: selectedRoute?.nombre || '1A', sequenceId: selectedSequence?.id, originStopId: selected.id, originName: selected.name })} /></View>
         </SafeAreaView>
     );
 }

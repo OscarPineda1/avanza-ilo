@@ -10,6 +10,8 @@ export type Edge = {
 };
 
 export type Graph = {
+  routeName?: string;
+  sequenceId?: string;
   nodes: LatLng[];
   stopIndexes: number[];
   adjacency: Edge[];
@@ -19,6 +21,20 @@ export type Graph = {
 const AVERAGE_BUS_SPEED_MS = 25 * 1000 / 3600;
 
 export function buildGraphFromStops(stops: Stop[]): Graph {
+  const routeName = stops[0]?.routeName;
+  const sequenceId = stops[0]?.sequenceId;
+
+  if (
+    stops.some(
+      (stop) =>
+        stop.routeName !== routeName || stop.sequenceId !== sequenceId
+    )
+  ) {
+    throw new Error(
+      'El grafo solo puede construirse con paradas de una misma ruta y secuencia.'
+    );
+  }
+
   const nodes = stops.map((s) => s.coordinate);
   const stopIndexes = stops.map((_, i) => i);
   const adjacency: Edge[] = [];
@@ -29,7 +45,7 @@ export function buildGraphFromStops(stops: Stop[]): Graph {
     adjacency.push({ from: i, to: i + 1, weight, distance });
   }
 
-  return { nodes, stopIndexes, adjacency };
+  return { routeName, sequenceId, nodes, stopIndexes, adjacency };
 }
 
 export function dijkstra(graph: Graph, originIndex: number): number[] {

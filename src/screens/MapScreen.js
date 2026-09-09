@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
 import { globalStyles, theme } from '../styles/global-styles';
-import { getRouteByName, getRouteCoordinates } from '../services/routes';
+import { getRouteByName, getRouteCoordinates, getRouteSequence } from '../services/routes';
 import { getEta } from '../services/eta';
 import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
 import { useNetwork } from '../context/NetworkContext';
@@ -22,9 +22,11 @@ const regionIlo = {
 
 export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
+    const requestedSequenceId = route.params?.sequenceId;
     const requestedOriginStopId = route.params?.originStopId;
     const routeData = routeName ? getRouteByName(routeName) : undefined;
-    const coordinates = routeData ? getRouteCoordinates(routeData.nombre) : null;
+    const selectedSequence = routeData ? getRouteSequence(routeData.nombre, requestedSequenceId) : undefined;
+    const coordinates = routeData ? getRouteCoordinates(routeData.nombre, selectedSequence?.id) : null;
     const { isOffline } = useNetwork();
     const mapRef = useRef(null);
 
@@ -33,7 +35,7 @@ export default function MapScreen({ route, navigation }) {
     const [destinationStop, setDestinationStop] = useState(null);
     const [eta, setEta] = useState(null);
 
-    const stops = routeData?.stops || [];
+    const stops = selectedSequence?.stops || [];
 
     useEffect(() => {
         if (routeData) {
@@ -47,7 +49,7 @@ export default function MapScreen({ route, navigation }) {
             setDestinationStop(stops[stops.length - 1]);
             setSelectedStop(requestedOrigin || stops[0]);
         }
-    }, [routeData?.nombre, requestedOriginStopId]);
+    }, [routeData?.nombre, selectedSequence?.id, requestedOriginStopId]);
 
     useEffect(() => {
         let unmounted = false;
@@ -87,7 +89,7 @@ export default function MapScreen({ route, navigation }) {
         let cancelled = false;
         setEta({ minutes: 0, loading: true });
 
-        getEta(routeData.nombre, selectedStop.id, destinationStop.id)
+        getEta(routeData.nombre, selectedStop.id, destinationStop.id, selectedSequence?.id)
             .then((result) => {
                 if (!cancelled) {
                     setEta(result ? { ...result, loading: false } : null);
@@ -102,7 +104,7 @@ export default function MapScreen({ route, navigation }) {
         return () => {
             cancelled = true;
         };
-    }, [selectedStop, destinationStop, routeData, isOffline]);
+    }, [selectedStop, destinationStop, routeData, selectedSequence?.id, isOffline]);
 
     const handleToggleFavorite = useCallback(async () => {
         if (!routeData) return;
@@ -134,7 +136,7 @@ export default function MapScreen({ route, navigation }) {
                 followsUserLocation={true}
                 onMapReady={fitRouteToMap}
             >
-                <RouteMapLayers route={routeData} selectedStopId={selectedStop?.id} onStopPress={handleSelectStop} />
+                <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={selectedStop?.id} onStopPress={handleSelectStop} />
             </MapView>
 
             <SafeAreaView style={styles.topOverlay}>
@@ -151,7 +153,7 @@ export default function MapScreen({ route, navigation }) {
                         <Text style={styles.routeTitle}>Mapa en vivo</Text>
                     </View>
                 )}
-                {routeData?.stops?.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir paradero manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre })}>
+                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir paradero manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre, sequenceId: selectedSequence?.id })}>
                     <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
                 </TouchableOpacity>}
             </SafeAreaView>
@@ -169,6 +171,7 @@ export default function MapScreen({ route, navigation }) {
                     eta={eta}
                     originName={selectedStop?.name}
                     destinationName={destinationStop?.name}
+                    directionLabel={selectedSequence?.label}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}
                 />

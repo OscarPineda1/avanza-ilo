@@ -1,10 +1,19 @@
 import { theme } from '../styles/theme';
-import { ruta1A_Coordenadas } from '../utils/ruta1a-my-maps';
+import {
+  ruta1A_Tramo1_Coordenadas,
+  ruta1A_Tramo2_Coordenadas,
+} from '../utils/ruta1a-my-maps';
 import { rutaD_Coordenadas } from '../utils/ruta-d-my-maps';
-import { ruta14_Coordenadas } from '../utils/ruta14-my-maps';
-import { buildStops } from './stops';
+import {
+  ruta14_Tramo1_Coordenadas,
+  ruta14_Tramo2_Coordenadas,
+} from '../utils/ruta14-my-maps';
 import type { Stop } from './stops';
 import { validateRouteCatalog } from './route-catalog-validation';
+import {
+  createRouteSequence,
+  type RouteSequence,
+} from './route-sequences';
 
 export type LatLng = {
   latitude: number;
@@ -28,6 +37,8 @@ export type Route = {
   available: boolean;
   pilot: boolean;
   sentido: string;
+  defaultSequenceId: string;
+  sequences: RouteSequence[];
 };
 
 export type RouteCatalogMetadata = {
@@ -42,14 +53,68 @@ export type RouteCatalogMetadata = {
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   id: 'avanza-ilo-rutas-piloto',
-  version: '2026-09-09',
+  version: '2026-09-09-hu20',
   source: 'Google My Maps y correccion del responsable de datos en HU-19',
   sourceDate: '2026-09-09',
   geometrySourceDate: '2026-08-19',
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
-    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Se conserva el ID 4 que ya identificaba a la ruta 14 y se retira la entrada 12 del catalogo aprobado.',
+    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Cada recorrido conserva las capas y el sentido publicados en Google My Maps; no se generan recorridos inversos ni conexiones entre rutas.',
 };
+
+const ruta1ASequence = createRouteSequence('1A', 8, {
+  id: '1a-publicado',
+  label: 'Alto Ilo hacia Pampa Inalámbrica',
+  kind: 'direction',
+  layers: [
+    {
+      id: '1a-tramo-1',
+      sourceName: 'Google My Maps · Ruta 1A · Tramo 1',
+      order: 0,
+      coordinates: ruta1A_Tramo1_Coordenadas as LatLng[],
+    },
+    {
+      id: '1a-tramo-2',
+      sourceName: 'Google My Maps · Ruta 1A · Tramo 2',
+      order: 1,
+      coordinates: ruta1A_Tramo2_Coordenadas as LatLng[],
+    },
+  ],
+});
+
+const rutaDSequence = createRouteSequence('D', 8, {
+  id: 'd-publicado',
+  label: 'Plaza de Armas hacia Ciudad Nueva',
+  kind: 'direction',
+  layers: [
+    {
+      id: 'd-trazo-publicado',
+      sourceName: 'Google My Maps · Ruta D',
+      order: 0,
+      coordinates: rutaD_Coordenadas as LatLng[],
+    },
+  ],
+});
+
+const ruta14Sequence = createRouteSequence('14', 8, {
+  id: '14-publicado',
+  label: 'Mercado Pacocha hacia Tren al Sur',
+  kind: 'direction',
+  layers: [
+    {
+      id: '14-tramo-1',
+      sourceName: 'Google My Maps · Ruta 14 · Tramo 1',
+      order: 0,
+      coordinates: ruta14_Tramo1_Coordenadas as LatLng[],
+    },
+    {
+      id: '14-tramo-2',
+      sourceName: 'Google My Maps · Ruta 14 · Tramo 2',
+      order: 1,
+      coordinates: ruta14_Tramo2_Coordenadas as LatLng[],
+    },
+  ],
+});
 
 const routes: Route[] = [
   {
@@ -64,11 +129,13 @@ const routes: Route[] = [
     horario: '6:00 AM - 9:00 PM',
     tarifa: 'S/. 1.50',
     frecuencia: '10 min',
-    coordinates: ruta1A_Coordenadas as LatLng[],
-    stops: buildStops('1A', ruta1A_Coordenadas as LatLng[], 8),
+    coordinates: ruta1ASequence.coordinates,
+    stops: ruta1ASequence.stops,
     available: true,
     pilot: true,
-    sentido: 'Secuencia completa publicada en Google My Maps',
+    sentido: ruta1ASequence.label,
+    defaultSequenceId: ruta1ASequence.id,
+    sequences: [ruta1ASequence],
   },
   {
     id: '2',
@@ -82,11 +149,13 @@ const routes: Route[] = [
     horario: '6:15 AM - 8:45 PM',
     tarifa: 'S/. 1.50',
     frecuencia: '12 min',
-    coordinates: rutaD_Coordenadas as LatLng[],
-    stops: buildStops('D', rutaD_Coordenadas as LatLng[], 8),
+    coordinates: rutaDSequence.coordinates,
+    stops: rutaDSequence.stops,
     available: true,
     pilot: true,
-    sentido: 'Secuencia completa publicada en Google My Maps',
+    sentido: rutaDSequence.label,
+    defaultSequenceId: rutaDSequence.id,
+    sequences: [rutaDSequence],
   },
   {
     id: '4',
@@ -100,11 +169,13 @@ const routes: Route[] = [
     horario: '6:00 AM - 9:00 PM',
     tarifa: 'S/. 1.70',
     frecuencia: '15 min',
-    coordinates: ruta14_Coordenadas as LatLng[],
-    stops: buildStops('14', ruta14_Coordenadas as LatLng[], 8),
+    coordinates: ruta14Sequence.coordinates,
+    stops: ruta14Sequence.stops,
     available: true,
     pilot: true,
-    sentido: 'Secuencia completa publicada en Google My Maps',
+    sentido: ruta14Sequence.label,
+    defaultSequenceId: ruta14Sequence.id,
+    sequences: [ruta14Sequence],
   },
 ];
 
@@ -130,8 +201,21 @@ export const getPilotRoutes = (): Route[] => routes.filter((r) => r.pilot);
 export const getRouteByName = (nombre: string): Route | undefined =>
   routes.find((r) => r.nombre.toLowerCase() === nombre.toLowerCase());
 
-export const getRouteCoordinates = (nombre: string): LatLng[] | null =>
-  getRouteByName(nombre)?.coordinates ?? null;
+export const getRouteCoordinates = (
+  nombre: string,
+  sequenceId?: string
+): LatLng[] | null => getRouteSequence(nombre, sequenceId)?.coordinates ?? null;
 
-export const getRouteStops = (nombre: string): Stop[] =>
-  getRouteByName(nombre)?.stops ?? [];
+export const getRouteStops = (nombre: string, sequenceId?: string): Stop[] =>
+  getRouteSequence(nombre, sequenceId)?.stops ?? [];
+
+export function getRouteSequence(
+  nombre: string,
+  sequenceId?: string
+): RouteSequence | undefined {
+  const route = getRouteByName(nombre);
+  if (!route) return undefined;
+
+  const requestedId = sequenceId ?? route.defaultSequenceId;
+  return route.sequences.find((sequence) => sequence.id === requestedId);
+}

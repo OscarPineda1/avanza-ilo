@@ -32,10 +32,11 @@ async function getFrequencyMinutes(routeName: string): Promise<number | undefine
 }
 
 export const getEta = onCall(async (request) => {
-  const { routeName, originStopId, destinationStopId } = (request.data || {}) as {
+  const { routeName, originStopId, destinationStopId, sequenceId } = (request.data || {}) as {
     routeName?: string;
     originStopId?: string;
     destinationStopId?: string;
+    sequenceId?: string;
   };
 
   if (!routeName || !originStopId || !destinationStopId) {
@@ -46,7 +47,13 @@ export const getEta = onCall(async (request) => {
   }
 
   const frequencyMinutes = await getFrequencyMinutes(routeName);
-  const result = computeEta(routeName, originStopId, destinationStopId, frequencyMinutes);
+  const result = computeEta(
+    routeName,
+    originStopId,
+    destinationStopId,
+    frequencyMinutes,
+    sequenceId
+  );
 
   if (!result) {
     throw new HttpsError('not-found', 'Could not compute ETA for the given route');

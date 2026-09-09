@@ -15,6 +15,7 @@ export default function MapInfoCard({
     eta,
     originName,
     destinationName,
+    directionLabel,
 }) {
     const [etaResult, setEtaResult] = useState(eta);
     const [remoteFrequency, setRemoteFrequency] = useState(null);
@@ -47,6 +48,7 @@ export default function MapInfoCard({
                 <View>
                     <Text style={styles.empresaText}>{datosRuta.empresa}</Text>
                     <Text style={styles.subtext}>Servicio Urbano de Ilo</Text>
+                    <Text style={styles.directionText}>{directionLabel || datosRuta.sentido}</Text>
                 </View>
                 <TouchableOpacity onPress={onToggleFavorite} activeOpacity={0.7}>
                     <Ionicons
@@ -130,6 +132,7 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     empresaText: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark },
     subtext: { fontSize: 13, color: theme.colors.textMuted },
+    directionText: { fontSize: 13, color: theme.colors.primary, fontWeight: '700', marginTop: 2 },
     etaContainer: {
         backgroundColor: '#F0F6FF', borderRadius: 16, padding: 12,
         alignItems: 'center', marginBottom: 14, borderWidth: 1, borderColor: '#D0E3FF',

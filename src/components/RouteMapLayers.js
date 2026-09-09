@@ -30,8 +30,11 @@ function StopCallout({ title, subtitle }) {
     return <Callout><View style={styles.callout}><Text style={styles.calloutTitle}>{title}</Text><Text style={styles.calloutSubtitle}>{subtitle}</Text></View></Callout>;
 }
 
-function RouteMapLayers({ route, showStops = true, selectedStopId, onStopPress }) {
-    const coordinates = route?.coordinates || [];
+function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onStopPress }) {
+    const selectedSequence = sequence || route?.sequences?.find((item) => item.id === route.defaultSequenceId);
+    const coordinates = selectedSequence?.coordinates || route?.coordinates || [];
+    const layers = selectedSequence?.layers || [{ id: 'legacy', coordinates }];
+    const stops = selectedSequence?.stops || route?.stops || [];
     const directionMarkers = useMemo(() => getDirectionMarkers(coordinates), [coordinates]);
     const firstCoordinate = coordinates[0];
     const lastCoordinate = coordinates[coordinates.length - 1];
@@ -39,14 +42,16 @@ function RouteMapLayers({ route, showStops = true, selectedStopId, onStopPress }
     if (!route || coordinates.length === 0) return null;
 
     return <>
-        <Polyline coordinates={coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 14 : 12} lineCap="round" lineJoin="round" />
-        <Polyline coordinates={coordinates} strokeColor={route.color} strokeWidth={showStops ? 7 : 6} lineCap="round" lineJoin="round" />
+        {layers.map((layer) => <React.Fragment key={layer.id}>
+            <Polyline coordinates={layer.coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 14 : 12} lineCap="round" lineJoin="round" />
+            <Polyline coordinates={layer.coordinates} strokeColor={route.color} strokeWidth={showStops ? 7 : 6} lineCap="round" lineJoin="round" />
+        </React.Fragment>)}
 
         {directionMarkers.map((marker, index) => <Marker key={`direction-${index}`} coordinate={marker.coordinate} anchor={{ x: .5, y: .5 }} flat rotation={marker.bearing} tracksViewChanges>
             <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={18} color="#FFFFFF" /></View>
         </Marker>)}
 
-        {showStops && route.stops?.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
+        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
             const isSelected = stop.id === selectedStopId;
             return <Marker key={stop.id} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={false}>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>

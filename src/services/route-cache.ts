@@ -9,7 +9,7 @@ import {
   type CacheWriteResult,
 } from './route-cache-core';
 
-const STATIC_DATASET_KEY = '@avanza_ilo:validated_route_dataset_v2';
+const STATIC_DATASET_KEY = '@avanza_ilo:validated_route_dataset_v3';
 
 export type { CachedRouteDataset, CacheWriteResult } from './route-cache-core';
 

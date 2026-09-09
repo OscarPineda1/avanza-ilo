@@ -1,5 +1,5 @@
 import { buildGraphFromStops, dijkstra } from './graph';
-import { getRouteByName } from './routes';
+import { getRouteByName, getRouteSequence } from './routes';
 
 export type EtaResult = {
   minutes: number;
@@ -17,15 +17,17 @@ export function computeEta(
   routeName: string,
   originStopId: string,
   destinationStopId: string,
-  frequencyMinutes?: number
+  frequencyMinutes?: number,
+  sequenceId?: string
 ): EtaResult {
   const route = getRouteByName(routeName);
-  if (!route || !route.stops || route.stops.length === 0) {
+  const sequence = getRouteSequence(routeName, sequenceId);
+  if (!route || !sequence || sequence.stops.length === 0) {
     return null;
   }
 
-  const originIndex = route.stops.findIndex((s) => s.id === originStopId);
-  const destinationIndex = route.stops.findIndex(
+  const originIndex = sequence.stops.findIndex((s) => s.id === originStopId);
+  const destinationIndex = sequence.stops.findIndex(
     (s) => s.id === destinationStopId
   );
 
@@ -33,7 +35,7 @@ export function computeEta(
     return null;
   }
 
-  const graph = buildGraphFromStops(route.stops);
+  const graph = buildGraphFromStops(sequence.stops);
   const distances = dijkstra(graph, originIndex);
   const seconds = distances[destinationIndex];
 

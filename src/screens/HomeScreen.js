@@ -37,14 +37,14 @@ export default function HomeScreen({ navigation }) {
         navigation.navigate('Map');
     };
 
-    const irAlMapa = (rutaName) => {
-        navigation.navigate('RouteDetails', { routeName: rutaName });
+    const irAlMapa = (selectedRoute) => {
+        navigation.navigate('RouteDetails', { routeName: selectedRoute.nombre, sequenceId: selectedRoute.defaultSequenceId });
     };
 
     const renderSuggestion = ({ item }) => (
         <TouchableOpacity
             style={styles.suggestionItem}
-            onPress={() => irAlMapa(item.nombre)}
+            onPress={() => irAlMapa(item)}
             activeOpacity={0.7}
         >
             <View style={[styles.suggestionBadge, { backgroundColor: item.color }]}>
@@ -112,7 +112,7 @@ export default function HomeScreen({ navigation }) {
                         <RouteCard
                             key={item.id}
                             item={item}
-                            onPress={() => irAlMapa(item.nombre)}
+                            onPress={() => irAlMapa(item)}
                         />
                     ))
                 ) : (

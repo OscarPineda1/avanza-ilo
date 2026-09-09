@@ -12,7 +12,8 @@ const cloudFunctionsEnabled =
 export async function getEta(
   routeName: string,
   originStopId: string,
-  destinationStopId: string
+  destinationStopId: string,
+  sequenceId?: string
 ): Promise<EtaResult> {
   const firebaseApp = getFirebaseApp();
   if (cloudFunctionsEnabled && firebaseApp) {
@@ -23,6 +24,7 @@ export async function getEta(
         routeName,
         originStopId,
         destinationStopId,
+        sequenceId,
       });
       const data = response.data as EtaResult;
       if (data && typeof data.minutes === 'number') {
@@ -33,7 +35,13 @@ export async function getEta(
     }
   }
 
-  return computeEta(routeName, originStopId, destinationStopId);
+  return computeEta(
+    routeName,
+    originStopId,
+    destinationStopId,
+    undefined,
+    sequenceId
+  );
 }
 
 export async function getRemoteFrequency(

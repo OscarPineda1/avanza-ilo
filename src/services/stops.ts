@@ -1,8 +1,9 @@
-import { LatLng } from './routes';
+import type { LatLng } from './routes';
 
 export type Stop = {
   id: string;
   routeName: string;
+  sequenceId: string;
   name: string;
   coordinate: LatLng;
   isOrigin: boolean;
@@ -12,6 +13,7 @@ export type Stop = {
 
 export function buildStops(
   routeName: string,
+  sequenceId: string,
   coordinates: LatLng[] | null,
   count: number
 ): Stop[] {
@@ -28,8 +30,9 @@ export function buildStops(
     const isOrigin = result.length === 0;
     const isDestination = i + step >= total;
     result.push({
-      id: `${routeName.toLowerCase()}-stop-${result.length + 1}`,
+      id: `${sequenceId.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
+      sequenceId,
       name: isOrigin
         ? 'Punto de referencia inicial'
         : isDestination
@@ -57,8 +60,9 @@ export function buildStops(
     lastStop.isDestination = false;
     lastStop.name = `Punto de referencia ${result.length}`;
     result.push({
-      id: `${routeName.toLowerCase()}-stop-${result.length + 1}`,
+      id: `${sequenceId.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
+      sequenceId,
       name: 'Punto de referencia final',
       coordinate: last,
       isOrigin: false,

@@ -1,5 +1,11 @@
 import { haversineDistance } from './haversine';
 import { buildGraphFromStops } from './graph';
+import {
+  flattenRouteLayers,
+  getLayerJoinDistance,
+  MAX_LAYER_JOIN_DISTANCE_METERS,
+  type RouteSequence,
+} from './route-sequences';
 import type { Route, RouteCatalogMetadata } from './routes';
 
 const ILO_BOUNDS = {
@@ -15,6 +21,7 @@ export type CatalogValidationIssue = {
   code: string;
   message: string;
   routeId?: string;
+  sequenceId?: string;
 };
 
 export type CatalogValidationResult = {
@@ -23,6 +30,8 @@ export type CatalogValidationResult = {
   summary: {
     routes: number;
     pilots: number;
+    sequences: number;
+    layers: number;
     coordinates: number;
     references: number;
     weights: number;
@@ -60,6 +69,19 @@ function coordinateKey(latitude: number, longitude: number): string {
   return `${latitude},${longitude}`;
 }
 
+function coordinatesMatch(
+  left: RouteSequence['coordinates'] | null,
+  right: RouteSequence['coordinates'] | null
+): boolean {
+  if (!left || !right || left.length !== right.length) return false;
+
+  return left.every(
+    (coordinate, index) =>
+      coordinate.latitude === right[index].latitude &&
+      coordinate.longitude === right[index].longitude
+  );
+}
+
 export function validateRouteCatalog(
   routes: Route[],
   metadata: RouteCatalogMetadata
@@ -67,7 +89,11 @@ export function validateRouteCatalog(
   const issues: CatalogValidationIssue[] = [];
   const routeIds = new Set<string>();
   const routeNames = new Set<string>();
+  const sequenceIds = new Set<string>();
+  const layerIds = new Set<string>();
   const referenceIds = new Set<string>();
+  let sequenceCount = 0;
+  let layerCount = 0;
   let coordinateCount = 0;
   let referenceCount = 0;
   let weightCount = 0;
@@ -158,129 +184,290 @@ export function validateRouteCatalog(
       });
     }
 
-    const coordinates = route.coordinates;
-    if (!coordinates || coordinates.length < 2) {
+    if (!Array.isArray(route.sequences) || route.sequences.length === 0) {
       issues.push({
-        code: 'pilot.coordinates',
-        message: `La ruta piloto ${route.nombre} necesita al menos dos coordenadas ordenadas.`,
+        code: 'sequence.missing',
+        message: `La ruta piloto ${route.nombre} necesita al menos una secuencia dirigida.`,
         routeId: route.id,
       });
       continue;
     }
 
-    coordinateCount += coordinates.length;
-    const coordinateIndexes = new Map<string, number[]>();
+    const defaultSequence = route.sequences.find(
+      (sequence) => sequence.id === route.defaultSequenceId
+    );
 
-    coordinates.forEach((coordinate, index) => {
-      if (!isCoordinateInIlo(coordinate.latitude, coordinate.longitude)) {
-        issues.push({
-          code: 'coordinate.bounds',
-          message: `Coordenada ${index} de la ruta ${route.nombre} no es valida para Ilo.`,
-          routeId: route.id,
-        });
-      }
-
-      const key = coordinateKey(coordinate.latitude, coordinate.longitude);
-      const indexes = coordinateIndexes.get(key) ?? [];
-      indexes.push(index);
-      coordinateIndexes.set(key, indexes);
-
-      if (index === 0) return;
-
-      const distance = haversineDistance(coordinates[index - 1], coordinate);
-
-      if (
-        !Number.isFinite(distance) ||
-        distance <= 0 ||
-        distance > MAX_ADJACENT_COORDINATE_DISTANCE_METERS
-      ) {
-        issues.push({
-          code: 'coordinate.order-weight',
-          message: `Segmento ${index - 1}-${index} de la ruta ${route.nombre} tiene orden o peso invalido.`,
-          routeId: route.id,
-        });
-      }
-    });
-
-    if (route.stops.length < 2) {
+    if (!defaultSequence) {
       issues.push({
-        code: 'references.missing',
-        message: `La ruta piloto ${route.nombre} necesita puntos de referencia.`,
+        code: 'sequence.default',
+        message: `La ruta ${route.nombre} no identifica una secuencia predeterminada valida.`,
         routeId: route.id,
       });
-      continue;
-    }
-
-    referenceCount += route.stops.length;
-    let previousCoordinateIndex = -1;
-
-    route.stops.forEach((reference, index) => {
-      if (!isNonEmpty(reference.id) || referenceIds.has(reference.id)) {
+    } else {
+      if (!coordinatesMatch(route.coordinates, defaultSequence.coordinates)) {
         issues.push({
-          code: 'reference.id',
-          message: `ID de referencia ausente o duplicado en la ruta ${route.nombre}.`,
+          code: 'sequence.default-coordinates',
+          message: `La geometria visible de la ruta ${route.nombre} no coincide con su secuencia predeterminada.`,
           routeId: route.id,
+          sequenceId: defaultSequence.id,
         });
       }
-      referenceIds.add(reference.id);
 
       if (
-        reference.routeName.toUpperCase() !== route.nombre.toUpperCase() ||
-        reference.order !== index ||
-        !isNonEmpty(reference.name)
+        route.stops.length !== defaultSequence.stops.length ||
+        !route.stops.every(
+          (stop, index) => stop.id === defaultSequence.stops[index]?.id
+        )
       ) {
         issues.push({
-          code: 'reference.order',
-          message: `Referencia ${reference.id} de la ruta ${route.nombre} tiene ruta, nombre u orden inconsistente.`,
+          code: 'sequence.default-references',
+          message: `Las referencias visibles de la ruta ${route.nombre} no conservan su secuencia predeterminada.`,
           routeId: route.id,
+          sequenceId: defaultSequence.id,
         });
       }
+    }
 
-      const key = coordinateKey(
-        reference.coordinate.latitude,
-        reference.coordinate.longitude
-      );
-      const matchingIndex = (coordinateIndexes.get(key) ?? []).find(
-        (candidateIndex) => candidateIndex > previousCoordinateIndex
-      );
+    for (const sequence of route.sequences) {
+      sequenceCount += 1;
 
-      if (matchingIndex === undefined) {
+      if (!isNonEmpty(sequence.id) || sequenceIds.has(sequence.id)) {
         issues.push({
-          code: 'reference.direction',
-          message: `Referencia ${reference.id} de la ruta ${route.nombre} no sigue el sentido del trazo.`,
+          code: 'sequence.id',
+          message: `ID de secuencia ausente o duplicado en la ruta ${route.nombre}.`,
           routeId: route.id,
+          sequenceId: sequence.id,
         });
-      } else {
-        previousCoordinateIndex = matchingIndex;
+      }
+      sequenceIds.add(sequence.id);
+
+      if (
+        !isNonEmpty(sequence.label) ||
+        (sequence.kind !== 'direction' && sequence.kind !== 'circuit')
+      ) {
+        issues.push({
+          code: 'sequence.identity',
+          message: `La secuencia ${sequence.id} debe declarar etiqueta y tipo.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
       }
 
-    });
+      if (!Array.isArray(sequence.layers) || sequence.layers.length === 0) {
+        issues.push({
+          code: 'sequence.layers',
+          message: `La secuencia ${sequence.id} no conserva capas de origen.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+        continue;
+      }
 
-    if (!route.stops[0].isOrigin || !route.stops.at(-1)?.isDestination) {
-      issues.push({
-        code: 'reference.endpoints',
-        message: `Las referencias de la ruta ${route.nombre} no identifican correctamente inicio y final.`,
-        routeId: route.id,
+      const sortedLayers = [...sequence.layers].sort(
+        (left, right) => left.order - right.order
+      );
+      sortedLayers.forEach((layer, index) => {
+        layerCount += 1;
+
+        if (!isNonEmpty(layer.id) || layerIds.has(layer.id)) {
+          issues.push({
+            code: 'layer.id',
+            message: `ID de capa ausente o duplicado en la secuencia ${sequence.id}.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+        layerIds.add(layer.id);
+
+        if (
+          layer.order !== index ||
+          !isNonEmpty(layer.sourceName) ||
+          !Array.isArray(layer.coordinates) ||
+          layer.coordinates.length < 2
+        ) {
+          issues.push({
+            code: 'layer.order-source',
+            message: `La capa ${layer.id} de ${sequence.id} tiene orden, fuente o geometria invalida.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+
+        if (index > 0) {
+          const joinDistance = getLayerJoinDistance(sortedLayers[index - 1], layer);
+          if (
+            !Number.isFinite(joinDistance) ||
+            joinDistance > MAX_LAYER_JOIN_DISTANCE_METERS
+          ) {
+            issues.push({
+              code: 'layer.disconnected',
+              message: `Las capas ${sortedLayers[index - 1].id} y ${layer.id} no forman una secuencia continua.`,
+              routeId: route.id,
+              sequenceId: sequence.id,
+            });
+          }
+        }
+      });
+
+      const flattenedCoordinates = flattenRouteLayers(sequence.layers);
+      if (!coordinatesMatch(sequence.coordinates, flattenedCoordinates)) {
+        issues.push({
+          code: 'sequence.layer-order',
+          message: `La secuencia ${sequence.id} no respeta el orden de sus capas de My Maps.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+      }
+
+      const coordinates = sequence.coordinates;
+      if (!coordinates || coordinates.length < 2) {
+        issues.push({
+          code: 'pilot.coordinates',
+          message: `La secuencia ${sequence.id} necesita al menos dos coordenadas ordenadas.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+        continue;
+      }
+
+      coordinateCount += coordinates.length;
+      const coordinateIndexes = new Map<string, number[]>();
+
+      coordinates.forEach((coordinate, index) => {
+        if (!isCoordinateInIlo(coordinate.latitude, coordinate.longitude)) {
+          issues.push({
+            code: 'coordinate.bounds',
+            message: `Coordenada ${index} de la secuencia ${sequence.id} no es valida para Ilo.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+
+        const key = coordinateKey(coordinate.latitude, coordinate.longitude);
+        const indexes = coordinateIndexes.get(key) ?? [];
+        indexes.push(index);
+        coordinateIndexes.set(key, indexes);
+
+        if (index === 0) return;
+
+        const distance = haversineDistance(coordinates[index - 1], coordinate);
+        if (
+          !Number.isFinite(distance) ||
+          distance <= 0 ||
+          distance > MAX_ADJACENT_COORDINATE_DISTANCE_METERS
+        ) {
+          issues.push({
+            code: 'coordinate.order-weight',
+            message: `Segmento ${index - 1}-${index} de ${sequence.id} tiene orden o peso invalido.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+      });
+
+      if (
+        sequence.kind === 'circuit' &&
+        haversineDistance(coordinates[0], coordinates.at(-1)!) >
+          MAX_LAYER_JOIN_DISTANCE_METERS
+      ) {
+        issues.push({
+          code: 'sequence.circuit-open',
+          message: `El circuito ${sequence.id} no incluye un cierre explicito en la fuente.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+      }
+
+      const sequenceStops = sequence.stops;
+      if (sequenceStops.length < 2) {
+        issues.push({
+          code: 'references.missing',
+          message: `La secuencia ${sequence.id} necesita puntos de referencia.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+        continue;
+      }
+
+      referenceCount += sequenceStops.length;
+      let previousCoordinateIndex = -1;
+
+      sequenceStops.forEach((reference, index) => {
+        if (!isNonEmpty(reference.id) || referenceIds.has(reference.id)) {
+          issues.push({
+            code: 'reference.id',
+            message: `ID de referencia ausente o duplicado en la secuencia ${sequence.id}.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+        referenceIds.add(reference.id);
+
+        if (
+          reference.routeName.toUpperCase() !== route.nombre.toUpperCase() ||
+          reference.sequenceId !== sequence.id ||
+          reference.order !== index ||
+          !isNonEmpty(reference.name)
+        ) {
+          issues.push({
+            code: 'reference.order',
+            message: `Referencia ${reference.id} de ${sequence.id} tiene ruta, secuencia, nombre u orden inconsistente.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
+
+        const key = coordinateKey(
+          reference.coordinate.latitude,
+          reference.coordinate.longitude
+        );
+        const matchingIndex = (coordinateIndexes.get(key) ?? []).find(
+          (candidateIndex) => candidateIndex > previousCoordinateIndex
+        );
+
+        if (matchingIndex === undefined) {
+          issues.push({
+            code: 'reference.direction',
+            message: `Referencia ${reference.id} no sigue el sentido ${sequence.id}.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        } else {
+          previousCoordinateIndex = matchingIndex;
+        }
+      });
+
+      if (
+        !sequenceStops[0].isOrigin ||
+        !sequenceStops.at(-1)?.isDestination
+      ) {
+        issues.push({
+          code: 'reference.endpoints',
+          message: `Las referencias de ${sequence.id} no identifican correctamente inicio y final.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+      }
+
+      const graph = buildGraphFromStops(sequenceStops);
+      weightCount += graph.adjacency.length;
+      graph.adjacency.forEach((edge) => {
+        if (
+          edge.to !== edge.from + 1 ||
+          !Number.isFinite(edge.distance) ||
+          edge.distance <= 0 ||
+          !Number.isFinite(edge.weight) ||
+          edge.weight <= 0
+        ) {
+          issues.push({
+            code: 'graph.direction-weight',
+            message: `La arista ${edge.from}-${edge.to} de ${sequence.id} no respeta el sentido o tiene peso invalido.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
+        }
       });
     }
-
-    const graph = buildGraphFromStops(route.stops);
-    weightCount += graph.adjacency.length;
-    graph.adjacency.forEach((edge) => {
-      if (
-        edge.to !== edge.from + 1 ||
-        !Number.isFinite(edge.distance) ||
-        edge.distance <= 0 ||
-        !Number.isFinite(edge.weight) ||
-        edge.weight <= 0
-      ) {
-        issues.push({
-          code: 'graph.direction-weight',
-          message: `La arista ${edge.from}-${edge.to} de la ruta ${route.nombre} no respeta el sentido o tiene peso invalido.`,
-          routeId: route.id,
-        });
-      }
-    });
   }
 
   return {
@@ -289,6 +476,8 @@ export function validateRouteCatalog(
     summary: {
       routes: routes.length,
       pilots: actualPilots.length,
+      sequences: sequenceCount,
+      layers: layerCount,
       coordinates: coordinateCount,
       references: referenceCount,
       weights: weightCount,
