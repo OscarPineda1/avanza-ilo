@@ -100,6 +100,7 @@ const ruta1ASequence = createRouteSequence('1A', 8, {
       sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Alto Ilo',
       order: 2,
       coordinates: ruta1A_RetornoTramoCompartido,
+      visible: false,
     },
   ],
 });
@@ -120,6 +121,7 @@ const rutaDSequence = createRouteSequence('D', 8, {
       sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Plaza de Armas',
       order: 1,
       coordinates: rutaD_RetornoTramoCompartido,
+      visible: false,
     },
   ],
 });
@@ -146,6 +148,7 @@ const ruta14Sequence = createRouteSequence('14', 8, {
       sourceName: 'HU-20 · Retorno confirmado por el mismo tramo hacia Mercado Pacocha',
       order: 2,
       coordinates: ruta14_RetornoTramoCompartido,
+      visible: false,
     },
   ],
 });

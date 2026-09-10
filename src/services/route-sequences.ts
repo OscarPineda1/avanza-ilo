@@ -7,6 +7,7 @@ export type RouteLayer = {
   sourceName: string;
   order: number;
   coordinates: LatLng[];
+  visible?: boolean;
 };
 
 export type RouteSequenceKind = 'direction' | 'circuit';

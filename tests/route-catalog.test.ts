@@ -103,6 +103,7 @@ test('las tres rutas cierran en su inicio despues del lazo y el tramo compartido
     assert.equal(sequence.kind, 'circuit');
     assert.deepEqual(sequence.coordinates[0], sequence.coordinates.at(-1));
     assert.match(sequence.layers.at(-1)!.id, /retorno-tramo-compartido$/);
+    assert.equal(sequence.layers.at(-1)!.visible, false);
   });
 
   const route1A = getAllRoutes().find((route) => route.nombre === '1A')!;

@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 
 import { globalStyles, theme } from '../styles/global-styles';
 import { getRouteByName, getRouteCoordinates, getRouteSequence } from '../services/routes';
@@ -28,6 +27,9 @@ export default function MapScreen({ route, navigation }) {
     const selectedSequence = routeData ? getRouteSequence(routeData.nombre, requestedSequenceId) : undefined;
     const isCircuit = selectedSequence?.kind === 'circuit';
     const coordinates = routeData ? getRouteCoordinates(routeData.nombre, selectedSequence?.id) : null;
+    const displayCoordinates = useMemo(() => selectedSequence
+        ? selectedSequence.layers.filter((layer) => layer.visible !== false).flatMap((layer) => layer.coordinates)
+        : coordinates, [coordinates, selectedSequence]);
     const { isOffline } = useNetwork();
     const mapRef = useRef(null);
 
@@ -56,35 +58,6 @@ export default function MapScreen({ route, navigation }) {
             setSelectedStop(requestedOrigin || stops[0]);
         }
     }, [routeData?.nombre, selectedSequence?.id, requestedOriginStopId]);
-
-    useEffect(() => {
-        let unmounted = false;
-
-        async function requestLocation() {
-            try {
-                const { status } = await Location.requestForegroundPermissionsAsync();
-                if (unmounted) return;
-                if (status !== 'granted') {
-                    Alert.alert('Permiso denegado', 'No se pudo acceder a la ubicación. Puedes seleccionar un paradero manualmente.');
-                    return;
-                }
-
-                await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.High,
-                });
-            } catch {
-                if (!unmounted) {
-                    Alert.alert('Ubicación no disponible', 'Activa el GPS o selecciona un paradero manualmente.');
-                }
-            }
-        }
-
-        requestLocation();
-
-        return () => {
-            unmounted = true;
-        };
-    }, []);
 
     useEffect(() => {
         if (!selectedStop || !destinationStop || !routeData || isOffline) {
@@ -123,13 +96,13 @@ export default function MapScreen({ route, navigation }) {
     }, []);
 
     const fitRouteToMap = useCallback(() => {
-        if (coordinates?.length > 1) {
-            mapRef.current?.fitToCoordinates(coordinates, {
+        if (displayCoordinates?.length > 1) {
+            mapRef.current?.fitToCoordinates(displayCoordinates, {
                 animated: false,
                 edgePadding: { top: 110, right: 45, bottom: 280, left: 45 },
             });
         }
-    }, [coordinates]);
+    }, [displayCoordinates]);
 
     return (
         <View style={globalStyles.safeArea}>
@@ -139,7 +112,6 @@ export default function MapScreen({ route, navigation }) {
                 style={styles.map}
                 initialRegion={regionIlo}
                 showsUserLocation={true}
-                followsUserLocation={true}
                 onMapReady={fitRouteToMap}
             >
                 <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={selectedStop?.id} onStopPress={handleSelectStop} />

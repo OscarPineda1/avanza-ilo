@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Callout, Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +34,7 @@ function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onS
     const selectedSequence = sequence || route?.sequences?.find((item) => item.id === route.defaultSequenceId);
     const coordinates = selectedSequence?.coordinates || route?.coordinates || [];
     const layers = selectedSequence?.layers || [{ id: 'legacy', coordinates }];
+    const visibleLayers = useMemo(() => layers.filter((layer) => layer.visible !== false), [layers]);
     const stops = selectedSequence?.stops || route?.stops || [];
     const isCircuit = selectedSequence?.kind === 'circuit';
     const directionMarkers = useMemo(() => getDirectionMarkers(coordinates, isCircuit), [coordinates, isCircuit]);
@@ -42,38 +43,47 @@ function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onS
     const returnCoordinate = isCircuit && layers.length > 1
         ? layers[layers.length - 2]?.coordinates?.at(-1)
         : null;
+    const [trackMarkers, setTrackMarkers] = useState(true);
+
+    useEffect(() => {
+        setTrackMarkers(true);
+        const timeoutId = setTimeout(() => setTrackMarkers(false), 350);
+        return () => clearTimeout(timeoutId);
+    }, [route?.id, selectedSequence?.id, selectedStopId]);
 
     if (!route || coordinates.length === 0) return null;
 
     return <>
-        {layers.map((layer) => <React.Fragment key={layer.id}>
+        {visibleLayers.map((layer) => <React.Fragment key={layer.id}>
             <Polyline coordinates={layer.coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 10 : 9} lineCap="round" lineJoin="round" />
             <Polyline coordinates={layer.coordinates} strokeColor={route.color} strokeWidth={showStops ? 5 : 4} lineCap="round" lineJoin="round" />
         </React.Fragment>)}
 
-        {directionMarkers.map((marker, index) => <Marker key={`direction-${index}`} coordinate={marker.coordinate} anchor={{ x: .5, y: .5 }} flat rotation={marker.bearing} tracksViewChanges>
+        {directionMarkers.map((marker, index) => <Marker key={`direction-${index}`} coordinate={marker.coordinate} anchor={{ x: .5, y: .5 }} flat rotation={marker.bearing} tracksViewChanges={trackMarkers}>
             <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={13} color="#FFFFFF" /></View>
         </Marker>)}
 
         {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
             const isSelected = stop.id === selectedStopId;
-            return <Marker key={stop.id} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges>
+            return <Marker key={`${stop.id}-${isSelected ? 'selected' : 'idle'}`} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={trackMarkers}>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>
                 <StopCallout title={stop.name} subtitle={`Ruta ${route.nombre} · Toca para elegir este origen`} />
             </Marker>;
         })}
 
-        <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
-            <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, isCircuit && styles.circuitEndpointText, { color: route.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
-            <StopCallout title={`${isCircuit ? 'Inicio y fin' : 'Inicio'} · Ruta ${route.nombre}`} subtitle={route.origen} />
-        </Marker>
-        {isCircuit && returnCoordinate ? <Marker coordinate={returnCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
-            <View style={[styles.returnMarker, { borderColor: route.color }]}><Text style={[styles.returnMarkerText, { color: route.color }]}>R</Text></View>
-            <StopCallout title={`Regreso · Ruta ${route.nombre}`} subtitle={`Desde aquí vuelve hacia ${route.origen}`} />
-        </Marker> : <Marker coordinate={lastCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges zIndex={3}>
-            <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, { color: route.color }]}>B</Text></View>
-            <StopCallout title={`Final · Ruta ${route.nombre}`} subtitle={route.destino} />
-        </Marker>}
+        {showStops ? <>
+            <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
+                <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, isCircuit && styles.circuitEndpointText, { color: route.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
+                <StopCallout title={`${isCircuit ? 'Inicio y fin' : 'Inicio'} · Ruta ${route.nombre}`} subtitle={route.origen} />
+            </Marker>
+            {isCircuit && returnCoordinate ? <Marker coordinate={returnCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
+                <View style={[styles.returnMarker, { borderColor: route.color }]}><Text style={[styles.returnMarkerText, { color: route.color }]}>R</Text></View>
+                <StopCallout title={`Regreso · Ruta ${route.nombre}`} subtitle={`Desde aquí vuelve hacia ${route.origen}`} />
+            </Marker> : <Marker coordinate={lastCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
+                <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, { color: route.color }]}>B</Text></View>
+                <StopCallout title={`Final · Ruta ${route.nombre}`} subtitle={route.destino} />
+            </Marker>}
+        </> : null}
     </>;
 }
 

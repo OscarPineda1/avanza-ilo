@@ -52,6 +52,10 @@ El validador tambien rechaza como circuito cualquier secuencia cuyo cierre no ap
 
 No se agrega una segunda ruta de vuelta: ida, lazo local y regreso forman un solo circuito en cada caso. Los retornos confirmados reutilizan el tramo comun y terminan exactamente en la coordenada inicial; no se añaden calles ni conexiones entre rutas.
 
+Las capas de retorno permanecen completas para la seleccion, el ETA y las pruebas del grafo, pero no se vuelven a dibujar sobre las mismas calles. Los marcadores del mapa se rasterizan durante una ventana corta al entrar o cambiar el paradero y luego dejan de seguir cambios; asi se evita trabajo continuo de renderizado sin perder visibilidad ni interaccion en Android.
+
+El detalle ya no vuelve a solicitar una lectura GPS de alta precision cuyo resultado no se utilizaba; el permiso se mantiene en la pantalla dedicada. El mapa general omite los marcadores de extremos de las tres rutas y conserva solo las lineas y una flecha por circuito.
+
 ## Resultado reproducible
 
 Comando de validacion:
