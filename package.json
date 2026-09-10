@@ -9,7 +9,11 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "validate:catalog": "tsx scripts/validate-route-catalog.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "verify": "npm run typecheck && npm test && npm run validate:catalog",
+    "demo:arrival": "tsx scripts/demo-arrival.ts",
+    "build:android:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
+    "backup:create": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/create-backup.ps1"
   },
   "engines": {
     "node": ">=20.19.4"
@@ -24,7 +28,6 @@
     "expo-location": "~19.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
-    "firebase": "^12.16.0",
     "react": "19.1.0",
     "react-is": "^19.2.7",
     "react-native": "0.81.5",

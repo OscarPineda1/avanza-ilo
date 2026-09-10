@@ -6,8 +6,8 @@ import { theme } from '../styles/global-styles';
 import AppButton from '../components/AppButton';
 
 const content = {
-    server: { icon: 'cloud-offline-outline', title: 'No pudimos calcular tu ETA', message: 'Estamos verificando la conexión con nuestro servidor. Inténtalo nuevamente en unos segundos.', action: 'Reintentar' },
-    offline: { icon: 'map-outline', title: 'Recorrido pendiente de publicar', message: 'Esta ruta está registrada, pero aún no cuenta con un trazo oficial ni paraderos georreferenciados para calcular su ETA.', action: 'Volver' },
+    server: { icon: 'alert-circle-outline', title: 'Estimación no disponible', message: 'Faltan datos válidos para calcular este caso. Revisa la ruta y el punto de espera.', action: 'Reintentar' },
+    offline: { icon: 'map-outline', title: 'Recorrido pendiente de publicar', message: 'Esta ruta está registrada, pero aún no cuenta con trazo y referencias georreferenciadas.', action: 'Volver' },
 };
 
 export default function StatusScreen({ navigation, route }) {

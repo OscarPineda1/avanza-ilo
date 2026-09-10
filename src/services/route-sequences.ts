@@ -22,11 +22,28 @@ export type RouteSequence = {
 };
 
 export const MAX_LAYER_JOIN_DISTANCE_METERS = 50;
+const displayGeometryCache = new WeakMap<LatLng[], LatLng[]>();
 
 export function flattenRouteLayers(layers: RouteLayer[]): LatLng[] {
   return [...layers]
     .sort((left, right) => left.order - right.order)
     .flatMap((layer) => layer.coordinates);
+}
+
+export function getDisplayCoordinates(coordinates: LatLng[]): LatLng[] {
+  const cached = displayGeometryCache.get(coordinates);
+  if (cached) return cached;
+  if (coordinates.length < 3) return coordinates;
+
+  const result = [coordinates[0]];
+  for (let index = 1; index < coordinates.length - 1; index += 1) {
+    if (haversineDistance(result.at(-1)!, coordinates[index]) >= 7) {
+      result.push(coordinates[index]);
+    }
+  }
+  result.push(coordinates.at(-1)!);
+  displayGeometryCache.set(coordinates, result);
+  return result;
 }
 
 export function createRouteSequence(

@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
+import { Alert, StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { globalStyles, theme } from '../styles/global-styles';
 import { getRouteByName, getRouteCoordinates, getRouteSequence } from '../services/routes';
-import { canTravelInSequence, getEta } from '../services/eta';
+import { getEta } from '../services/eta';
+import { findRoutePositionCandidates, positionFromStop } from '../services/route-position';
 import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
 import { useNetwork } from '../context/NetworkContext';
 import MapInfoCard from '../components/MapInfoCard';
 import RouteMapLayers from '../components/RouteMapLayers';
+import { getDisplayCoordinates } from '../services/route-sequences';
 
 const regionIlo = {
     latitude: -17.6433,
@@ -22,28 +24,22 @@ const regionIlo = {
 export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
     const requestedSequenceId = route.params?.sequenceId;
-    const requestedOriginStopId = route.params?.originStopId;
+    const requestedWaitPointId = route.params?.waitPointId;
     const routeData = routeName ? getRouteByName(routeName) : undefined;
     const selectedSequence = routeData ? getRouteSequence(routeData.nombre, requestedSequenceId) : undefined;
     const isCircuit = selectedSequence?.kind === 'circuit';
     const coordinates = routeData ? getRouteCoordinates(routeData.nombre, selectedSequence?.id) : null;
     const displayCoordinates = useMemo(() => selectedSequence
-        ? selectedSequence.layers.filter((layer) => layer.visible !== false).flatMap((layer) => layer.coordinates)
+        ? selectedSequence.layers.filter((layer) => layer.visible !== false).flatMap((layer) => getDisplayCoordinates(layer.coordinates))
         : coordinates, [coordinates, selectedSequence]);
     const { isOffline } = useNetwork();
     const mapRef = useRef(null);
 
     const [isFavorite, setIsFavorite] = useState(false);
-    const [selectedStop, setSelectedStop] = useState(null);
-    const [destinationStop, setDestinationStop] = useState(null);
+    const [waitPoint, setWaitPoint] = useState(null);
     const [eta, setEta] = useState(null);
 
     const stops = selectedSequence?.stops || [];
-    const directionUnavailable = Boolean(
-        selectedStop &&
-        destinationStop &&
-        !canTravelInSequence(selectedSequence, selectedStop.id, destinationStop.id)
-    );
 
     useEffect(() => {
         if (routeData) {
@@ -53,14 +49,13 @@ export default function MapScreen({ route, navigation }) {
 
     useEffect(() => {
         if (stops.length > 0) {
-            const requestedOrigin = stops.find((stop) => stop.id === requestedOriginStopId);
-            setDestinationStop(stops[stops.length - 1]);
-            setSelectedStop(requestedOrigin || stops[0]);
+            const requestedPoint = stops.find((stop) => stop.id === requestedWaitPointId) || stops[0];
+            setWaitPoint(positionFromStop(requestedPoint, selectedSequence));
         }
-    }, [routeData?.nombre, selectedSequence?.id, requestedOriginStopId]);
+    }, [routeData?.nombre, selectedSequence?.id, requestedWaitPointId]);
 
     useEffect(() => {
-        if (!selectedStop || !destinationStop || !routeData || isOffline) {
+        if (!waitPoint || !routeData) {
             setEta(null);
             return;
         }
@@ -68,7 +63,7 @@ export default function MapScreen({ route, navigation }) {
         let cancelled = false;
         setEta({ minutes: 0, loading: true });
 
-        getEta(routeData.nombre, selectedStop.id, destinationStop.id, selectedSequence?.id)
+        getEta(routeData.nombre, waitPoint, selectedSequence?.id)
             .then((result) => {
                 if (!cancelled) {
                     setEta(result ? { ...result, loading: false } : null);
@@ -83,7 +78,7 @@ export default function MapScreen({ route, navigation }) {
         return () => {
             cancelled = true;
         };
-    }, [selectedStop, destinationStop, routeData, selectedSequence?.id, isOffline]);
+    }, [waitPoint, routeData, selectedSequence?.id]);
 
     const handleToggleFavorite = useCallback(async () => {
         if (!routeData) return;
@@ -92,8 +87,33 @@ export default function MapScreen({ route, navigation }) {
     }, [routeData]);
 
     const handleSelectStop = useCallback((stop) => {
-        setSelectedStop(stop);
-    }, []);
+        if (selectedSequence) setWaitPoint(positionFromStop(stop, selectedSequence));
+    }, [selectedSequence]);
+
+    const handleRoutePress = useCallback((coordinate) => {
+        if (!routeData || !selectedSequence) return;
+        if (!Number.isFinite(coordinate?.latitude) || !Number.isFinite(coordinate?.longitude)) {
+            Alert.alert('Selección no disponible', 'Usa la lista de referencias para elegir dónde esperar.');
+            return;
+        }
+        const candidates = findRoutePositionCandidates(routeData.nombre, selectedSequence, coordinate);
+        if (candidates.length === 0) {
+            Alert.alert('Punto fuera del recorrido', 'Toca directamente sobre la línea de la ruta.');
+            return;
+        }
+        if (candidates.length === 1) {
+            setWaitPoint(candidates[0]);
+            return;
+        }
+        Alert.alert(
+            'Elige el paso de la ruta',
+            'La ruta pasa más de una vez por este lugar. ¿En qué tramo esperarás?',
+            candidates.map((candidate) => ({
+                text: candidate.passageLabel,
+                onPress: () => setWaitPoint(candidate),
+            })).concat({ text: 'Cancelar', style: 'cancel' })
+        );
+    }, [routeData, selectedSequence]);
 
     const fitRouteToMap = useCallback(() => {
         if (displayCoordinates?.length > 1) {
@@ -114,7 +134,7 @@ export default function MapScreen({ route, navigation }) {
                 showsUserLocation={true}
                 onMapReady={fitRouteToMap}
             >
-                <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={selectedStop?.id} onStopPress={handleSelectStop} />
+                <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={waitPoint?.id} selectedPosition={waitPoint} onStopPress={handleSelectStop} onRoutePress={handleRoutePress} />
             </MapView>
 
             <SafeAreaView style={styles.topOverlay}>
@@ -131,7 +151,7 @@ export default function MapScreen({ route, navigation }) {
                         <Text style={styles.routeTitle}>Mapa en vivo</Text>
                     </View>
                 )}
-                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir paradero manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre, sequenceId: selectedSequence?.id })}>
+                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir punto de espera manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre, sequenceId: selectedSequence?.id })}>
                     <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
                 </TouchableOpacity>}
             </SafeAreaView>
@@ -155,9 +175,7 @@ export default function MapScreen({ route, navigation }) {
                     hasCoordinates={stops.length > 0 || !!coordinates}
                     isOffline={isOffline}
                     eta={eta}
-                    originName={selectedStop?.name}
-                    destinationName={destinationStop?.name}
-                    directionUnavailable={directionUnavailable}
+                    waitPointName={waitPoint?.name}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}
                 />

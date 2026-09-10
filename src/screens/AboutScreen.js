@@ -13,7 +13,7 @@ export default function AboutScreen({ navigation }) {
             <ScrollView contentContainerStyle={styles.content}>
                 <View style={styles.logo}><Ionicons name="bus" size={34} color="#FFFFFF" /></View>
                 <Text style={styles.name}>Avanza Ilo</Text><Text style={styles.version}>Versión 1.0.0 MVP</Text>
-                <Text style={styles.paragraph}>Avanza Ilo es una plataforma diseñada para mejorar la movilidad urbana en Ilo, mostrando rutas, paraderos y tiempos estimados de arribo.</Text>
+                <Text style={styles.paragraph}>Avanza Ilo es una prueba de concepto para consultar rutas, referencias del recorrido y estimaciones de espera en Ilo.</Text>
                 <View style={styles.info}><Text style={styles.label}>CON EL RESPALDO DE</Text><Text style={styles.value}>Municipalidad Provincial de Ilo</Text></View>
                 <View style={styles.info}><Text style={styles.label}>DESARROLLADO POR</Text><Text style={styles.value}>Jesús Martínez · Ricardo Pineda</Text><Text style={styles.value}>Escuela Profesional de Ingeniería</Text></View>
                 <AppButton label="Términos y privacidad" variant="outline" onPress={() => Linking.openURL('https://www.privacypolicies.com/')} />

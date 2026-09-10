@@ -15,7 +15,7 @@ export default function LiveMapCard({ onPress }) {
             </View>
             <View style={styles.liveMapInfo}>
                 <Text style={styles.liveMapTitle}>Explorar recorridos en el mapa</Text>
-                <Text style={styles.liveMapDesc}>Ubica rutas, paraderos y sentido de viaje</Text>
+                <Text style={styles.liveMapDesc}>Ubica rutas, referencias y sentido de viaje</Text>
             </View>
             <View style={styles.liveMapGoBtn}>
                 <Ionicons name="arrow-forward" size={20} color={theme.colors.surface} />

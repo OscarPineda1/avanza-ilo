@@ -19,7 +19,7 @@ module.exports = {
         NSLocationWhenInUseUsageDescription: "Avanza Ilo necesita acceder a tu ubicación para mostrar tu posición en el mapa y calcular tiempos de arribo.",
       },
       config: {
-        googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY || "AIzaSyBUwuGHIiPDjzEcI9Jwmd-a2TbwjrEADSM",
+        googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY,
       },
     },
     android: {
@@ -32,7 +32,7 @@ module.exports = {
       permissions: ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       config: {
         googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY || "AIzaSyBUwuGHIiPDjzEcI9Jwmd-a2TbwjrEADSM",
+          apiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY,
         },
       },
     },

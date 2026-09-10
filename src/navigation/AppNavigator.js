@@ -17,8 +17,6 @@ import AboutScreen from '../screens/AboutScreen';
 import StopSelectionScreen from '../screens/StopSelectionScreen';
 import LocationPermissionScreen from '../screens/LocationPermissionScreen';
 import NearbyStopsScreen from '../screens/NearbyStopsScreen';
-import EtaLoadingScreen from '../screens/EtaLoadingScreen';
-import LiveRouteScreen from '../screens/LiveRouteScreen';
 import StatusScreen from '../screens/StatusScreen';
 import BottomNavbar from '../components/BottomNavbar';
 import OfflineModal from '../components/OfflineModal';
@@ -67,8 +65,6 @@ export default function AppNavigator() {
                 <Stack.Screen name="StopSelection" component={StopSelectionScreen} />
                 <Stack.Screen name="LocationPermission" component={LocationPermissionScreen} />
                 <Stack.Screen name="NearbyStops" component={NearbyStopsScreen} />
-                <Stack.Screen name="EtaLoading" component={EtaLoadingScreen} />
-                <Stack.Screen name="LiveRoute" component={LiveRouteScreen} />
                 <Stack.Screen name="Status" component={StatusScreen} />
             </Stack.Navigator>
             <OfflineModal

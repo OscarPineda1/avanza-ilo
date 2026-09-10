@@ -1,59 +1,65 @@
-Avanza Ilo: Sistema de Predicción ETA (Software-Centric)
+# Avanza Ilo
 
-📌 Introducción
-Este proyecto nace como una solución de ingeniería de computación para la asimetría de información en el transporte público de Ilo. A diferencia de las soluciones tradicionales que requieren sensores GPS (IoT) en cada vehículo, Avanza Ilo utiliza un modelo de inferencia basado en Teoría de Grafos y el algoritmo de Dijkstra, permitiendo calcular tiempos de arribo (ETA) predictivos mediante datos maestros de frecuencia y topología vial. Es una propuesta Software-Centric que garantiza escalabilidad, bajo costo de implementación y alta disponibilidad.
+Prueba de concepto móvil para consultar los circuitos piloto 1A, D y 14, elegir un punto de espera y ejecutar un modelo estimativo sin telemetría vehicular.
 
-🚀 Guía de Ejecución y Despliegue
-1. Requisitos Previos
-Para evitar errores de compatibilidad, asegúrate de tener instalado:
+## Alcance actual
 
-Node.js: Versión LTS (se recomienda v20.19.4+).
+- Catálogo local versionado con rutas, secuencias, referencias, horario, frecuencia y fuente.
+- Circuitos dirigidos completos; un cruce no crea conexiones ni recorridos inversos.
+- Selección manual de una referencia o de un punto sobre la polilínea, sin requerir GPS.
+- Grafo dirigido y Dijkstra sobre la secuencia completa.
+- Motor temporal capaz de elegir llegadas candidatas cuando existe una fase de despacho sustentada.
+- Suite reproducible que incluye el ejemplo sintético 07:12 → 07:15.
 
-Expo CLI: npm install -g expo-cli
+Los datos reales actuales no incluyen una fase de despacho validada. La interfaz muestra **espera promedio estimada** (`frecuencia ÷ 2`) y no inventa una próxima unidad, posición GPS ni precisión ±5 minutos.
 
-Entorno: Se ha configurado específicamente para Expo SDK 54.
+## Requisitos
 
-2. Pasos para Inicializar
-Clonar el repositorio:
+- Node.js 20.19.4 o superior.
+- Expo SDK 54 / Expo Go compatible.
+- Android SDK y Java para generar un APK local.
 
-Intento
-git clone [URL_DE_TU_REPO]
-cd avanza-ilo
-Instalación de Dependencias:
-Ejecuta el siguiente comando para limpiar y asegurar que las librerías (React Navigation, Maps, etc.) se instalen correctamente:
+## Ejecución
 
-Intento
-npm install
-Ejecutar el Proyecto:
-Para evitar errores de caché en el bundler, inicia siempre con el limpiador de caché:
-
-Intento
+```powershell
+Copy-Item .env.example .env
+npm ci
 npx expo start -c
-⚠️ Consideraciones Críticas (Lo que debes cuidar)
-Como estamos trabajando con un proyecto modular y dependencias de navegación, ten cuidado con lo siguiente:
+```
 
-Rutas de Archivos (Windows): Si al intentar compilar recibes el error Unable to resolve module, es probable que se deba a la profundidad de carpetas en Windows.
+Completa las claves de Google Maps solo en `.env`. Ese archivo no se versiona.
 
-Solución: Si persiste, instala react-is manualmente (npm install react-is) para forzar la resolución del paquete en node_modules.
+## Verificación
 
-Gestión de Caché: Si haces cambios en la estructura de navegación o instalas una nueva librería y la app no responde o se cierra, no reinstales todo. Primero haz:
+```powershell
+npm run verify
+npm run demo:arrival
+```
 
-Intento
-watchman watch-del-all # (Si usas Mac/Linux)
-npx expo start -c
-Firebase / Cloud Functions: La lógica de Dijkstra reside en el backend. Asegúrate de que las credenciales de Firebase en tu archivo .env tengan los permisos correctos de lectura en la colección rutas_grafo. Si la app no muestra el ETA, verifica que el objeto JSON devuelto por la función cloud coincida con el formato de lista de adyacencia esperado por tu MapScreen.
+`verify` ejecuta TypeScript, las pruebas del núcleo y la validación del catálogo. La evidencia y trazabilidad de OE1 están en `docs/evidencias/`.
 
-🏗 Arquitectura del Proyecto (Estructura de Carpetas)
-Para mantener el código limpio y escalable, sigue esta jerarquía:
+## APK y respaldo reproducibles
 
-Texto plano
+```powershell
+npm run build:android:release
+npm run backup:create
+```
+
+Los resultados se escriben en `artifacts/`, que no se versiona. El manifiesto del APK registra commit, versión de datos y SHA-256. El respaldo se crea desde `git archive HEAD`, por lo que no contiene `.env`, dependencias ni archivos generados.
+
+## Estructura
+
+```text
 src/
-├── navigation/      # Configuración de AppNavigator (Stack/Tabs)
-├── screens/         # Componentes de vista (HomeScreen, MapScreen, etc.)
-├── services/        # Conexiones a Firebase y lógica de Dijkstra
-├── styles/          # Estilos globales y constantes de diseño
-└── utils/           # Funciones auxiliares y formateadores de datos
-💡 Notas para el Evaluador
-Enfoque Académico: Este código es la implementación práctica del Capítulo 4 de la investigación.
+├── components/   interfaz reutilizable
+├── navigation/   navegación de pantallas
+├── screens/      búsqueda, mapa y selección
+├── services/     catálogo, grafo, ETA, calibración y validación
+├── styles/       tema visual
+└── utils/        geometrías publicadas
+tests/            casos reproducibles del núcleo
+scripts/          validación, demostración, build y respaldo
+docs/evidencias/  decisiones, resultados y límites
+```
 
-Validación: El algoritmo de Dijkstra se ha diseñado para correr en el servidor (Cloud Functions) para que el dispositivo móvil del usuario (pasajero) no agote su batería realizando cálculos matemáticos intensivos.
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) antes de crear commits.

@@ -22,7 +22,7 @@ export default function OfflineModal({ visible, onClose }) {
                     {/* Textos de Alto Contraste */}
                     <Text style={styles.title}>Sin conexión a Internet</Text>
                     <Text style={styles.message}>
-                        Parece que perdiste la señal. Estás viendo las rutas y paraderos guardados en la memoria caché de tu celular. El tiempo de arribo (ETA) no estará disponible hasta recuperar la conexión.
+                        Parece que perdiste la señal. Las rutas, referencias y el cálculo local siguen disponibles; el mapa base puede tardar en actualizarse.
                     </Text>
 
                     {/* Botón de Acción */}

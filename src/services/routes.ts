@@ -14,6 +14,10 @@ import {
   createRouteSequence,
   type RouteSequence,
 } from './route-sequences';
+import {
+  BASELINE_TRAVEL_PROFILE,
+  type TravelTimeProfile,
+} from './graph';
 
 export type LatLng = {
   latitude: number;
@@ -39,6 +43,18 @@ export type Route = {
   sentido: string;
   defaultSequenceId: string;
   sequences: RouteSequence[];
+  service: ServiceProfile;
+  travelProfile: TravelTimeProfile;
+};
+
+export type ServiceProfile = {
+  startMinute: number;
+  endMinute: number;
+  headwayMinutes: number;
+  dispatchReferenceMinute: number | null;
+  dispatchReferenceKind: 'none' | 'scheduled' | 'estimated';
+  source: string;
+  sourceDate: string;
 };
 
 export type RouteCatalogMetadata = {
@@ -53,7 +69,7 @@ export type RouteCatalogMetadata = {
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   id: 'avanza-ilo-rutas-piloto',
-  version: '2026-09-09-hu20-circuitos',
+  version: '2026-09-09-oe1-nucleo-v1',
   source:
     'Google My Maps, correccion del responsable de datos en HU-19 y aclaracion funcional de HU-20',
   sourceDate: '2026-09-09',
@@ -61,6 +77,38 @@ export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
     'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Cada retorno se declara dentro de su secuencia; no se generan conexiones automaticas entre rutas.',
+};
+
+const SERVICE_SOURCE = 'Ficha operativa del catálogo piloto; fase de despacho pendiente de validación de campo';
+
+const serviceProfiles: Record<'1A' | 'D' | '14', ServiceProfile> = {
+  '1A': {
+    startMinute: 6 * 60,
+    endMinute: 21 * 60,
+    headwayMinutes: 10,
+    dispatchReferenceMinute: null,
+    dispatchReferenceKind: 'none',
+    source: SERVICE_SOURCE,
+    sourceDate: '2026-09-09',
+  },
+  D: {
+    startMinute: 6 * 60 + 15,
+    endMinute: 20 * 60 + 45,
+    headwayMinutes: 12,
+    dispatchReferenceMinute: null,
+    dispatchReferenceKind: 'none',
+    source: SERVICE_SOURCE,
+    sourceDate: '2026-09-09',
+  },
+  '14': {
+    startMinute: 6 * 60,
+    endMinute: 21 * 60,
+    headwayMinutes: 15,
+    dispatchReferenceMinute: null,
+    dispatchReferenceKind: 'none',
+    source: SERVICE_SOURCE,
+    sourceDate: '2026-09-09',
+  },
 };
 
 const RUTA_1A_CRUCE_REGRESO_INDEX = 324;
@@ -173,6 +221,8 @@ const routes: Route[] = [
     sentido: ruta1ASequence.label,
     defaultSequenceId: ruta1ASequence.id,
     sequences: [ruta1ASequence],
+    service: serviceProfiles['1A'],
+    travelProfile: BASELINE_TRAVEL_PROFILE,
   },
   {
     id: '2',
@@ -193,6 +243,8 @@ const routes: Route[] = [
     sentido: rutaDSequence.label,
     defaultSequenceId: rutaDSequence.id,
     sequences: [rutaDSequence],
+    service: serviceProfiles.D,
+    travelProfile: BASELINE_TRAVEL_PROFILE,
   },
   {
     id: '4',
@@ -213,6 +265,8 @@ const routes: Route[] = [
     sentido: ruta14Sequence.label,
     defaultSequenceId: ruta14Sequence.id,
     sequences: [ruta14Sequence],
+    service: serviceProfiles['14'],
+    travelProfile: BASELINE_TRAVEL_PROFILE,
   },
 ];
 
