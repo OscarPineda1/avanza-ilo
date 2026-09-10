@@ -2,6 +2,7 @@ param([switch]$SkipCompile)
 
 $ErrorActionPreference = 'Stop'
 
+<<<<<<< HEAD
 function Get-Sha256([string]$Path) {
     $stream = [System.IO.File]::OpenRead($Path)
     $algorithm = [System.Security.Cryptography.SHA256]::Create()
@@ -13,6 +14,8 @@ function Get-Sha256([string]$Path) {
     }
 }
 
+=======
+>>>>>>> b824d1cf46859e282d6e8db3860cb83275da811b
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $artifacts = Join-Path $repository 'artifacts'
 $androidDirectory = Join-Path $repository 'android'
@@ -60,7 +63,11 @@ if (-not (Test-Path -LiteralPath $apk)) {
 
 $commit = (git rev-parse HEAD).Trim()
 $dataVersion = (npx tsx -e "import {ROUTE_CATALOG_METADATA as m} from './src/services/routes'; console.log(m.version)").Trim()
+<<<<<<< HEAD
 $hash = Get-Sha256 $apk
+=======
+$hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $apk).Hash.ToLowerInvariant()
+>>>>>>> b824d1cf46859e282d6e8db3860cb83275da811b
 $destination = Join-Path $artifacts "avanza-ilo-$($commit.Substring(0, 7)).apk"
 Copy-Item -LiteralPath $apk -Destination $destination -Force
 
