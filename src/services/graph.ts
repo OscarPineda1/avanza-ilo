@@ -55,9 +55,14 @@ function assertProfile(profile: TravelTimeProfile): void {
   }
 }
 
-function edgeWeightSeconds(distanceMeters: number, profile: TravelTimeProfile): number {
+function edgeWeightSeconds(
+  distanceMeters: number,
+  profile: TravelTimeProfile,
+  reachesStop: boolean
+): number {
   const metersPerSecond = (profile.averageSpeedKmh * 1000) / 3600;
-  return distanceMeters / metersPerSecond;
+  const stopPenaltySeconds = reachesStop ? profile.stopPenaltyMinutes * 60 : 0;
+  return distanceMeters / metersPerSecond + stopPenaltySeconds;
 }
 
 export function buildDirectedRouteGraph(
@@ -73,9 +78,10 @@ export function buildDirectedRouteGraph(
   }
 
   const adjacency: Edge[] = [];
+  const stopIndexSet = new Set(stopIndexes);
   for (let index = 0; index < coordinates.length - 1; index += 1) {
     const distance = haversineDistance(coordinates[index], coordinates[index + 1]);
-    const weight = edgeWeightSeconds(distance, profile);
+    const weight = edgeWeightSeconds(distance, profile, stopIndexSet.has(index + 1));
     if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(weight) || weight < 0) {
       throw new Error(`El segmento ${index}-${index + 1} tiene un peso inválido.`);
     }

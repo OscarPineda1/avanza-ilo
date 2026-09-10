@@ -92,6 +92,21 @@ test('HU-10/11: Dijkstra devuelve cero en el mismo nodo y reconstruye el camino 
   assert.deepEqual(shortestPath(branchedGraph, 0, 3), { distance: 5, path: [0, 2, 1, 3] });
 });
 
+test('HU-10/18: el peso suma penalidad solo al alcanzar una parada declarada', () => {
+  const route = getAllRoutes()[0];
+  const coordinates = route.sequences[0].coordinates.slice(0, 3);
+  const baseGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-base', {
+    ...route.travelProfile,
+    stopPenaltyMinutes: 0,
+  }, [1]);
+  const penalizedGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-penalizado', {
+    ...route.travelProfile,
+    stopPenaltyMinutes: 1.5,
+  }, [1]);
+  assert.ok(Math.abs(penalizedGraph.adjacency[0].weight - baseGraph.adjacency[0].weight - 90) < 1e-9);
+  assert.equal(penalizedGraph.adjacency[1].weight, baseGraph.adjacency[1].weight);
+});
+
 test('HU-08: frecuencias mostradas y usadas comparten el mismo dato maestro', () => {
   for (const route of getAllRoutes()) {
     assert.equal(route.frecuencia, `${route.service.headwayMinutes} min`);
@@ -104,9 +119,11 @@ test('HU-08/10: el validador rechaza frecuencia incoherente y pesos inválidos',
   const routes = cloneRoutes();
   routes[0].service.headwayMinutes = -1;
   routes[1].travelProfile.averageSpeedKmh = 0;
+  routes[2].service.dispatchReferenceKind = 'scheduled';
+  routes[2].service.dispatchReferenceMinute = null;
   const result = validateRouteCatalog(routes, ROUTE_CATALOG_METADATA);
   assert.equal(result.valid, false);
-  assert.ok(result.issues.some((issue) => issue.code === 'pilot.service-profile'));
+  assert.ok(result.issues.some((issue) => issue.code === 'pilot.service-profile' && issue.routeId === routes[2].id));
   assert.ok(result.issues.some((issue) => issue.code === 'pilot.travel-profile'));
 });
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildArrivalCandidates,
   computeEta,
   inferArrivalFromService,
   travelMinutesToPosition,
@@ -65,6 +66,20 @@ test('HU-06/20: un tramo compartido ofrece ida y regreso como pasos distintos', 
 });
 
 test('HU-11/16/17: caso manual 07:12 elige la unidad ya despachada que llega 07:15', () => {
+  const candidates = buildArrivalCandidates(syntheticService, 5, 7 * 60 + 12);
+  assert.deepEqual(
+    candidates.map((candidate) => [
+      candidate.departureTime,
+      candidate.arrivalTime,
+      candidate.alreadyDispatched,
+      candidate.decision,
+    ]),
+    [
+      ['07:00', '07:05', true, 'discarded-before-query'],
+      ['07:10', '07:15', true, 'selected'],
+      ['07:20', '07:25', false, 'later'],
+    ]
+  );
   const result = inferArrivalFromService(syntheticService, 5, 7 * 60 + 12, 'C', 'sintético-v1');
   assert.equal(result.status, 'arrival');
   assert.equal(result.minutes, 3);
@@ -96,6 +111,10 @@ test('HU-11/17: ruta, sentido o dato temporal incompatible se reporta como no di
   assert.equal(computeEta(route.nombre, foreignPoint, 12 * 60, route.defaultSequenceId).status, 'unavailable');
   assert.equal(
     inferArrivalFromService({ ...syntheticService, headwayMinutes: -2 }, 5, 7 * 60 + 12, 'C').status,
+    'unavailable'
+  );
+  assert.equal(
+    inferArrivalFromService({ ...syntheticService, dispatchReferenceMinute: null }, 5, 7 * 60 + 12, 'C').status,
     'unavailable'
   );
   assert.equal(

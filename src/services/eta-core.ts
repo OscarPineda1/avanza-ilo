@@ -29,6 +29,21 @@ export type EtaResult = {
   waitPointName: string;
 };
 
+export type ArrivalCandidateDecision =
+  | 'discarded-before-query'
+  | 'selected'
+  | 'later';
+
+export type ArrivalCandidate = {
+  ordinal: number;
+  departureMinute: number;
+  arrivalMinute: number;
+  departureTime: string;
+  arrivalTime: string;
+  alreadyDispatched: boolean;
+  decision: ArrivalCandidateDecision;
+};
+
 const graphCache = new Map<string, Graph>();
 
 export function parseFrequencyMinutes(frequency: string | undefined): number | undefined {
@@ -47,6 +62,71 @@ export function formatMinuteOfDay(value: number): string {
   if (!Number.isFinite(value)) return '--:--';
   const normalized = ((Math.round(value) % 1440) + 1440) % 1440;
   return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+}
+
+function hasCoherentDispatchReference(service: ServiceProfile): boolean {
+  return service.dispatchReferenceKind === 'none'
+    ? service.dispatchReferenceMinute === null
+    : service.dispatchReferenceMinute !== null && Number.isFinite(service.dispatchReferenceMinute);
+}
+
+/**
+ * HU-16: expande la fase de despacho dentro de la ventana de servicio y
+ * clasifica cada arribo respecto de la hora de consulta. La unidad elegida
+ * puede haber partido antes de la consulta si todavía no llegó al punto.
+ */
+export function buildArrivalCandidates(
+  service: ServiceProfile,
+  travelMinutes: number,
+  queryMinute: number
+): ArrivalCandidate[] {
+  const reference = service.dispatchReferenceMinute;
+  if (
+    reference === null ||
+    service.dispatchReferenceKind === 'none' ||
+    !hasCoherentDispatchReference(service) ||
+    !Number.isFinite(reference) ||
+    !Number.isFinite(queryMinute) ||
+    !Number.isFinite(travelMinutes) ||
+    travelMinutes < 0 ||
+    !Number.isFinite(service.startMinute) ||
+    !Number.isFinite(service.endMinute) ||
+    service.endMinute < service.startMinute ||
+    !Number.isFinite(service.headwayMinutes) ||
+    service.headwayMinutes <= 0
+  ) return [];
+
+  const firstPhaseIndex = Math.ceil(
+    (service.startMinute - reference) / service.headwayMinutes
+  );
+  const lastPhaseIndex = Math.floor(
+    (service.endMinute - reference) / service.headwayMinutes
+  );
+  let selected = false;
+  const candidates: ArrivalCandidate[] = [];
+
+  for (let index = firstPhaseIndex; index <= lastPhaseIndex; index += 1) {
+    const departureMinute = reference + index * service.headwayMinutes;
+    const arrivalMinute = departureMinute + travelMinutes;
+    let decision: ArrivalCandidateDecision = 'later';
+    if (arrivalMinute < queryMinute) {
+      decision = 'discarded-before-query';
+    } else if (!selected) {
+      decision = 'selected';
+      selected = true;
+    }
+    candidates.push({
+      ordinal: candidates.length + 1,
+      departureMinute,
+      arrivalMinute,
+      departureTime: formatMinuteOfDay(departureMinute),
+      arrivalTime: formatMinuteOfDay(arrivalMinute),
+      alreadyDispatched: departureMinute <= queryMinute,
+      decision,
+    });
+  }
+
+  return candidates;
 }
 
 function unavailable(
@@ -83,12 +163,13 @@ export function inferArrivalFromService(
     !Number.isFinite(service.endMinute) ||
     service.endMinute < service.startMinute ||
     !Number.isFinite(service.headwayMinutes) ||
-    service.headwayMinutes <= 0
+    service.headwayMinutes <= 0 ||
+    !hasCoherentDispatchReference(service)
   ) {
     return unavailable('unavailable', queryMinute, 'Datos temporales o pesos inválidos.', waitPointName);
   }
 
-  if (service.dispatchReferenceMinute === null || service.dispatchReferenceKind === 'none') {
+  if (service.dispatchReferenceKind === 'none') {
     if (queryMinute < service.startMinute || queryMinute > service.endMinute) {
       return unavailable('out-of-service', queryMinute, 'Consulta fuera del horario declarado.', waitPointName);
     }
@@ -105,19 +186,12 @@ export function inferArrivalFromService(
     };
   }
 
-  const firstDeparture = service.dispatchReferenceMinute;
-  const firstArrival = firstDeparture + travelMinutes;
-  const lastArrival = service.endMinute + travelMinutes;
-  if (queryMinute > lastArrival) {
+  const candidates = buildArrivalCandidates(service, travelMinutes, queryMinute);
+  const selectedCandidate = candidates.find((candidate) => candidate.decision === 'selected');
+  if (!selectedCandidate) {
     return unavailable('out-of-service', queryMinute, 'La última unidad estimada ya pasó por este punto.', waitPointName);
   }
-
-  const candidateIndex = Math.max(0, Math.ceil((queryMinute - firstArrival) / service.headwayMinutes));
-  const departure = firstDeparture + candidateIndex * service.headwayMinutes;
-  if (departure > service.endMinute) {
-    return unavailable('out-of-service', queryMinute, 'No quedan salidas que alcancen este punto.', waitPointName);
-  }
-  const arrival = departure + travelMinutes;
+  const arrival = selectedCandidate.arrivalMinute;
   const minutes = Math.max(0, Math.round((arrival - queryMinute) * 10) / 10);
 
   return {

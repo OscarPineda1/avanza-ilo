@@ -1,4 +1,4 @@
-import { inferArrivalFromService } from '../src/services/eta-core';
+import { buildArrivalCandidates, inferArrivalFromService } from '../src/services/eta-core';
 import type { ServiceProfile } from '../src/services/routes';
 
 const service: ServiceProfile = {
@@ -18,8 +18,15 @@ const result = inferArrivalFromService(
   'Referencia C',
   'ejemplo-sintetico-p9'
 );
+const candidates = buildArrivalCandidates(service, 5, 7 * 60 + 12);
 
 console.log('Caso: A → B → C, 5 min acumulados; salidas 07:00/07:10/07:20; consulta 07:12.');
+console.table(candidates.map((candidate) => ({
+  salida: candidate.departureTime,
+  llegadaAC: candidate.arrivalTime,
+  yaHabiaSalido: candidate.alreadyDispatched ? 'sí' : 'no',
+  decision: candidate.decision,
+})));
 console.log('Esperado: llegada 07:15, ETA 3 min.');
 console.log(`Obtenido: llegada ${result.estimatedArrival}, ETA ${result.minutes} min, estado ${result.status}.`);
 

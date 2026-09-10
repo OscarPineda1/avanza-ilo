@@ -17,7 +17,6 @@ Los datos reales actuales no incluyen una fase de despacho validada. La interfaz
 
 - Node.js 20.19.4 o superior.
 - Expo SDK 54 / Expo Go compatible.
-- Android SDK y Java para generar un APK local.
 
 ## Ejecución
 
@@ -36,16 +35,7 @@ npm run verify
 npm run demo:arrival
 ```
 
-`verify` ejecuta TypeScript, las pruebas del núcleo y la validación del catálogo. La evidencia y trazabilidad de OE1 están en `docs/evidencias/`.
-
-## APK y respaldo reproducibles
-
-```powershell
-npm run build:android:release
-npm run backup:create
-```
-
-Los resultados se escriben en `artifacts/`, que no se versiona. El manifiesto del APK registra commit, versión de datos y SHA-256. El respaldo se crea desde `git archive HEAD`, por lo que no contiene `.env`, dependencias ni archivos generados.
+`verify` ejecuta TypeScript, las pruebas del núcleo y la validación del catálogo. La evidencia, las fórmulas y el guion de defensa de OE1 están en `docs/evidencias/OE1-defensa-modelo-estimativo.md`.
 
 ## Estructura
 
@@ -58,7 +48,7 @@ src/
 ├── styles/       tema visual
 └── utils/        geometrías publicadas
 tests/            casos reproducibles del núcleo
-scripts/          validación, demostración, build y respaldo
+scripts/          validación y demostración del modelo
 docs/evidencias/  decisiones, resultados y límites
 ```
 

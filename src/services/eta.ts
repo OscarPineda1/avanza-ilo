@@ -3,6 +3,7 @@ import type { RoutePosition } from './route-position';
 
 export type { EtaResult } from './eta-core';
 export {
+  buildArrivalCandidates,
   computeEta,
   formatMinuteOfDay,
   inferArrivalFromService,

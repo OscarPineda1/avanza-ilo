@@ -11,9 +11,7 @@
     "validate:catalog": "tsx scripts/validate-route-catalog.ts",
     "test": "tsx --test tests/*.test.ts",
     "verify": "npm run typecheck && npm test && npm run validate:catalog",
-    "demo:arrival": "tsx scripts/demo-arrival.ts",
-    "build:android:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
-    "backup:create": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/create-backup.ps1"
+    "demo:arrival": "tsx scripts/demo-arrival.ts"
   },
   "engines": {
     "node": ">=20.19.4"

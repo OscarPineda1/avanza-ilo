@@ -185,12 +185,17 @@ export function validateRouteCatalog(
     }
 
     const parsedFrequency = parsePositiveMinutes(route.frecuencia);
+    const hasValidDispatchReference = route.service.dispatchReferenceKind === 'none'
+      ? route.service.dispatchReferenceMinute === null
+      : route.service.dispatchReferenceMinute !== null &&
+        Number.isFinite(route.service.dispatchReferenceMinute);
     if (
       !Number.isFinite(route.service.startMinute) ||
       !Number.isFinite(route.service.endMinute) ||
       route.service.endMinute <= route.service.startMinute ||
       !Number.isFinite(route.service.headwayMinutes) ||
       route.service.headwayMinutes <= 0 ||
+      !hasValidDispatchReference ||
       parsedFrequency !== route.service.headwayMinutes ||
       !isNonEmpty(route.service.source) ||
       !isIsoDate(route.service.sourceDate)
