@@ -1,5 +1,5 @@
 import { haversineDistance } from './haversine';
-import { buildGraphFromStops } from './graph';
+import { buildDirectedRouteGraph } from './graph';
 import {
   flattenRouteLayers,
   getLayerJoinDistance,
@@ -180,6 +180,40 @@ export function validateRouteCatalog(
       issues.push({
         code: 'pilot.frequency',
         message: `La frecuencia de la ruta ${route.nombre} debe ser positiva y expresarse en minutos.`,
+        routeId: route.id,
+      });
+    }
+
+    const parsedFrequency = parsePositiveMinutes(route.frecuencia);
+    if (
+      !Number.isFinite(route.service.startMinute) ||
+      !Number.isFinite(route.service.endMinute) ||
+      route.service.endMinute <= route.service.startMinute ||
+      !Number.isFinite(route.service.headwayMinutes) ||
+      route.service.headwayMinutes <= 0 ||
+      parsedFrequency !== route.service.headwayMinutes ||
+      !isNonEmpty(route.service.source) ||
+      !isIsoDate(route.service.sourceDate)
+    ) {
+      issues.push({
+        code: 'pilot.service-profile',
+        message: `La ruta ${route.nombre} debe usar un único perfil de servicio válido y coherente con la frecuencia mostrada.`,
+        routeId: route.id,
+      });
+    }
+
+    if (
+      !isNonEmpty(route.travelProfile.id) ||
+      !Number.isFinite(route.travelProfile.averageSpeedKmh) ||
+      route.travelProfile.averageSpeedKmh <= 0 ||
+      !Number.isFinite(route.travelProfile.stopPenaltyMinutes) ||
+      route.travelProfile.stopPenaltyMinutes < 0 ||
+      !isNonEmpty(route.travelProfile.source) ||
+      !isIsoDate(route.travelProfile.sourceDate)
+    ) {
+      issues.push({
+        code: 'pilot.travel-profile',
+        message: `La ruta ${route.nombre} debe declarar fuente, unidad y pesos temporales válidos.`,
         routeId: route.id,
       });
     }
@@ -407,6 +441,7 @@ export function validateRouteCatalog(
           reference.routeName.toUpperCase() !== route.nombre.toUpperCase() ||
           reference.sequenceId !== sequence.id ||
           reference.order !== index ||
+          !Number.isInteger(reference.coordinateIndex) ||
           !isNonEmpty(reference.name)
         ) {
           issues.push({
@@ -425,7 +460,7 @@ export function validateRouteCatalog(
           (candidateIndex) => candidateIndex > previousCoordinateIndex
         );
 
-        if (matchingIndex === undefined) {
+        if (matchingIndex === undefined || matchingIndex !== reference.coordinateIndex) {
           issues.push({
             code: 'reference.direction',
             message: `Referencia ${reference.id} no sigue el sentido ${sequence.id}.`,
@@ -449,24 +484,39 @@ export function validateRouteCatalog(
         });
       }
 
-      const graph = buildGraphFromStops(sequenceStops);
-      weightCount += graph.adjacency.length;
-      graph.adjacency.forEach((edge) => {
-        if (
-          edge.to !== edge.from + 1 ||
-          !Number.isFinite(edge.distance) ||
-          edge.distance <= 0 ||
-          !Number.isFinite(edge.weight) ||
-          edge.weight <= 0
-        ) {
-          issues.push({
-            code: 'graph.direction-weight',
-            message: `La arista ${edge.from}-${edge.to} de ${sequence.id} no respeta el sentido o tiene peso invalido.`,
-            routeId: route.id,
-            sequenceId: sequence.id,
-          });
-        }
-      });
+      try {
+        const graph = buildDirectedRouteGraph(
+          sequence.coordinates,
+          route.nombre,
+          sequence.id,
+          route.travelProfile,
+          sequenceStops.map((stop) => stop.coordinateIndex)
+        );
+        weightCount += graph.adjacency.length;
+        graph.adjacency.forEach((edge) => {
+          if (
+            edge.to !== edge.from + 1 ||
+            !Number.isFinite(edge.distance) ||
+            edge.distance <= 0 ||
+            !Number.isFinite(edge.weight) ||
+            edge.weight <= 0
+          ) {
+            issues.push({
+              code: 'graph.direction-weight',
+              message: `La arista ${edge.from}-${edge.to} de ${sequence.id} no respeta el sentido o tiene peso invalido.`,
+              routeId: route.id,
+              sequenceId: sequence.id,
+            });
+          }
+        });
+      } catch {
+        issues.push({
+          code: 'graph.direction-weight',
+          message: `La secuencia ${sequence.id} no permite construir pesos dirigidos válidos.`,
+          routeId: route.id,
+          sequenceId: sequence.id,
+        });
+      }
     }
   }
 

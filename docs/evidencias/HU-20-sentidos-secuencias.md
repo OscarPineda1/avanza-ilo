@@ -2,7 +2,7 @@
 
 - Fecha de validacion: **2026-09-09**
 - Catalogo: `avanza-ilo-rutas-piloto`
-- Version: `2026-09-09-hu20-circuitos`
+- Version: `2026-09-09-oe1-nucleo-v1`
 
 ## Decision de alcance
 
@@ -39,8 +39,8 @@ El validador tambien rechaza como circuito cualquier secuencia cuyo cierre no ap
 
 - Cada referencia incluye `routeName` y `sequenceId`.
 - La navegacion conserva `sequenceId` desde el listado o mapa hasta la seleccion manual y el detalle.
-- El calculo de ETA busca origen y destino dentro de la misma secuencia.
-- Consultar desde el cierre posicional hacia el primer nodo devuelve un resultado inalcanzable; el cierre fisico del circuito no crea una arista automatica.
+- El cálculo ubica el punto de espera dentro de la misma ruta y secuencia.
+- Consultar desde el cierre posicional hacia el primer nodo devuelve un resultado inalcanzable; el cierre físico del circuito no crea una arista automática.
 - El constructor del grafo rechaza referencias que pertenezcan a rutas o secuencias distintas.
 
 ## Evidencia visible en la aplicacion
@@ -62,11 +62,11 @@ Comando de validacion:
 
 ```text
 npm run validate:catalog
-Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 24 pesos verificados.
+Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos verificados.
 Resultado: VALIDO
 ```
 
-Pruebas ejecutadas con `npm test`: **10 aprobadas, 0 fallidas**. Incluyen el cierre real de las tres rutas piloto, conservacion de capas, calculo dirigido, ausencia de reversos automaticos, circuito/cruce, aislamiento entre rutas y rechazo de circuitos sin cierre explicito.
+Las pruebas de `npm test` incluyen cierre de las tres rutas piloto, conservación de capas, cálculo dirigido sobre la geometría completa, ausencia de reversos automáticos, circuito/cruce y aislamiento entre rutas.
 
 ## Trazabilidad
 

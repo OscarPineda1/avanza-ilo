@@ -1,75 +1,219 @@
-import { buildGraphFromStops, dijkstra } from './graph';
-import { getRouteByName, getRouteSequence } from './routes';
-import type { RouteSequence } from './route-sequences';
+import {
+  buildDirectedRouteGraph,
+  dijkstra,
+  type Graph,
+} from './graph';
+import {
+  getRouteByName,
+  getRouteSequence,
+  ROUTE_CATALOG_METADATA,
+  type ServiceProfile,
+} from './routes';
+import { positionFromStop, type RoutePosition } from './route-position';
+
+export type EtaStatus =
+  | 'arrival'
+  | 'average-wait'
+  | 'out-of-service'
+  | 'unavailable';
 
 export type EtaResult = {
-  minutes: number;
-} | null;
+  status: EtaStatus;
+  minutes: number | null;
+  estimatedArrival: string | null;
+  queryTime: string;
+  method: string;
+  condition: string;
+  dataVersion: string;
+  travelMinutes: number | null;
+  waitPointName: string;
+};
 
-export function parseFrequencyMinutes(
-  frecuencia: string | undefined
-): number | undefined {
-  if (!frecuencia) return undefined;
-  const match = frecuencia.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : undefined;
+const graphCache = new Map<string, Graph>();
+
+export function parseFrequencyMinutes(frequency: string | undefined): number | undefined {
+  if (!frequency) return undefined;
+  const match = frequency.match(/^\s*(\d+(?:\.\d+)?)\s*min(?:utos?)?\s*$/i);
+  if (!match) return undefined;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-export function canTravelInSequence(
-  sequence: RouteSequence | undefined,
-  originStopId: string | undefined,
-  destinationStopId: string | undefined
-): boolean {
-  if (!sequence || !originStopId || !destinationStopId) return false;
+export function minuteOfDay(date: Date): number {
+  return date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60;
+}
 
-  const originIndex = sequence.stops.findIndex(
-    (stop) => stop.id === originStopId
-  );
-  const destinationIndex = sequence.stops.findIndex(
-    (stop) => stop.id === destinationStopId
-  );
+export function formatMinuteOfDay(value: number): string {
+  if (!Number.isFinite(value)) return '--:--';
+  const normalized = ((Math.round(value) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+}
 
-  return originIndex >= 0 && destinationIndex > originIndex;
+function unavailable(
+  status: Extract<EtaStatus, 'out-of-service' | 'unavailable'>,
+  queryMinute: number,
+  condition: string,
+  waitPointName: string
+): EtaResult {
+  return {
+    status,
+    minutes: null,
+    estimatedArrival: null,
+    queryTime: formatMinuteOfDay(queryMinute),
+    method: 'Sin cálculo',
+    condition,
+    dataVersion: ROUTE_CATALOG_METADATA.version,
+    travelMinutes: null,
+    waitPointName,
+  };
+}
+
+export function inferArrivalFromService(
+  service: ServiceProfile,
+  travelMinutes: number,
+  queryMinute: number,
+  waitPointName: string,
+  dataVersion = ROUTE_CATALOG_METADATA.version
+): EtaResult {
+  if (
+    !Number.isFinite(queryMinute) ||
+    !Number.isFinite(travelMinutes) ||
+    travelMinutes < 0 ||
+    !Number.isFinite(service.startMinute) ||
+    !Number.isFinite(service.endMinute) ||
+    service.endMinute < service.startMinute ||
+    !Number.isFinite(service.headwayMinutes) ||
+    service.headwayMinutes <= 0
+  ) {
+    return unavailable('unavailable', queryMinute, 'Datos temporales o pesos inválidos.', waitPointName);
+  }
+
+  if (service.dispatchReferenceMinute === null || service.dispatchReferenceKind === 'none') {
+    if (queryMinute < service.startMinute || queryMinute > service.endMinute) {
+      return unavailable('out-of-service', queryMinute, 'Consulta fuera del horario declarado.', waitPointName);
+    }
+    return {
+      status: 'average-wait',
+      minutes: Math.round((service.headwayMinutes / 2) * 10) / 10,
+      estimatedArrival: null,
+      queryTime: formatMinuteOfDay(queryMinute),
+      method: 'Frecuencia ÷ 2',
+      condition: 'Espera promedio inferida; no existe una fase de despacho validada.',
+      dataVersion,
+      travelMinutes: Math.round(travelMinutes * 10) / 10,
+      waitPointName,
+    };
+  }
+
+  const firstDeparture = service.dispatchReferenceMinute;
+  const firstArrival = firstDeparture + travelMinutes;
+  const lastArrival = service.endMinute + travelMinutes;
+  if (queryMinute > lastArrival) {
+    return unavailable('out-of-service', queryMinute, 'La última unidad estimada ya pasó por este punto.', waitPointName);
+  }
+
+  const candidateIndex = Math.max(0, Math.ceil((queryMinute - firstArrival) / service.headwayMinutes));
+  const departure = firstDeparture + candidateIndex * service.headwayMinutes;
+  if (departure > service.endMinute) {
+    return unavailable('out-of-service', queryMinute, 'No quedan salidas que alcancen este punto.', waitPointName);
+  }
+  const arrival = departure + travelMinutes;
+  const minutes = Math.max(0, Math.round((arrival - queryMinute) * 10) / 10);
+
+  return {
+    status: 'arrival',
+    minutes,
+    estimatedArrival: formatMinuteOfDay(arrival),
+    queryTime: formatMinuteOfDay(queryMinute),
+    method: service.dispatchReferenceKind === 'scheduled'
+      ? 'Llegadas candidatas desde salidas programadas'
+      : 'Llegadas candidatas desde fase de despacho estimada',
+    condition: service.dispatchReferenceKind === 'scheduled'
+      ? 'Horario programado; no representa ubicación GPS.'
+      : 'Fase inferida; no representa ubicación GPS.',
+    dataVersion,
+    travelMinutes: Math.round(travelMinutes * 10) / 10,
+    waitPointName,
+  };
+}
+
+function getGraph(routeName: string, sequenceId: string): Graph | null {
+  const route = getRouteByName(routeName);
+  const sequence = getRouteSequence(routeName, sequenceId);
+  if (!route || !sequence) return null;
+  const key = `${routeName}:${sequenceId}:${route.travelProfile.id}`;
+  const cached = graphCache.get(key);
+  if (cached) return cached;
+  const graph = buildDirectedRouteGraph(
+    sequence.coordinates,
+    routeName,
+    sequenceId,
+    route.travelProfile,
+    sequence.stops.map((stop) => stop.coordinateIndex)
+  );
+  graphCache.set(key, graph);
+  return graph;
+}
+
+export function travelMinutesToPosition(
+  routeName: string,
+  position: RoutePosition
+): number | null {
+  const sequence = getRouteSequence(routeName, position.sequenceId);
+  const graph = getGraph(routeName, position.sequenceId);
+  if (
+    !sequence ||
+    !graph ||
+    position.routeName.toUpperCase() !== routeName.toUpperCase() ||
+    position.segmentIndex < 0 ||
+    position.segmentIndex >= graph.adjacency.length ||
+    !Number.isFinite(position.fraction) ||
+    position.fraction < 0 ||
+    position.fraction > 1
+  ) return null;
+
+  const distances = dijkstra(graph, 0);
+  const edge = graph.adjacency[position.segmentIndex];
+  const seconds = distances[position.segmentIndex] + edge.weight * position.fraction;
+  return Number.isFinite(seconds) ? seconds / 60 : null;
 }
 
 export function computeEta(
   routeName: string,
-  originStopId: string,
-  destinationStopId: string,
-  frequencyMinutes?: number,
-  sequenceId?: string
+  waitPoint: RoutePosition | string,
+  queryMinute = minuteOfDay(new Date()),
+  sequenceId?: string,
+  serviceOverride?: ServiceProfile
 ): EtaResult {
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
-  if (!route || !sequence || sequence.stops.length === 0) {
-    return null;
+  const fallbackName = typeof waitPoint === 'string' ? waitPoint : waitPoint.name;
+  if (!route || !sequence) {
+    return unavailable('unavailable', queryMinute, 'Ruta o sentido inexistente.', fallbackName);
   }
 
-  if (!canTravelInSequence(sequence, originStopId, destinationStopId)) {
-    return null;
+  const position = typeof waitPoint === 'string'
+    ? sequence.stops.find((stop) => stop.id === waitPoint)
+    : waitPoint;
+  if (!position) {
+    return unavailable('unavailable', queryMinute, 'El punto no pertenece a la ruta seleccionada.', fallbackName);
+  }
+  const routePosition = 'segmentIndex' in position
+    ? position
+    : positionFromStop(position, sequence);
+  if (routePosition.sequenceId !== sequence.id || routePosition.routeName !== route.nombre) {
+    return unavailable('unavailable', queryMinute, 'El punto no pertenece a la ruta y sentido seleccionados.', routePosition.name);
   }
 
-  const originIndex = sequence.stops.findIndex((s) => s.id === originStopId);
-  const destinationIndex = sequence.stops.findIndex(
-    (s) => s.id === destinationStopId
+  const travelMinutes = travelMinutesToPosition(routeName, routePosition);
+  if (travelMinutes === null) {
+    return unavailable('unavailable', queryMinute, 'No existe un recorrido dirigido hasta este punto.', routePosition.name);
+  }
+
+  return inferArrivalFromService(
+    serviceOverride ?? route.service,
+    travelMinutes,
+    queryMinute,
+    routePosition.name
   );
-
-  if (originIndex === -1 || destinationIndex === -1) {
-    return null;
-  }
-
-  const graph = buildGraphFromStops(sequence.stops);
-  const distances = dijkstra(graph, originIndex);
-  const seconds = distances[destinationIndex];
-
-  if (!Number.isFinite(seconds)) {
-    return null;
-  }
-
-  const travelMinutes = Math.max(0, Math.round(seconds / 60));
-  const freq = frequencyMinutes ?? parseFrequencyMinutes(route.frecuencia) ?? 0;
-  // Average expected wait time is half the dispatch interval.
-  const waitMinutes = freq > 0 ? Math.floor(freq / 2) : 0;
-  const minutes = Math.max(1, travelMinutes + waitMinutes);
-
-  return { minutes };
 }

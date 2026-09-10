@@ -2,6 +2,7 @@ import React, { memo, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Callout, Marker, Polyline } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
+import { getDisplayCoordinates } from '../services/route-sequences';
 
 const toRadians = (degrees) => degrees * (Math.PI / 180);
 const toDegrees = (radians) => radians * (180 / Math.PI);
@@ -30,14 +31,16 @@ function StopCallout({ title, subtitle }) {
     return <Callout><View style={styles.callout}><Text style={styles.calloutTitle}>{title}</Text><Text style={styles.calloutSubtitle}>{subtitle}</Text></View></Callout>;
 }
 
-function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onStopPress }) {
+function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, selectedPosition, onStopPress, onRoutePress }) {
     const selectedSequence = sequence || route?.sequences?.find((item) => item.id === route.defaultSequenceId);
     const coordinates = selectedSequence?.coordinates || route?.coordinates || [];
     const layers = selectedSequence?.layers || [{ id: 'legacy', coordinates }];
-    const visibleLayers = useMemo(() => layers.filter((layer) => layer.visible !== false), [layers]);
+    const visibleLayers = useMemo(() => layers
+        .filter((layer) => layer.visible !== false)
+        .map((layer) => ({ ...layer, displayCoordinates: getDisplayCoordinates(layer.coordinates) })), [layers]);
     const stops = selectedSequence?.stops || route?.stops || [];
     const isCircuit = selectedSequence?.kind === 'circuit';
-    const directionMarkers = useMemo(() => getDirectionMarkers(coordinates, isCircuit), [coordinates, isCircuit]);
+    const directionMarkers = useMemo(() => getDirectionMarkers(visibleLayers.flatMap((layer) => layer.displayCoordinates), isCircuit), [visibleLayers, isCircuit]);
     const firstCoordinate = coordinates[0];
     const lastCoordinate = coordinates[coordinates.length - 1];
     const returnCoordinate = isCircuit && layers.length > 1
@@ -55,21 +58,26 @@ function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, onS
 
     return <>
         {visibleLayers.map((layer) => <React.Fragment key={layer.id}>
-            <Polyline coordinates={layer.coordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 10 : 9} lineCap="round" lineJoin="round" />
-            <Polyline coordinates={layer.coordinates} strokeColor={route.color} strokeWidth={showStops ? 5 : 4} lineCap="round" lineJoin="round" />
+            <Polyline coordinates={layer.displayCoordinates} strokeColor="#FFFFFF" strokeWidth={showStops ? 9 : 8} lineCap="round" lineJoin="round" />
+            <Polyline coordinates={layer.displayCoordinates} strokeColor={route.color} strokeWidth={showStops ? 5 : 4} lineCap="round" lineJoin="round" tappable={Boolean(onRoutePress)} onPress={(event) => onRoutePress?.(event.nativeEvent.coordinate)} />
         </React.Fragment>)}
 
         {directionMarkers.map((marker, index) => <Marker key={`direction-${index}`} coordinate={marker.coordinate} anchor={{ x: .5, y: .5 }} flat rotation={marker.bearing} tracksViewChanges={trackMarkers}>
             <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={13} color="#FFFFFF" /></View>
         </Marker>)}
 
-        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
+        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination && stop.id === selectedStopId).map((stop) => {
             const isSelected = stop.id === selectedStopId;
             return <Marker key={`${stop.id}-${isSelected ? 'selected' : 'idle'}`} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={trackMarkers}>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>
-                <StopCallout title={stop.name} subtitle={`Ruta ${route.nombre} · Toca para elegir este origen`} />
+                <StopCallout title={stop.name} subtitle={`Ruta ${route.nombre} · Toca para esperar aquí`} />
             </Marker>;
         })}
+
+        {showStops && selectedPosition?.source === 'map' ? <Marker coordinate={selectedPosition.coordinate} anchor={{ x: .5, y: 1 }} tracksViewChanges={trackMarkers} zIndex={4}>
+            <View style={[styles.selectedPin, { backgroundColor: route.color }]}><Ionicons name="location" size={17} color="#FFFFFF" /></View>
+            <StopCallout title="Punto de espera elegido" subtitle={`${selectedPosition.passageLabel} · Ruta ${route.nombre}`} />
+        </Marker> : null}
 
         {showStops ? <>
             <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
@@ -97,6 +105,7 @@ const styles = StyleSheet.create({
     circuitEndpointText: { fontSize: 11 },
     returnMarker: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, elevation: 3 },
     returnMarkerText: { fontSize: 12, fontWeight: '900' },
+    selectedPin: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', elevation: 3 },
     callout: { minWidth: 150, padding: 4 },
     calloutTitle: { color: '#1B2730', fontSize: 14, fontWeight: '800' },
     calloutSubtitle: { color: '#63717A', fontSize: 13, marginTop: 2 },

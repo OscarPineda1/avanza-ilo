@@ -2,7 +2,7 @@
 
 - Fecha de validacion: **2026-09-09**
 - Catalogo: `avanza-ilo-rutas-piloto`
-- Version: `2026-09-09`
+- Version: `2026-09-09-oe1-nucleo-v1`
 
 ## Decision documentada
 
@@ -34,7 +34,7 @@ Los puntos generados son referencias matematicas sobre el trazo; este reporte no
 
 ```text
 Pilotos aprobados: 1A, D, 14
-Resumen: 3 rutas, 3 pilotos, 1912 coordenadas, 26 referencias y 23 pesos verificados.
+Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos verificados.
 Resultado: VALIDO
 ```
 

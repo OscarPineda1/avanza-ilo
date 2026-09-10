@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
-import { getRemoteFrequency } from '../services/eta';
 import RouteDirectionBadge from './RouteDirectionBadge';
 
 export default function MapInfoCard({
@@ -12,34 +11,19 @@ export default function MapInfoCard({
     hasCoordinates,
     isOffline,
     eta,
-    originName,
-    destinationName,
-    directionUnavailable = false,
+    waitPointName,
 }) {
-    const [etaResult, setEtaResult] = useState(eta);
-    const [remoteFrequency, setRemoteFrequency] = useState(null);
-
-    useEffect(() => {
-        setEtaResult(eta);
-    }, [eta]);
-
-    useEffect(() => {
-        if (!datosRuta?.nombre || isOffline) return;
-
-        let cancelled = false;
-        getRemoteFrequency(datosRuta.nombre)
-            .then((minutes) => {
-                if (!cancelled && minutes) {
-                    setRemoteFrequency(`${minutes} min`);
-                }
-            })
-            .catch(() => {});
-
-        return () => { cancelled = true; };
-    }, [datosRuta?.nombre, isOffline]);
-
-    const etaVisible = !isOffline && !directionUnavailable && hasCoordinates && etaResult;
-    const etaFallback = !etaVisible;
+    const etaVisible = hasCoordinates && eta && !eta.loading && eta.minutes !== null;
+    const isArrival = eta?.status === 'arrival';
+    const estimateLabel = eta?.loading
+        ? 'Calculando'
+        : eta?.status === 'out-of-service'
+        ? 'Servicio no disponible'
+        : eta?.status === 'unavailable'
+        ? 'Estimación no disponible'
+        : isArrival
+        ? 'Llegada estimada'
+        : 'Espera promedio estimada';
     const isCircuit = datosRuta.sequences?.some((sequence) => sequence.id === datosRuta.defaultSequenceId && sequence.kind === 'circuit');
 
     return (
@@ -60,46 +44,25 @@ export default function MapInfoCard({
 
             <RouteDirectionBadge origin={datosRuta.origen} destination={datosRuta.destino} color={datosRuta.color} isCircuit={isCircuit} />
 
-            {directionUnavailable && (
-                <View style={styles.directionWarning}>
-                    <Ionicons name="alert-circle" size={20} color={theme.colors.warningText} />
-                    <View style={styles.warningCopy}>
-                        <Text style={styles.warningTitle}>No disponible en este recorrido</Text>
-                        <Text style={styles.warningText}>Elige un punto anterior para viajar hacia {datosRuta.destino}.</Text>
-                    </View>
-                </View>
-            )}
-
-            <View style={[styles.etaContainer, directionUnavailable && styles.etaUnavailableContainer]}>
+            <View style={[styles.etaContainer, eta?.status === 'out-of-service' && styles.etaUnavailableContainer]}>
                 <View style={styles.etaBadge}>
                     <Ionicons name="time" size={20} color={theme.colors.primary} />
-                    <Text style={styles.etaLabel}>ETA inferido</Text>
+                    <Text style={styles.etaLabel}>{estimateLabel}</Text>
                 </View>
                 <View style={styles.etaTimeRow}>
-                    {etaVisible ? (
-                        <>
-                            {etaResult.loading ? (
-                                <ActivityIndicator size="small" color={theme.colors.primary} />
-                            ) : (
-                                <>
-                                    <Text style={styles.etaMinutes}>{etaResult.minutes}</Text>
-                                    <Text style={styles.etaUnit}> min restantes</Text>
-                                </>
-                            )}
-                        </>
+                    {eta?.loading ? (
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : etaVisible ? (
+                        <><Text style={styles.etaMinutes}>{eta.minutes}</Text><Text style={styles.etaUnit}> min</Text></>
                     ) : (
-                        <Text style={styles.etaUnavailable} numberOfLines={1}>
-                            {directionUnavailable ? 'Cambia el punto de partida' : isOffline ? 'ETA no disponible sin conexión' : 'ETA inferido no disponible'}
+                        <Text style={styles.etaUnavailable}>
+                            {eta?.condition || 'Estimación no disponible'}
                         </Text>
                     )}
                 </View>
-                {!etaFallback && etaResult && etaResult.minutes && (
-                    <Text style={styles.toleranceText}>
-                        {isCircuit
-                            ? `Vuelta completa desde y hasta ${datosRuta.origen}`
-                            : `Desde ${originName || 'origen'} hasta ${destinationName || 'destino'}`} · Margen ±5 min
-                    </Text>
-                )}
+                {waitPointName || eta?.waitPointName ? <Text style={styles.waitPointText}>Esperas en: {waitPointName || eta.waitPointName}</Text> : null}
+                {isArrival && eta.estimatedArrival ? <Text style={styles.arrivalText}>Hora estimada: {eta.estimatedArrival}</Text> : null}
+                {etaVisible ? <Text style={styles.toleranceText}>{eta.condition}</Text> : null}
             </View>
 
             <View style={styles.detailsGrid}>
@@ -118,7 +81,7 @@ export default function MapInfoCard({
                 <View style={styles.detailBox}>
                     <Ionicons name="git-network-outline" size={18} color={theme.colors.textMuted} />
                     <Text style={styles.detailTitle}>Frecuencia</Text>
-                    <Text style={styles.detailValue}>{remoteFrequency || datosRuta.frecuencia || 'Por definir'}</Text>
+                    <Text style={styles.detailValue}>{datosRuta.frecuencia || 'Por definir'}</Text>
                 </View>
             </View>
 
@@ -126,7 +89,7 @@ export default function MapInfoCard({
                 <View style={[styles.instructionBanner, { backgroundColor: theme.colors.danger + '15' }]}>
                     <Ionicons name="wifi" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
                     <Text style={[styles.instructionText, { color: theme.colors.danger }]}>
-                        Modo offline: información estática en caché.
+                        Modo offline: cálculo local con el catálogo incluido.
                     </Text>
                 </View>
             )}
@@ -156,11 +119,9 @@ const styles = StyleSheet.create({
     etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
     etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },
-    toleranceText: { fontSize: 14, color: theme.colors.textMuted, fontStyle: 'italic', textAlign: 'center' },
-    directionWarning: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, marginTop: 10, padding: 11, borderRadius: 12, backgroundColor: theme.colors.warningBg, borderWidth: 1, borderColor: theme.colors.warningBorder },
-    warningCopy: { flex: 1 },
-    warningTitle: { color: theme.colors.warningText, fontSize: 14, fontWeight: '900' },
-    warningText: { color: theme.colors.warningText, fontSize: 13, lineHeight: 18, marginTop: 2 },
+    waitPointText: { fontSize: 14, color: theme.colors.textDark, fontWeight: '700', textAlign: 'center' },
+    arrivalText: { fontSize: 13, color: theme.colors.primary, fontWeight: '800', marginTop: 2 },
+    toleranceText: { fontSize: 12, color: theme.colors.textMuted, textAlign: 'center', marginTop: 3 },
     detailsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
     detailBox: {
         flex: 1, backgroundColor: theme.colors.background, borderRadius: 12,

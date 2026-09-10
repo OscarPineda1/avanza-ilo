@@ -76,10 +76,10 @@ export default function ProfileScreen({ navigation }) {
                 <View style={styles.menuCard}>
                     <SettingOption
                         icon="location" iconBg={theme.colors.primarySoft} iconColor={theme.colors.primary}
-                        title="Elegir mi paradero" subtitle="Calcula el ETA sin usar GPS"
+                        title="Elegir dónde esperar" subtitle="Consulta sin usar GPS"
                         onPress={() => navigation.navigate('StopSelection')}
                     />
-                    <SettingOption icon="map" iconBg="#EAF8F1" iconColor={theme.colors.success} title="Ver mapa de rutas" subtitle="Colores, sentido y paraderos" onPress={() => navigation.navigate('MainTabs', { screen: 'Map' })} />
+                    <SettingOption icon="map" iconBg="#EAF8F1" iconColor={theme.colors.success} title="Ver mapa de rutas" subtitle="Colores, sentido y referencias" onPress={() => navigation.navigate('MainTabs', { screen: 'Map' })} />
                 </View>
 
                 <Text style={globalStyles.sectionTitle}>Información</Text>

@@ -9,6 +9,7 @@ export type Stop = {
   isOrigin: boolean;
   isDestination: boolean;
   order: number;
+  coordinateIndex: number;
 };
 
 export function buildStops(
@@ -42,6 +43,7 @@ export function buildStops(
       isOrigin,
       isDestination,
       order: result.length,
+      coordinateIndex: i,
     });
     if (isDestination) {
       break;
@@ -68,6 +70,7 @@ export function buildStops(
       isOrigin: false,
       isDestination: true,
       order: result.length,
+      coordinateIndex: total - 1,
     });
   }
 
