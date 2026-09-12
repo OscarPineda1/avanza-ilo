@@ -10,6 +10,7 @@ export type TravelTimeProfile = {
   source: string;
   sourceDate: string;
   evidence: 'field' | 'synthetic' | 'assumption';
+  weightUnit: 'seconds';
 };
 
 export type Edge = {
@@ -42,6 +43,7 @@ export const BASELINE_TRAVEL_PROFILE: TravelTimeProfile = {
   source: 'Supuesto técnico provisional; pendiente de calibración manual HU-18',
   sourceDate: '2026-09-09',
   evidence: 'assumption',
+  weightUnit: 'seconds',
 };
 
 function assertProfile(profile: TravelTimeProfile): void {

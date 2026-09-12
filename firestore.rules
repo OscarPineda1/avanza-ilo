@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function activeVersion() {
+      return get(/databases/$(database)/documents/publication/current).data.dataVersion;
+    }
+
+    match /publication/current {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /publishedSnapshots/{dataVersion} {
+      allow read: if dataVersion == activeVersion()
+        && resource.data.status == 'published'
+        && resource.data.dataVersion == dataVersion;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

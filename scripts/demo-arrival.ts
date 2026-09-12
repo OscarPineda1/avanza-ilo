@@ -7,6 +7,7 @@ const service: ServiceProfile = {
   headwayMinutes: 10,
   dispatchReferenceMinute: 7 * 60,
   dispatchReferenceKind: 'scheduled',
+  timezone: 'America/Lima',
   source: 'Ejemplo sintético del informe, página 9',
   sourceDate: '2026-09-08',
 };

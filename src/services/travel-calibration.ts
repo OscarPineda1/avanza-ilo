@@ -49,6 +49,7 @@ export function calibrateTravelProfile(
       source: `Calibración manual: ${calibration.map((item) => item.id).join(', ')}`,
       sourceDate,
       evidence: 'field',
+      weightUnit: 'seconds',
     },
     observationIds: calibration.map((item) => item.id),
   };

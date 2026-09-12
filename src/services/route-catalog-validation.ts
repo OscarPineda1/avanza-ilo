@@ -197,6 +197,7 @@ export function validateRouteCatalog(
       route.service.headwayMinutes <= 0 ||
       !hasValidDispatchReference ||
       parsedFrequency !== route.service.headwayMinutes ||
+      route.service.timezone !== 'America/Lima' ||
       !isNonEmpty(route.service.source) ||
       !isIsoDate(route.service.sourceDate)
     ) {
@@ -214,6 +215,7 @@ export function validateRouteCatalog(
       !Number.isFinite(route.travelProfile.stopPenaltyMinutes) ||
       route.travelProfile.stopPenaltyMinutes < 0 ||
       !isNonEmpty(route.travelProfile.source) ||
+      route.travelProfile.weightUnit !== 'seconds' ||
       !isIsoDate(route.travelProfile.sourceDate)
     ) {
       issues.push({

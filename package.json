@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "validate:catalog": "tsx scripts/validate-route-catalog.ts",
     "test": "tsx --test tests/*.test.ts",
-    "verify": "npm run typecheck && npm test && npm run validate:catalog",
+    "test:emulators": "npx --yes firebase-tools@15.23.0 emulators:exec --project demo-avanza-ilo --only firestore,functions \"npm run test:emulators:inside\"",
+    "test:emulators:inside": "tsx --test tests/emulator/*.test.ts",
+    "verify": "npm run typecheck && npm test && npm run validate:catalog && npm --prefix functions run build && npm --prefix functions test",
     "demo:arrival": "tsx scripts/demo-arrival.ts"
   },
   "engines": {
@@ -26,6 +28,7 @@
     "expo-location": "~19.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "firebase": "^12.19.0",
     "react": "19.1.0",
     "react-is": "^19.2.7",
     "react-native": "0.81.5",
@@ -36,6 +39,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/node": "^22.20.2",
     "@types/react": "~19.1.10",
     "tsx": "^4.23.13",

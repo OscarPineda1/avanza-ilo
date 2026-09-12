@@ -53,6 +53,7 @@ export type ServiceProfile = {
   headwayMinutes: number;
   dispatchReferenceMinute: number | null;
   dispatchReferenceKind: 'none' | 'scheduled' | 'estimated';
+  timezone: 'America/Lima';
   source: string;
   sourceDate: string;
 };
@@ -88,6 +89,7 @@ const serviceProfiles: Record<'1A' | 'D' | '14', ServiceProfile> = {
     headwayMinutes: 10,
     dispatchReferenceMinute: null,
     dispatchReferenceKind: 'none',
+    timezone: 'America/Lima',
     source: SERVICE_SOURCE,
     sourceDate: '2026-09-09',
   },
@@ -97,6 +99,7 @@ const serviceProfiles: Record<'1A' | 'D' | '14', ServiceProfile> = {
     headwayMinutes: 12,
     dispatchReferenceMinute: null,
     dispatchReferenceKind: 'none',
+    timezone: 'America/Lima',
     source: SERVICE_SOURCE,
     sourceDate: '2026-09-09',
   },
@@ -106,6 +109,7 @@ const serviceProfiles: Record<'1A' | 'D' | '14', ServiceProfile> = {
     headwayMinutes: 15,
     dispatchReferenceMinute: null,
     dispatchReferenceKind: 'none',
+    timezone: 'America/Lima',
     source: SERVICE_SOURCE,
     sourceDate: '2026-09-09',
   },
