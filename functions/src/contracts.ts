@@ -77,6 +77,7 @@ export type PublishedSnapshot = {
   geometrySourceDate: string;
   decision: string;
   publishedAt: string;
+  publishedBy: string;
   routes: PublishedRoute[];
 };
 

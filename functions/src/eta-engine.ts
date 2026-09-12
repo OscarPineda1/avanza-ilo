@@ -41,23 +41,53 @@ function buildDirectedEdges(route: PublishedRoute, sequence: PublishedSequence):
 
 export function dijkstra(edges: Edge[], nodeCount: number, origin: number): number[] {
   const distances = new Array<number>(nodeCount).fill(Infinity);
-  const visited = new Set<number>();
-  distances[origin] = 0;
-  while (visited.size < nodeCount) {
-    let current = -1;
-    let currentDistance = Infinity;
-    distances.forEach((value, index) => {
-      if (!visited.has(index) && value < currentDistance) {
-        current = index;
-        currentDistance = value;
+  const adjacency = new Map<number, Edge[]>();
+  for (const edge of edges) {
+    const outgoing = adjacency.get(edge.from) ?? [];
+    outgoing.push(edge);
+    adjacency.set(edge.from, outgoing);
+  }
+  const heap: Array<{ node: number; distance: number }> = [];
+  const push = (entry: { node: number; distance: number }) => {
+    heap.push(entry);
+    let index = heap.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (heap[parent].distance <= heap[index].distance) break;
+      [heap[parent], heap[index]] = [heap[index], heap[parent]];
+      index = parent;
+    }
+  };
+  const pop = () => {
+    const first = heap[0];
+    const last = heap.pop();
+    if (heap.length && last) {
+      heap[0] = last;
+      let index = 0;
+      while (true) {
+        const left = index * 2 + 1;
+        const right = left + 1;
+        let smallest = index;
+        if (left < heap.length && heap[left].distance < heap[smallest].distance) smallest = left;
+        if (right < heap.length && heap[right].distance < heap[smallest].distance) smallest = right;
+        if (smallest === index) break;
+        [heap[index], heap[smallest]] = [heap[smallest], heap[index]];
+        index = smallest;
       }
-    });
-    if (current < 0) break;
-    visited.add(current);
-    for (const edge of edges) {
-      if (edge.from !== current) continue;
-      const candidate = distances[current] + edge.weightSeconds;
-      if (candidate < distances[edge.to]) distances[edge.to] = candidate;
+    }
+    return first;
+  };
+  distances[origin] = 0;
+  push({ node: origin, distance: 0 });
+  while (heap.length) {
+    const current = pop();
+    if (!current || current.distance !== distances[current.node]) continue;
+    for (const edge of adjacency.get(current.node) ?? []) {
+      const candidate = current.distance + edge.weightSeconds;
+      if (candidate < distances[edge.to]) {
+        distances[edge.to] = candidate;
+        push({ node: edge.to, distance: candidate });
+      }
     }
   }
   return distances;

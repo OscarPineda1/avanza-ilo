@@ -12,6 +12,10 @@ const ILO_BOUNDS = {
   maxLongitude: -71.1,
 };
 
+// Firestore limita cada documento a 1 MiB. Dejamos margen para codificación y
+// metadatos internos antes de iniciar cualquier transacción de publicación.
+const MAX_SAFE_SNAPSHOT_BYTES = 900_000;
+
 function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -35,6 +39,15 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
   let references = 0;
   let edges = 0;
 
+  try {
+    const serializedBytes = new TextEncoder().encode(JSON.stringify(snapshot)).byteLength;
+    if (serializedBytes > MAX_SAFE_SNAPSHOT_BYTES) {
+      issues.push({ code: 'snapshot.size', message: `El snapshot ocupa ${serializedBytes} bytes y supera el límite seguro de publicación.` });
+    }
+  } catch {
+    issues.push({ code: 'snapshot.serialization', message: 'El snapshot no se puede serializar de forma segura.' });
+  }
+
   if (
     snapshot?.schemaVersion !== 1 ||
     snapshot?.status !== 'published' ||
@@ -43,6 +56,7 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
     !isoDate(snapshot?.sourceDate) ||
     !isoDate(snapshot?.geometrySourceDate) ||
     !nonEmpty(snapshot?.decision) ||
+    !nonEmpty(snapshot?.publishedBy) ||
     Number.isNaN(Date.parse(snapshot?.publishedAt))
   ) {
     issues.push({ code: 'snapshot.metadata', message: 'El snapshot no tiene metadatos publicables completos.' });

@@ -16,6 +16,14 @@ async function main(): Promise<void> {
   if (target === 'production' && !args.has('--confirm-production')) {
     throw new Error('La publicación real requiere --confirm-production y autorización explícita del usuario.');
   }
+  if (target === 'production' && (!process.env.GCLOUD_PROJECT || process.env.GCLOUD_PROJECT.startsWith('demo-'))) {
+    throw new Error('GCLOUD_PROJECT debe identificar explícitamente el proyecto Firebase real autorizado.');
+  }
+  const responsible = process.env.AVANZA_PUBLICATION_RESPONSIBLE
+    || (target === 'emulator' ? 'firebase-emulator-suite' : '');
+  if (!responsible) {
+    throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
+  }
 
   initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-avanza-ilo' });
   const firestore = getFirestore();
@@ -28,6 +36,7 @@ async function main(): Promise<void> {
     geometrySourceDate: ROUTE_CATALOG_METADATA.geometrySourceDate,
     decision: ROUTE_CATALOG_METADATA.decision,
     publishedAt: new Date().toISOString(),
+    publishedBy: responsible,
     routes: getAllRoutes(),
   };
   const result = await publishValidatedSnapshot(firestore, snapshot);

@@ -78,6 +78,7 @@ test('HU-22/23: Function valida el contrato y responde con el snapshot de Firest
     }),
   });
   assert.equal(response.status, 200);
+  assert.match(response.headers.get('server-timing') ?? '', /firestore;dur=.*eta;dur=.*app;dur=/);
   const body = await response.json();
   assert.ok(['average_wait', 'out_of_service'].includes(body.status));
   assert.equal(body.dataVersion, ROUTE_CATALOG_METADATA.version);

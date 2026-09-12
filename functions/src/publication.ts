@@ -28,6 +28,7 @@ export async function publishValidatedSnapshot(
       status: 'published',
       checkedAt: snapshot.publishedAt,
       dataVersion: snapshot.dataVersion,
+      publishedBy: snapshot.publishedBy,
       validation,
     });
   });

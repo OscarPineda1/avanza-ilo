@@ -93,8 +93,15 @@ export const eta = onRequest(
       return;
     }
     try {
+      const requestStartedAt = performance.now();
       const snapshot = await readActiveSnapshot();
+      const snapshotReadyAt = performance.now();
       const result = inferEta(snapshot, validated.request, new Date());
+      const responseReadyAt = performance.now();
+      response.set(
+        'Server-Timing',
+        `firestore;dur=${(snapshotReadyAt - requestStartedAt).toFixed(2)}, eta;dur=${(responseReadyAt - snapshotReadyAt).toFixed(2)}, app;dur=${(responseReadyAt - requestStartedAt).toFixed(2)}`
+      );
       response.status(result.status === 'version_mismatch' ? 409 : 200).json(result);
     } catch (error) {
       logger.error('ETA backend failure', {

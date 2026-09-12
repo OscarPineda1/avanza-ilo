@@ -23,6 +23,7 @@ function syntheticSnapshot(): PublishedSnapshot {
     geometrySourceDate: '2026-09-12',
     decision: 'Datos exclusivos de prueba; no publicar como datos reales.',
     publishedAt: '2026-09-12T12:00:00.000Z',
+    publishedBy: 'automated-test-fixture',
     routes: ['1A', 'D', '14'].map((name, routeIndex) => ({
       id: String(routeIndex + 1),
       nombre: name,
@@ -118,4 +119,12 @@ test('HU-19: la validación rechaza el conflicto ruta 12', () => {
   const snapshot = syntheticSnapshot();
   snapshot.routes[2].nombre = '12';
   assert.equal(validatePublishedSnapshot(snapshot).valid, false);
+});
+
+test('HU-08/22: la publicación rechaza documentos que exceden el margen seguro de Firestore', () => {
+  const snapshot = syntheticSnapshot();
+  snapshot.routes[0].descripcion = 'x'.repeat(901_000);
+  const validation = validatePublishedSnapshot(snapshot);
+  assert.equal(validation.valid, false);
+  assert.ok(validation.issues.some((issue) => issue.code === 'snapshot.size'));
 });
