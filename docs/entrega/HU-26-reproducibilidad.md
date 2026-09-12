@@ -5,8 +5,9 @@ Estado: procedimiento preparado. El despliegue cloud, la publicación real, la i
 ## Compilación local ejecutada el 2026-09-12
 
 - `assembleRelease`: satisfactorio (480 tareas; 169 ejecutadas).
-- APK de comprobación: `android/app/build/outputs/apk/release/app-release.apk`, 69,868,697 bytes.
-- SHA-256: `CE32F35341A59CC65B7F3D856FCB3838A583D2BC6F091A6DBFEBC9E5B3CB1BC1`.
+- Commit de código y lockfile usado: `8be2687`.
+- APK de comprobación: `android/app/build/outputs/apk/release/app-release.apk`, 69,878,393 bytes.
+- SHA-256: `269C51B9613D5020481E7D395E2C02F456FDBFA3B515F246427015EAEDE1D11E`.
 - Manifest: `com.avanzailo.app`, minSdk 24 (compatible por nivel de API con Android 8/API 26).
 - Firma: verificada con APK Signature Scheme v2, usando la configuración de depuración existente; **no es firma de distribución**.
 - No había dispositivo conectado, por lo que instalación, inicio frío y flujo contra entorno real permanecen pendientes.
