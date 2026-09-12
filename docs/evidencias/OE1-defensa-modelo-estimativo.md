@@ -4,7 +4,7 @@
 
 > Diseñar un modelo estimativo basado en lógicas de inferencia que permita calcular los tiempos de llegada (ETA) de las unidades de transporte urbano de manera funcional ante la ausencia de hardware telemático.
 
-La solución no rastrea un bus. Infiere su posible llegada combinando cuatro elementos: recorrido dirigido, peso temporal de cada segmento, punto donde espera el pasajero y patrón temporal de despachos. El motor se ejecuta localmente; Firebase no forma parte de la demostración de OE1.
+La solución no rastrea un bus. Infiere su posible llegada combinando cuatro elementos: recorrido dirigido, peso temporal de cada segmento, punto donde espera el pasajero y patrón temporal de despachos. El motor vigente se ejecuta exclusivamente en la Cloud Function HTTPS; los módulos locales históricos se conservan como referencia y pruebas, pero la app no los importa.
 
 ## Cadena de inferencia
 
@@ -135,7 +135,7 @@ En la aplicación real, mañana ocurrirá lo siguiente:
 - El recorrido conserva dirección, circuito y punto de espera.
 - HU-16 considera unidades ya despachadas.
 - El cálculo distingue ETA, espera promedio, fuera de servicio y datos incompatibles.
-- El núcleo funciona localmente; Firebase no es necesario para probar OE1.
+- El núcleo es determinista y se prueba de forma aislada; el flujo de usuario obtiene la respuesta de la Function respaldada por Firestore.
 
 ## Qué todavía no se debe afirmar
 
@@ -159,7 +159,7 @@ No. Solo es espera promedio cuando falta la fase temporal. El ETA exacto del mod
 Obtiene el costo temporal mínimo dirigido desde el inicio hasta el segmento donde espera el pasajero y permite reconstruir el camino usado.
 
 **¿Firebase ya está desarrollado?**
-No. El núcleo de OE1 es local y determinista. Firebase puede incorporarse después para distribuir datos, pero no sustituye ni define la fórmula del modelo.
+Sí en código y emuladores: reglas, publicación transaccional, snapshot, Function y pruebas integradas. El despliegue real sigue pendiente de confirmaciones externas y autorización.
 
 ## Guion de cierre
 

@@ -1,0 +1,1 @@
+record_id,set,route_id,direction_id,wait_point_id,time_band,data_version,method,prediction_recorded_at,estimated_arrival_at,observed_arrival_at,extraordinary_event,observer_code,notes
