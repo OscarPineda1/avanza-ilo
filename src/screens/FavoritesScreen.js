@@ -24,7 +24,7 @@ export default function FavoritesScreen({ navigation }) {
         <SafeAreaView style={styles.safeArea}>
             <ScreenHeader title="Mis Rutas Favoritas" onBack={() => navigation.goBack()} />
             <ScrollView contentContainerStyle={styles.content}>
-                {favorites.length ? <View style={styles.list}>{favorites.map((item) => <RouteListItem key={item.id} route={item} favorite onPress={() => navigation.navigate('RouteDetails', { routeName: item.nombre, sequenceId: item.defaultSequenceId })} />)}</View> : <EmptyState icon="heart-outline" title="Aún no tienes rutas favoritas" message="Guarda las rutas que más utilizas para tenerlas siempre a un toque." actionLabel="Explorar rutas" onAction={() => navigation.navigate('MainTabs', { screen: 'ExploreRoutes' })} />}
+                {favorites.length ? <View style={styles.list}>{favorites.map((item) => <RouteListItem key={item.id} route={item} favorite onPress={() => navigation.navigate('RouteDetails', { routeId: item.id, sequenceId: item.defaultSequenceId })} />)}</View> : <EmptyState icon="heart-outline" title="Aún no tienes rutas favoritas" message="Guarda las rutas que más utilizas para tenerlas siempre a un toque." actionLabel="Explorar rutas" onAction={() => navigation.navigate('MainTabs', { screen: 'ExploreRoutes' })} />}
             </ScrollView>
         </SafeAreaView>
     );

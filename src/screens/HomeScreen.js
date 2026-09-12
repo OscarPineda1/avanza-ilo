@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }) {
     };
 
     const irAlMapa = (selectedRoute) => {
-        navigation.navigate('RouteDetails', { routeName: selectedRoute.nombre, sequenceId: selectedRoute.defaultSequenceId });
+        navigation.navigate('RouteDetails', { routeId: selectedRoute.id, sequenceId: selectedRoute.defaultSequenceId });
     };
 
     return (

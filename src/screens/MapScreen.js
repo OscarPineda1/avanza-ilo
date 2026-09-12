@@ -24,12 +24,17 @@ const regionIlo = {
 };
 
 export default function MapScreen({ route, navigation }) {
+    const routeId = route.params?.routeId;
     const routeName = route.params?.routeName;
     const requestedSequenceId = route.params?.sequenceId;
     const requestedWaitPointId = route.params?.waitPointId;
     const { routes, metadata, source: catalogSource } = useCatalog();
     const { locationEnabled } = useLocationConsent();
-    const routeData = routeName ? routes.find((item) => item.nombre.toLowerCase() === routeName.toLowerCase()) : undefined;
+    const routeData = routeId
+        ? routes.find((item) => item.id === routeId)
+        : routeName
+        ? routes.find((item) => item.nombre.toLowerCase() === routeName.toLowerCase())
+        : undefined;
     const selectedSequence = routeData?.sequences.find((item) => item.id === (requestedSequenceId || routeData.defaultSequenceId));
     const isCircuit = selectedSequence?.kind === 'circuit';
     const coordinates = selectedSequence?.coordinates || null;
@@ -174,7 +179,7 @@ export default function MapScreen({ route, navigation }) {
                         <Text style={styles.routeTitle}>Mapa en vivo</Text>
                     </View>
                 )}
-                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir punto de espera manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeName: routeData.nombre, sequenceId: selectedSequence?.id })}>
+                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir punto de espera manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeId: routeData.id, sequenceId: selectedSequence?.id })}>
                     <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
                 </TouchableOpacity>}
             </SafeAreaView>

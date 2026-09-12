@@ -55,7 +55,7 @@ export default function ProfileScreen({ navigation }) {
                             <TouchableOpacity
                                 key={route.id}
                                 style={styles.favoriteItem}
-                                onPress={() => navigation.navigate('RouteDetails', { routeName: route.nombre, sequenceId: route.defaultSequenceId })}
+                                onPress={() => navigation.navigate('RouteDetails', { routeId: route.id, sequenceId: route.defaultSequenceId })}
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.favoriteBadge, { backgroundColor: route.color }]}>

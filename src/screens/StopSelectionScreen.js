@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,14 +9,22 @@ import AppButton from '../components/AppButton';
 
 export default function StopSelectionScreen({ navigation, route }) {
     const { routes } = useCatalog();
-    const selectedRoute = routes.find((item) => item.nombre.toLowerCase() === (route.params?.routeName || routes[0]?.nombre || '').toLowerCase());
+    const selectedRoute = route.params?.routeId
+        ? routes.find((item) => item.id === route.params.routeId)
+        : routes.find((item) => item.nombre.toLowerCase() === (route.params?.routeName || '').toLowerCase());
     const selectedSequence = selectedRoute?.sequences.find((item) => item.id === (route.params?.sequenceId || selectedRoute.defaultSequenceId));
     const isCircuit = selectedSequence?.kind === 'circuit';
     const [selected, setSelected] = useState(null);
     const [query, setQuery] = useState('');
-    const stops = useMemo(() => (
+    const eligibleStops = useMemo(() => (
         selectedSequence?.stops || []
-    ).filter((item) => (!isCircuit || !item.isDestination) && item.name.toLowerCase().includes(query.trim().toLowerCase())), [isCircuit, query, selectedSequence]);
+    ).filter((item) => !isCircuit || !item.isDestination), [isCircuit, selectedSequence]);
+    const stops = useMemo(() => eligibleStops.filter((item) => item.name.toLowerCase().includes(query.trim().toLowerCase())), [eligibleStops, query]);
+
+    useEffect(() => {
+        const suggested = eligibleStops.find((item) => item.id === route.params?.suggestedWaitPointId);
+        setSelected(suggested || null);
+    }, [eligibleStops, route.params?.suggestedWaitPointId]);
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -28,7 +36,7 @@ export default function StopSelectionScreen({ navigation, route }) {
                 {!stops.length && <Text style={styles.emptyText}>Esta ruta aún no tiene referencias georreferenciadas.</Text>}
             </ScrollView>
             <View style={styles.footer}>
-                <AppButton disabled={!selected || !selectedRoute} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeName: selectedRoute?.nombre, sequenceId: selectedSequence?.id, waitPointId: selected.id })} />
+                <AppButton disabled={!selected || !selectedRoute} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeId: selectedRoute?.id, sequenceId: selectedSequence?.id, waitPointId: selected.id })} />
             </View>
         </SafeAreaView>
     );

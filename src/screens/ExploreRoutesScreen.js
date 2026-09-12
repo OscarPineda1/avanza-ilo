@@ -47,7 +47,7 @@ export default function ExploreRoutesScreen({ navigation }) {
                     <RouteDetailCard
                         key={item.id}
                         item={item}
-                        onPress={() => navigation.navigate(item.coordinates?.length ? 'RouteDetails' : 'Status', item.coordinates?.length ? { routeName: item.nombre, sequenceId: item.defaultSequenceId } : { type: 'offline', routeName: item.nombre })}
+                        onPress={() => navigation.navigate(item.coordinates?.length ? 'RouteDetails' : 'Status', item.coordinates?.length ? { routeId: item.id, sequenceId: item.defaultSequenceId } : { type: 'offline', routeName: item.nombre })}
                     />
                 )) : <EmptyState icon="bus-outline" title="No hay rutas en esta zona" message="Prueba con otro filtro para ver los recorridos disponibles." actionLabel="Ver todas" onAction={() => setFiltroActivo('Todas')} />}
             </ScrollView>
