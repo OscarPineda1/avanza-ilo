@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { globalStyles } from '../styles/global-styles';
-import { getAllRoutes } from '../services/routes';
+import { useCatalog } from '../context/CatalogContext';
 import RouteDetailCard from '../components/RouteDetailCard';
 import EmptyState from '../components/EmptyState';
 
@@ -10,8 +10,7 @@ const filtros = ['Todas', 'Pampa', 'Centro', 'Sur'];
 
 export default function ExploreRoutesScreen({ navigation }) {
     const [filtroActivo, setFiltroActivo] = useState('Todas');
-
-    const rutasDirectorio = getAllRoutes();
+    const { routes: rutasDirectorio } = useCatalog();
     const rutasMostradas = rutasDirectorio.filter(ruta =>
         filtroActivo === 'Todas' ? true : ruta.zona === filtroActivo
     );

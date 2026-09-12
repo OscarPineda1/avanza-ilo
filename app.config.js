@@ -7,6 +7,12 @@ module.exports = {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
+    extra: {
+      mapsConfigured: {
+        android: Boolean(process.env.GOOGLE_MAPS_ANDROID_API_KEY),
+        ios: Boolean(process.env.GOOGLE_MAPS_IOS_API_KEY),
+      },
+    },
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -16,7 +22,7 @@ module.exports = {
       bundleIdentifier: "com.avanzailo.app",
       supportsTablet: true,
       infoPlist: {
-        NSLocationWhenInUseUsageDescription: "Avanza Ilo necesita acceder a tu ubicación para mostrar tu posición en el mapa y calcular tiempos de arribo.",
+        NSLocationWhenInUseUsageDescription: "Avanza Ilo usa tu ubicación solo para mostrar tu posición y sugerir referencias del recorrido; no ubica las unidades.",
       },
       config: {
         googleMapsApiKey: process.env.GOOGLE_MAPS_IOS_API_KEY,

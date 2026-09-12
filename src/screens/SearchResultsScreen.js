@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllRoutes } from '../services/routes';
+import { useCatalog } from '../context/CatalogContext';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
 import RouteListItem from '../components/RouteListItem';
@@ -11,7 +11,8 @@ import { searchRoutes } from '../services/route-search';
 
 export default function SearchResultsScreen({ navigation, route }) {
     const [query, setQuery] = useState(route.params?.query || '');
-    const results = useMemo(() => searchRoutes(getAllRoutes(), query), [query]);
+    const { routes } = useCatalog();
+    const results = useMemo(() => searchRoutes(routes, query), [query, routes]);
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScreenHeader title="Buscar rutas" onBack={() => navigation.goBack()} />

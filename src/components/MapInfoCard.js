@@ -12,19 +12,26 @@ export default function MapInfoCard({
     isOffline,
     eta,
     waitPointName,
+    dataVersion,
+    catalogSource,
 }) {
-    const etaVisible = hasCoordinates && eta && !eta.loading && eta.minutes !== null;
-    const isArrival = eta?.status === 'arrival';
+    const etaVisible = hasCoordinates && eta && !eta.loading && eta.etaMinutes !== null;
+    const isArrival = eta?.status === 'available';
     const estimateLabel = eta?.loading
         ? 'Calculando'
-        : eta?.status === 'out-of-service'
+        : eta?.status === 'out_of_service'
         ? 'Servicio no disponible'
-        : eta?.status === 'unavailable'
+        : eta?.status === 'offline'
+        ? 'ETA sin conexión'
+        : ['no_route', 'insufficient_data', 'version_mismatch', 'backend', 'network', 'timeout', 'app_check'].includes(eta?.status)
         ? 'Estimación no disponible'
         : isArrival
         ? 'Llegada estimada'
         : 'Espera promedio estimada';
     const isCircuit = datosRuta.sequences?.some((sequence) => sequence.id === datosRuta.defaultSequenceId && sequence.kind === 'circuit');
+    const estimatedArrival = eta?.estimatedArrivalAt
+        ? new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(eta.estimatedArrivalAt))
+        : null;
 
     return (
         <View style={styles.cardContainer}>
@@ -44,7 +51,7 @@ export default function MapInfoCard({
 
             <RouteDirectionBadge origin={datosRuta.origen} destination={datosRuta.destino} color={datosRuta.color} isCircuit={isCircuit} />
 
-            <View style={[styles.etaContainer, eta?.status === 'out-of-service' && styles.etaUnavailableContainer]}>
+            <View style={[styles.etaContainer, eta?.status === 'out_of_service' && styles.etaUnavailableContainer]}>
                 <View style={styles.etaBadge}>
                     <Ionicons name="time" size={20} color={theme.colors.primary} />
                     <Text style={styles.etaLabel}>{estimateLabel}</Text>
@@ -53,16 +60,16 @@ export default function MapInfoCard({
                     {eta?.loading ? (
                         <ActivityIndicator size="small" color={theme.colors.primary} />
                     ) : etaVisible ? (
-                        <><Text style={styles.etaMinutes}>{eta.minutes}</Text><Text style={styles.etaUnit}> min</Text></>
+                        <><Text style={styles.etaMinutes}>{eta.etaMinutes}</Text><Text style={styles.etaUnit}> min</Text></>
                     ) : (
                         <Text style={styles.etaUnavailable}>
-                            {eta?.condition || 'Estimación no disponible'}
+                            {eta?.assumptions?.note || 'Estimación no disponible'}
                         </Text>
                     )}
                 </View>
-                {waitPointName || eta?.waitPointName ? <Text style={styles.waitPointText}>Esperas en: {waitPointName || eta.waitPointName}</Text> : null}
-                {isArrival && eta.estimatedArrival ? <Text style={styles.arrivalText}>Hora estimada: {eta.estimatedArrival}</Text> : null}
-                {etaVisible ? <Text style={styles.toleranceText}>{eta.condition}</Text> : null}
+                {waitPointName || eta?.assumptions?.waitPoint ? <Text style={styles.waitPointText}>Esperas en: {waitPointName || eta.assumptions.waitPoint}</Text> : null}
+                {isArrival && estimatedArrival ? <Text style={styles.arrivalText}>Hora estimada: {estimatedArrival}</Text> : null}
+                {etaVisible ? <Text style={styles.toleranceText}>{eta.assumptions.note}</Text> : null}
             </View>
 
             <View style={styles.detailsGrid}>
@@ -85,11 +92,18 @@ export default function MapInfoCard({
                 </View>
             </View>
 
+            {dataVersion ? <Text style={styles.dataVersion}>Datos {dataVersion}{catalogSource === 'cache' ? ' · copia guardada' : ''}</Text> : null}
+            {datosRuta.service?.source ? (
+                <Text style={styles.dataSource} numberOfLines={2}>
+                    Fuente operativa: {datosRuta.service.source}{datosRuta.service.sourceDate ? ` · ${datosRuta.service.sourceDate}` : ''}
+                </Text>
+            ) : null}
+
             {isOffline && (
                 <View style={[styles.instructionBanner, { backgroundColor: theme.colors.danger + '15' }]}>
                     <Ionicons name="wifi" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
                     <Text style={[styles.instructionText, { color: theme.colors.danger }]}>
-                        Modo offline: cálculo local con el catálogo incluido.
+                        Modo offline: información estática guardada; ETA desactivado.
                     </Text>
                 </View>
             )}
@@ -129,6 +143,8 @@ const styles = StyleSheet.create({
     },
     detailTitle: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600', marginTop: 4 },
     detailValue: { fontSize: 14, fontWeight: '700', color: theme.colors.textDark, marginTop: 2 },
+    dataVersion: { color: theme.colors.textMuted, fontSize: 11, textAlign: 'center', marginBottom: 10 },
+    dataSource: { color: theme.colors.textMuted, fontSize: 10, lineHeight: 14, textAlign: 'center', marginTop: -6, marginBottom: 10 },
     instructionBanner: {
         flexDirection: 'row', backgroundColor: theme.colors.warningBg, borderRadius: 10,
         padding: 10, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.warningBorder,

@@ -11,15 +11,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { globalStyles, theme } from '../styles/global-styles';
-import { getPilotRoutes } from '../services/routes';
+import { useCatalog } from '../context/CatalogContext';
 import RouteCard from '../components/RouteCard';
 import LiveMapCard from '../components/LiveMapCard';
 import { searchRoutes } from '../services/route-search';
 
-const pilotRoutes = getPilotRoutes();
-
 export default function HomeScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
+    const { routes, source, status, error } = useCatalog();
+    const pilotRoutes = useMemo(() => routes.filter((item) => item.pilot && item.available), [routes]);
 
     const rutasFiltradas = useMemo(
         () => searchRoutes(pilotRoutes, searchQuery),
@@ -44,11 +44,13 @@ export default function HomeScreen({ navigation }) {
             >
                 <View style={styles.header}>
                     <View style={styles.brandRow}>
-                        <View><Text style={globalStyles.headerTitle}>Avanza Ilo</Text><View style={styles.statusRow}><View style={styles.statusDot} /><Text style={styles.statusText}>Rutas y referencias disponibles</Text></View></View>
+                        <View><Text style={globalStyles.headerTitle}>Avanza Ilo</Text><View style={styles.statusRow}><View style={styles.statusDot} /><Text style={styles.statusText}>{status === 'loading' ? 'Actualizando rutas…' : source === 'cache' ? 'Última información publicada guardada' : 'Rutas y referencias publicadas'}</Text></View></View>
                         <TouchableOpacity style={styles.locationButton} accessibilityRole="button" accessibilityLabel="Usar mi ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /></TouchableOpacity>
                     </View>
                     <Text style={globalStyles.subtitle}>Encuentra tu ruta y conoce por dónde pasa.</Text>
                 </View>
+
+                {error ? <View style={styles.dataNotice}><Text style={styles.dataNoticeText}>{error}</Text></View> : null}
 
                 <View style={styles.searchContainer}>
                     <Ionicons name="search" size={24} color={theme.colors.primary} style={styles.searchIcon} />
@@ -141,6 +143,8 @@ const styles = StyleSheet.create({
     },
     noResults: { marginTop: 10, padding: 12, borderRadius: 10, backgroundColor: theme.colors.primarySoft },
     noResultsText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '700' },
+    dataNotice: { padding: 12, marginBottom: 14, borderRadius: 10, backgroundColor: theme.colors.warningBg, borderWidth: 1, borderColor: theme.colors.warningBorder },
+    dataNoticeText: { color: theme.colors.warningText, fontSize: 13, lineHeight: 18 },
     sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     routeCount: { marginTop: 24, color: theme.colors.textMuted, fontSize: 14, fontWeight: '700' },
 });

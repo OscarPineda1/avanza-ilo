@@ -3,7 +3,7 @@ import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
 
-export default function OfflineModal({ visible, onClose }) {
+export default function OfflineModal({ visible, onClose, availability }) {
     return (
         <Modal
             animationType="fade"
@@ -20,9 +20,9 @@ export default function OfflineModal({ visible, onClose }) {
                     </View>
 
                     {/* Textos de Alto Contraste */}
-                    <Text style={styles.title}>Sin conexión a Internet</Text>
+                    <Text style={styles.title}>{availability === 'no-internet' ? 'Red sin acceso a Internet' : 'Sin conexión a Internet'}</Text>
                     <Text style={styles.message}>
-                        Parece que perdiste la señal. Las rutas, referencias y el cálculo local siguen disponibles; el mapa base puede tardar en actualizarse.
+                        Parece que no hay conexión utilizable. Solo verás la última información estática guardada; el ETA queda desactivado y el mapa base puede no estar disponible.
                     </Text>
 
                     {/* Botón de Acción */}

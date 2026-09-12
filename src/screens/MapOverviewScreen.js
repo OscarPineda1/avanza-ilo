@@ -1,23 +1,29 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllRoutes } from '../services/routes';
+import Constants from 'expo-constants';
+import { useCatalog } from '../context/CatalogContext';
 import { theme } from '../styles/global-styles';
 import RouteBadge from '../components/RouteBadge';
 import RouteMapLayers from '../components/RouteMapLayers';
+import { useLocationConsent } from '../context/LocationConsentContext';
 
 const iloRegion = { latitude: -17.6428, longitude: -71.3452, latitudeDelta: 0.035, longitudeDelta: 0.035 };
 export default function MapOverviewScreen({ navigation }) {
-    const routes = useMemo(() => getAllRoutes().filter((item) => item.available && item.coordinates?.length), []);
+    const { routes: catalogRoutes } = useCatalog();
+    const { locationEnabled } = useLocationConsent();
+    const mapsConfigured = Platform.OS === 'android' ? Constants.expoConfig?.extra?.mapsConfigured?.android : Constants.expoConfig?.extra?.mapsConfigured?.ios;
+    const routes = useMemo(() => catalogRoutes.filter((item) => item.available && item.coordinates?.length), [catalogRoutes]);
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <MapView provider={PROVIDER_GOOGLE} initialRegion={iloRegion} style={styles.map} showsUserLocation>
+            <MapView provider={PROVIDER_GOOGLE} initialRegion={iloRegion} style={styles.map} showsUserLocation={locationEnabled}>
                 {routes.map((item) => <RouteMapLayers key={item.id} route={item} showStops={false} />)}
             </MapView>
+            {!mapsConfigured && <View pointerEvents="none" style={styles.mapHint}><Ionicons name="map-outline" size={17} color={theme.colors.surface} /><Text style={styles.mapHintText}>Mapa base no configurado; el directorio sigue disponible</Text></View>}
             <View style={styles.top}><View style={styles.brand}><Ionicons name="bus-outline" size={20} color={theme.colors.primary} /><Text style={styles.brandText}>Avanza Ilo</Text></View><TouchableOpacity accessibilityRole="button" accessibilityLabel="Buscar ruta" onPress={() => navigation.navigate('SearchResults')} style={styles.searchButton}><Ionicons name="search-outline" size={21} color={theme.colors.textDark} /></TouchableOpacity></View>
-            <View style={styles.mapHint}><Ionicons name="navigate" size={17} color={theme.colors.surface} /><Text style={styles.mapHintText}>Las flechas indican el sentido de la combi</Text></View>
+            {mapsConfigured && <View style={styles.mapHint}><Ionicons name="navigate" size={17} color={theme.colors.surface} /><Text style={styles.mapHintText}>Las flechas indican el sentido de la combi</Text></View>}
             <View style={styles.sheet}><View style={styles.handle} /><Text style={styles.sheetTitle}>¿Por dónde pasa tu combi?</Text><Text style={styles.sheetSub}>Elige una ruta para ver sus referencias, sentido y estimación.</Text><View style={styles.routeRow}>{routes.slice(0, 3).map((item) => <TouchableOpacity key={item.id} onPress={() => navigation.navigate('RouteDetails', { routeName: item.nombre, sequenceId: item.defaultSequenceId })} style={[styles.routeChip, { borderColor: item.color }]}><View style={[styles.routeLine, { backgroundColor: item.color }]} /><RouteBadge route={item.nombre} color={item.color} size="small" /><Text style={styles.routeName}>Ruta {item.nombre}</Text></TouchableOpacity>)}</View><TouchableOpacity onPress={() => navigation.navigate('NearbyStops')} style={styles.nearby}><View style={styles.nearbyIcon}><Ionicons name="location" size={17} color={theme.colors.primary} /></View><Text style={styles.nearbyText}>Ver puntos de referencia</Text><Ionicons name="chevron-forward" size={18} color={theme.colors.textLight} /></TouchableOpacity></View>
         </SafeAreaView>
     );

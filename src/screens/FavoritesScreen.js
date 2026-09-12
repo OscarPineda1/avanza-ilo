@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { getFavoriteRouteNames } from '../services/favorites';
-import { getRouteByName } from '../services/routes';
+import { getFavoriteRouteNames, replaceFavoriteRouteIds } from '../services/favorites';
+import { useCatalog } from '../context/CatalogContext';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
 import RouteListItem from '../components/RouteListItem';
@@ -11,7 +11,14 @@ import EmptyState from '../components/EmptyState';
 
 export default function FavoritesScreen({ navigation }) {
     const [favorites, setFavorites] = useState([]);
-    const refresh = useCallback(async () => setFavorites((await getFavoriteRouteNames()).map(getRouteByName).filter(Boolean)), []);
+    const { routes } = useCatalog();
+    const refresh = useCallback(async () => {
+        const identifiers = await getFavoriteRouteNames();
+        const available = identifiers.map((identifier) => routes.find((item) => item.id === identifier || item.nombre === identifier)).filter(Boolean);
+        const validIds = available.map((item) => item.id);
+        if (JSON.stringify(validIds) !== JSON.stringify(identifiers)) await replaceFavoriteRouteIds(validIds);
+        setFavorites(available);
+    }, [routes]);
     useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
     return (
         <SafeAreaView style={styles.safeArea}>

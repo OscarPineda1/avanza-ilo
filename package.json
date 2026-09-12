@@ -13,7 +13,8 @@
     "test:emulators": "npx --yes firebase-tools@15.23.0 emulators:exec --project demo-avanza-ilo --only firestore,functions \"npm run test:emulators:inside\"",
     "test:emulators:inside": "tsx --test tests/emulator/*.test.ts",
     "verify": "npm run typecheck && npm test && npm run validate:catalog && npm --prefix functions run build && npm --prefix functions test",
-    "demo:arrival": "tsx scripts/demo-arrival.ts"
+    "demo:arrival": "tsx scripts/demo-arrival.ts",
+    "analyze:field": "tsx scripts/analyze-field-observations.ts"
   },
   "engines": {
     "node": ">=20.19.4"
@@ -25,6 +26,7 @@
     "@react-navigation/native": "^7.2.5",
     "@react-navigation/native-stack": "^7.16.0",
     "expo": "~54.0.37",
+    "expo-constants": "~18.0.14",
     "expo-location": "~19.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",

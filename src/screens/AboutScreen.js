@@ -1,10 +1,9 @@
 import React from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
-import AppButton from '../components/AppButton';
 
 export default function AboutScreen({ navigation }) {
     return (
@@ -14,9 +13,9 @@ export default function AboutScreen({ navigation }) {
                 <View style={styles.logo}><Ionicons name="bus" size={34} color="#FFFFFF" /></View>
                 <Text style={styles.name}>Avanza Ilo</Text><Text style={styles.version}>Versión 1.0.0 MVP</Text>
                 <Text style={styles.paragraph}>Avanza Ilo es una prueba de concepto para consultar rutas, referencias del recorrido y estimaciones de espera en Ilo.</Text>
-                <View style={styles.info}><Text style={styles.label}>CON EL RESPALDO DE</Text><Text style={styles.value}>Municipalidad Provincial de Ilo</Text></View>
-                <View style={styles.info}><Text style={styles.label}>DESARROLLADO POR</Text><Text style={styles.value}>Jesús Martínez · Ricardo Pineda</Text><Text style={styles.value}>Escuela Profesional de Ingeniería</Text></View>
-                <AppButton label="Términos y privacidad" variant="outline" onPress={() => Linking.openURL('https://www.privacypolicies.com/')} />
+                <View style={styles.info}><Text style={styles.label}>PROYECTO ACADÉMICO</Text><Text style={styles.value}>Prueba de concepto sin respaldo institucional declarado.</Text></View>
+                <View style={styles.info}><Text style={styles.label}>DESARROLLADO POR</Text><Text style={styles.value}>Oscar René Pineda Flores · Joshua Fabianni Martínez Blanco</Text><Text style={styles.value}>Escuela Profesional de Ingeniería</Text></View>
+                <View style={styles.info}><Text style={styles.label}>PRIVACIDAD Y USO DE DATOS</Text><Text style={styles.value}>No necesitas crear una cuenta. La ubicación es opcional, se usa solo para sugerir referencias cercanas y no se guarda en favoritos, Firestore ni registros de la aplicación. El GPS corresponde al pasajero y no indica la ubicación de las unidades.</Text></View>
             </ScrollView>
         </SafeAreaView>
     );

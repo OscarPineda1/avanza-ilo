@@ -2,14 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getRouteByName, getRouteSequence } from '../services/routes';
+import { useCatalog } from '../context/CatalogContext';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
 import AppButton from '../components/AppButton';
 
 export default function StopSelectionScreen({ navigation, route }) {
-    const selectedRoute = getRouteByName(route.params?.routeName || '1A');
-    const selectedSequence = getRouteSequence(selectedRoute?.nombre || '1A', route.params?.sequenceId);
+    const { routes } = useCatalog();
+    const selectedRoute = routes.find((item) => item.nombre.toLowerCase() === (route.params?.routeName || routes[0]?.nombre || '').toLowerCase());
+    const selectedSequence = selectedRoute?.sequences.find((item) => item.id === (route.params?.sequenceId || selectedRoute.defaultSequenceId));
     const isCircuit = selectedSequence?.kind === 'circuit';
     const [selected, setSelected] = useState(null);
     const [query, setQuery] = useState('');
@@ -27,7 +28,7 @@ export default function StopSelectionScreen({ navigation, route }) {
                 {!stops.length && <Text style={styles.emptyText}>Esta ruta aún no tiene referencias georreferenciadas.</Text>}
             </ScrollView>
             <View style={styles.footer}>
-                <AppButton disabled={!selected} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeName: selectedRoute?.nombre || '1A', sequenceId: selectedSequence?.id, waitPointId: selected.id })} />
+                <AppButton disabled={!selected || !selectedRoute} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeName: selectedRoute?.nombre, sequenceId: selectedSequence?.id, waitPointId: selected.id })} />
             </View>
         </SafeAreaView>
     );

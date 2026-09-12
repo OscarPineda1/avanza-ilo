@@ -20,6 +20,7 @@ import NearbyStopsScreen from '../screens/NearbyStopsScreen';
 import StatusScreen from '../screens/StatusScreen';
 import BottomNavbar from '../components/BottomNavbar';
 import OfflineModal from '../components/OfflineModal';
+import { recordAppReady } from '../services/performance-metrics';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -40,7 +41,8 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
-    const { isOffline } = useNetwork();
+    const { availability } = useNetwork();
+    const isOffline = availability === 'no-network' || availability === 'no-internet';
     const [offlineModalDismissed, setOfflineModalDismissed] = useState(false);
 
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function AppNavigator() {
     }, [isOffline]);
 
     return (
-        <NavigationContainer>
+        <NavigationContainer onReady={() => recordAppReady()}>
             <Stack.Navigator
                 initialRouteName="Splash"
                 screenOptions={{ headerShown: false }}
@@ -69,6 +71,7 @@ export default function AppNavigator() {
             </Stack.Navigator>
             <OfflineModal
                 visible={isOffline && !offlineModalDismissed}
+                availability={availability}
                 onClose={() => setOfflineModalDismissed(true)}
             />
         </NavigationContainer>

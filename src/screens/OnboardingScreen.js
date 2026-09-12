@@ -6,7 +6,7 @@ import { theme } from '../styles/global-styles';
 import AppButton from '../components/AppButton';
 
 const steps = [
-    { icon: 'bus-outline', title: 'Olvídate de la espera', text: 'Sabrás si tu transporte está por llegar y podrás elegir la ruta que más te conviene.' },
+    { icon: 'bus-outline', title: 'Planifica tu espera', text: 'Consulta una estimación sustentada cuando existan datos publicados y conexión utilizable.' },
     { icon: 'map-outline', title: 'Consulta sin GPS en las unidades', text: 'Usamos rutas, referencias y datos de servicio; si falta una fase de despacho, mostramos solo espera promedio.' },
     { icon: 'heart-outline', title: 'Encuentra tus rutas favoritas', text: 'Guarda las rutas que utilizas con frecuencia para consultarlas más rápido.' },
 ];

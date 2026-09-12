@@ -1,19 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NetworkProvider } from './src/context/NetworkContext';
+import { CatalogProvider } from './src/context/CatalogContext';
+import { LocationConsentProvider } from './src/context/LocationConsentContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { getAllRoutes } from './src/services/routes';
-import { cacheStaticRoutes } from './src/services/route-cache';
 
 export default function App() {
-  useEffect(() => {
-    cacheStaticRoutes(getAllRoutes());
-  }, []);
-
   return (
     <SafeAreaProvider>
       <NetworkProvider>
-        <AppNavigator />
+        <CatalogProvider>
+          <LocationConsentProvider>
+            <AppNavigator />
+          </LocationConsentProvider>
+        </CatalogProvider>
       </NetworkProvider>
     </SafeAreaProvider>
   );

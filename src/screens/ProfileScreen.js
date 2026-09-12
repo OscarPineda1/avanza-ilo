@@ -6,19 +6,20 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import { globalStyles, theme } from '../styles/global-styles';
 import { getFavoriteRouteNames } from '../services/favorites';
-import { getRouteByName } from '../services/routes';
+import { useCatalog } from '../context/CatalogContext';
 import SettingOption from '../components/SettingOption';
 
 export default function ProfileScreen({ navigation }) {
     const [favorites, setFavorites] = useState([]);
+    const { routes: catalogRoutes } = useCatalog();
 
     const loadFavorites = useCallback(async () => {
         const names = await getFavoriteRouteNames();
         const routes = names
-            .map((name) => getRouteByName(name))
+            .map((identifier) => catalogRoutes.find((route) => route.id === identifier || route.nombre === identifier))
             .filter(Boolean);
         setFavorites(routes);
-    }, []);
+    }, [catalogRoutes]);
 
     useFocusEffect(
         useCallback(() => {

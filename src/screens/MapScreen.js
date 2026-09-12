@@ -3,13 +3,15 @@ import { Alert, StyleSheet, View, Text, TouchableOpacity, Platform } from 'react
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 
 import { globalStyles, theme } from '../styles/global-styles';
-import { getRouteByName, getRouteCoordinates, getRouteSequence } from '../services/routes';
 import { getEta } from '../services/eta';
 import { findRoutePositionCandidates, positionFromStop } from '../services/route-position';
 import { toggleFavoriteRoute, isFavoriteRoute } from '../services/favorites';
 import { useNetwork } from '../context/NetworkContext';
+import { useCatalog } from '../context/CatalogContext';
+import { useLocationConsent } from '../context/LocationConsentContext';
 import MapInfoCard from '../components/MapInfoCard';
 import RouteMapLayers from '../components/RouteMapLayers';
 import { getDisplayCoordinates } from '../services/route-sequences';
@@ -25,15 +27,20 @@ export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
     const requestedSequenceId = route.params?.sequenceId;
     const requestedWaitPointId = route.params?.waitPointId;
-    const routeData = routeName ? getRouteByName(routeName) : undefined;
-    const selectedSequence = routeData ? getRouteSequence(routeData.nombre, requestedSequenceId) : undefined;
+    const { routes, metadata, source: catalogSource } = useCatalog();
+    const { locationEnabled } = useLocationConsent();
+    const routeData = routeName ? routes.find((item) => item.nombre.toLowerCase() === routeName.toLowerCase()) : undefined;
+    const selectedSequence = routeData?.sequences.find((item) => item.id === (requestedSequenceId || routeData.defaultSequenceId));
     const isCircuit = selectedSequence?.kind === 'circuit';
-    const coordinates = routeData ? getRouteCoordinates(routeData.nombre, selectedSequence?.id) : null;
+    const coordinates = selectedSequence?.coordinates || null;
     const displayCoordinates = useMemo(() => selectedSequence
         ? selectedSequence.layers.filter((layer) => layer.visible !== false).flatMap((layer) => getDisplayCoordinates(layer.coordinates))
         : coordinates, [coordinates, selectedSequence]);
-    const { isOffline } = useNetwork();
+    const { isOffline, availability } = useNetwork();
     const mapRef = useRef(null);
+    const mapsConfigured = Platform.OS === 'android'
+        ? Constants.expoConfig?.extra?.mapsConfigured?.android
+        : Constants.expoConfig?.extra?.mapsConfigured?.ios;
 
     const [isFavorite, setIsFavorite] = useState(false);
     const [waitPoint, setWaitPoint] = useState(null);
@@ -43,7 +50,7 @@ export default function MapScreen({ route, navigation }) {
 
     useEffect(() => {
         if (routeData) {
-            isFavoriteRoute(routeData.nombre).then(setIsFavorite);
+            isFavoriteRoute(routeData.id).then(setIsFavorite);
         }
     }, [routeData]);
 
@@ -55,34 +62,49 @@ export default function MapScreen({ route, navigation }) {
     }, [routeData?.nombre, selectedSequence?.id, requestedWaitPointId]);
 
     useEffect(() => {
-        if (!waitPoint || !routeData) {
+        if (!waitPoint || !routeData || !metadata) {
             setEta(null);
             return;
         }
 
-        let cancelled = false;
-        setEta({ minutes: 0, loading: true });
+        if (availability !== 'online') {
+            setEta({ status: 'offline', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: availability === 'no-internet' ? 'La red no tiene acceso a Internet. El ETA quedó invalidado.' : 'Sin conexión. El ETA quedó invalidado.' } });
+            return;
+        }
 
-        getEta(routeData.nombre, waitPoint, selectedSequence?.id)
+        let cancelled = false;
+        const requestController = new AbortController();
+        setEta({ etaMinutes: null, loading: true });
+
+        getEta(routeData, waitPoint, metadata.version, requestController.signal)
             .then((result) => {
                 if (!cancelled) {
                     setEta(result ? { ...result, loading: false } : null);
                 }
             })
-            .catch(() => {
+            .catch((error) => {
                 if (!cancelled) {
-                    setEta(null);
+                    const code = error?.code || 'backend';
+                    const note = code === 'timeout'
+                        ? 'La consulta agotó el tiempo de espera. Reintenta con conexión estable.'
+                        : code === 'network'
+                        ? 'No fue posible contactar el servicio ETA.'
+                        : code === 'app_check'
+                        ? 'La verificación de la aplicación no está configurada.'
+                        : 'El servicio ETA no está disponible temporalmente.';
+                    setEta({ status: code, etaMinutes: null, estimatedArrivalAt: null, assumptions: { note } });
                 }
             });
 
         return () => {
             cancelled = true;
+            requestController.abort();
         };
-    }, [waitPoint, routeData, selectedSequence?.id]);
+    }, [availability, metadata, routeData, selectedSequence?.id, waitPoint]);
 
     const handleToggleFavorite = useCallback(async () => {
         if (!routeData) return;
-        const next = await toggleFavoriteRoute(routeData.nombre);
+        const next = await toggleFavoriteRoute(routeData.id);
         setIsFavorite(next);
     }, [routeData]);
 
@@ -131,11 +153,12 @@ export default function MapScreen({ route, navigation }) {
                 provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                 style={styles.map}
                 initialRegion={regionIlo}
-                showsUserLocation={true}
+                showsUserLocation={locationEnabled}
                 onMapReady={fitRouteToMap}
             >
                 <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={waitPoint?.id} selectedPosition={waitPoint} onStopPress={handleSelectStop} onRoutePress={handleRoutePress} />
             </MapView>
+            {!mapsConfigured && <View pointerEvents="none" style={styles.mapError}><Ionicons name="map-outline" size={22} color={theme.colors.textMuted} /><Text style={styles.mapErrorText}>El mapa base no está configurado. La ficha textual y las referencias siguen disponibles.</Text></View>}
 
             <SafeAreaView style={styles.topOverlay}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -176,6 +199,8 @@ export default function MapScreen({ route, navigation }) {
                     isOffline={isOffline}
                     eta={eta}
                     waitPointName={waitPoint?.name}
+                    dataVersion={metadata?.version}
+                    catalogSource={catalogSource}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}
                 />
@@ -226,4 +251,6 @@ const styles = StyleSheet.create({
     endpointValue: { color: theme.colors.textDark, fontSize: 11, fontWeight: '700', flexShrink: 1 },
     colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
     routeTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
+    mapError: { position: 'absolute', top: 172, left: 20, right: 20, flexDirection: 'row', gap: 8, alignItems: 'center', padding: 12, borderRadius: 12, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
+    mapErrorText: { flex: 1, color: theme.colors.textMuted, fontSize: 13, lineHeight: 18 },
 });

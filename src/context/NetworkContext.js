@@ -1,38 +1,42 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import NetInfo from '@react-native-community/netinfo';
+import { classifyNetworkState } from '../services/network-state';
 
 const NetworkContext = createContext({
-  isConnected: true,
-  isOffline: false,
+  isConnected: null,
+  isInternetReachable: null,
+  isOffline: true,
+  availability: 'checking',
   type: null,
 });
 
+function normalizeNetworkState(netInfo) {
+  const availability = classifyNetworkState(netInfo);
+  return {
+    isConnected: netInfo.isConnected ?? null,
+    isInternetReachable: netInfo.isInternetReachable ?? null,
+    isOffline: availability !== 'online',
+    availability,
+    type: netInfo.type ?? null,
+  };
+}
+
 export function NetworkProvider({ children }) {
   const [state, setState] = useState({
-    isConnected: true,
-    isOffline: false,
+    isConnected: null,
+    isInternetReachable: null,
+    isOffline: true,
+    availability: 'checking',
     type: null,
   });
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((netInfo) => {
-      const isConnected =
-        netInfo.isConnected != null ? netInfo.isConnected : true;
-      setState({
-        isConnected,
-        isOffline: !isConnected,
-        type: netInfo.type,
-      });
+      setState(normalizeNetworkState(netInfo));
     });
 
     NetInfo.fetch().then((netInfo) => {
-      const isConnected =
-        netInfo.isConnected != null ? netInfo.isConnected : true;
-      setState({
-        isConnected,
-        isOffline: !isConnected,
-        type: netInfo.type,
-      });
+      setState(normalizeNetworkState(netInfo));
     });
 
     return () => unsubscribe && unsubscribe();

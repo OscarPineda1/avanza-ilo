@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { ROUTE_CATALOG_METADATA } from './routes';
 import type { Route, RouteCatalogMetadata } from './routes';
 import {
   readValidatedRouteDataset,
@@ -9,23 +8,25 @@ import {
   type CacheWriteResult,
 } from './route-cache-core';
 
-const STATIC_DATASET_KEY = '@avanza_ilo:validated_route_dataset_v3';
+const STATIC_DATASET_KEY = '@avanza_ilo:published_route_dataset_v4';
 
 export type { CachedRouteDataset, CacheWriteResult } from './route-cache-core';
 
 /**
- * Keeps the master data required by offline mode on-device. The app continues
- * using the bundled dataset if the cache cannot be read or written.
+ * Guarda únicamente un snapshot publicado que ya superó la validación. Una
+ * escritura fallida conserva la última copia íntegra bajo la misma clave.
  */
 export async function cacheStaticRoutes(
   routes: Route[],
-  metadata: RouteCatalogMetadata = ROUTE_CATALOG_METADATA
+  metadata: RouteCatalogMetadata,
+  validatedAt?: string
 ): Promise<CacheWriteResult> {
   return saveValidatedRouteDataset(
     AsyncStorage,
     STATIC_DATASET_KEY,
     routes,
-    metadata
+    metadata,
+    validatedAt
   );
 }
 
