@@ -46,7 +46,7 @@ El emulador usa el proyecto aislado `demo-avanza-ilo`; el publicador exige `FIRE
 1. En Firebase Console, confirmar que el proyecto existente corresponde exactamente al `projectId` autorizado; no crear otro proyecto.
 2. Confirmar que la aplicación Android registrada usa `com.avanzailo.app` y obtener su configuración pública por el canal acordado, sin versionar `.env` ni archivos de credenciales.
 3. Confirmar plan Blaze, región de Functions, APIs necesarias, presupuesto y alertas de consumo.
-4. Registrar Play Integrity para Android App Check y entregar una forma aprobada de obtener el token desde el build nativo. El cliente ya tiene el punto de integración `configureAppCheckTokenProvider`; el backend rechaza peticiones sin token fuera del emulador.
+4. Registrar la aplicación Android y Play Integrity en App Check. Descargar `google-services.json` por un canal seguro, sin versionarlo; instalar `@react-native-firebase/app` y `@react-native-firebase/app-check`; declarar ambos plugins en Expo; inicializar el proveedor antes de montar la aplicación y conectar `getToken()` con `configureAppCheckTokenProvider`. Esta integración requiere un development/release build (no Expo Go). Activar la exigencia en Console solo después de verificar tokens reales. El backend y el cliente ya fallan de forma cerrada sin token fuera del emulador.
 5. Definir el responsable de la publicación (`AVANZA_PUBLICATION_RESPONSIBLE`) y usar credenciales administrativas temporales/ADC con mínimo privilegio.
 6. Confirmar la fase de despacho y mediciones de viaje que se publicarán; mientras falten, el servicio devuelve espera promedio etiquetada y no una llegada de unidad.
 
