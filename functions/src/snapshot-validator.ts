@@ -51,6 +51,8 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
   if (
     snapshot?.schemaVersion !== 1 ||
     snapshot?.status !== 'published' ||
+    typeof snapshot?.cartographyReady !== 'boolean' ||
+    typeof snapshot?.etaReady !== 'boolean' ||
     !nonEmpty(snapshot?.dataVersion) ||
     !nonEmpty(snapshot?.source) ||
     !isoDate(snapshot?.sourceDate) ||
@@ -105,7 +107,7 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
     }
 
     const profile = route.travelProfile;
-    if (
+    if (snapshot.etaReady && (
       !nonEmpty(profile?.id) ||
       !finite(profile?.averageSpeedKmh) ||
       profile.averageSpeedKmh <= 0 ||
@@ -115,7 +117,7 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
       !nonEmpty(profile?.source) ||
       !isoDate(profile?.sourceDate) ||
       !['field', 'synthetic', 'assumption'].includes(profile?.evidence)
-    ) {
+    )) {
       issues.push({ code: 'route.weights', message: 'El perfil de pesos carece de unidad, fuente o valores válidos.', routeId: route.id });
     }
 
@@ -195,17 +197,31 @@ export function validateProductionReadiness(snapshot: PublishedSnapshot): Snapsh
   const issues = [...validation.issues];
 
   for (const route of snapshot.routes ?? []) {
-    if (route.travelProfile?.evidence !== 'field') {
+    if (!snapshot.cartographyReady) {
+      issues.push({
+        code: 'snapshot.cartography.unavailable',
+        message: 'Producción requiere una cartografía validada antes de activar el snapshot.',
+      });
+      break;
+    }
+    if (!snapshot.etaReady && route.travelProfile !== null) {
+      issues.push({
+        code: 'route.weights.provisional',
+        message: 'Un snapshot cartográfico sin ETA no puede publicar pesos provisionales.',
+        routeId: route.id,
+      });
+    }
+    if (snapshot.etaReady && route.travelProfile?.evidence !== 'field') {
       issues.push({
         code: 'route.weights.unverified',
         message: 'Producción requiere pesos respaldados por medición de campo.',
         routeId: route.id,
       });
     }
-    if (
+    if (snapshot.etaReady && (
       route.service?.dispatchReferenceKind === 'none' ||
       !finite(route.service?.dispatchReferenceMinute)
-    ) {
+    )) {
       issues.push({
         code: 'route.dispatch.unverified',
         message: 'Producción requiere una fase de despacho validada para generar llegadas candidatas.',

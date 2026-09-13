@@ -65,12 +65,14 @@ export type PublishedRoute = {
   defaultSequenceId: string;
   sequences: PublishedSequence[];
   service: PublishedServiceProfile;
-  travelProfile: PublishedTravelProfile;
+  travelProfile: PublishedTravelProfile | null;
 };
 
 export type PublishedSnapshot = {
   schemaVersion: 1;
   status: 'published';
+  cartographyReady: boolean;
+  etaReady: boolean;
   dataVersion: string;
   source: string;
   sourceDate: string;

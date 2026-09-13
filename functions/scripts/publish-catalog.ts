@@ -3,7 +3,83 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAllRoutes, ROUTE_CATALOG_METADATA } from '../../src/services/routes';
 import type { PublishedSnapshot } from '../src/contracts';
 import { publishValidatedSnapshot } from '../src/publication';
-import { validateProductionReadiness } from '../src/snapshot-validator';
+import { validateProductionReadiness, validatePublishedSnapshot } from '../src/snapshot-validator';
+
+type FirestoreValue = Record<string, unknown>;
+
+function toFirestoreValue(value: unknown): FirestoreValue {
+  if (value === null) return { nullValue: null };
+  if (typeof value === 'string') return { stringValue: value };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number') {
+    return Number.isInteger(value)
+      ? { integerValue: String(value) }
+      : { doubleValue: value };
+  }
+  if (Array.isArray(value)) {
+    return { arrayValue: { values: value.map(toFirestoreValue) } };
+  }
+  if (typeof value === 'object') {
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(value).map(([key, nested]) => [key, toFirestoreValue(nested)])
+        ),
+      },
+    };
+  }
+  throw new Error('El snapshot contiene un tipo que Firestore no admite.');
+}
+
+function toFirestoreFields(value: Record<string, unknown>): Record<string, FirestoreValue> {
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nested]) => [key, toFirestoreValue(nested)])
+  );
+}
+
+async function publishWithEphemeralAccessToken(
+  projectId: string,
+  token: string,
+  snapshot: PublishedSnapshot
+) {
+  const validation = validatePublishedSnapshot(snapshot);
+  if (!validation.valid) return { published: false as const, validation };
+  const root = `projects/${projectId}/databases/(default)/documents`;
+  const document = (path: string, data: Record<string, unknown>) => ({
+    update: { name: `${root}/${path}`, fields: toFirestoreFields(data) },
+  });
+  const response = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        writes: [
+          document(`publishedSnapshots/${snapshot.dataVersion}`, snapshot),
+          document('publication/current', {
+            dataVersion: snapshot.dataVersion,
+            publishedAt: snapshot.publishedAt,
+            sourceDate: snapshot.sourceDate,
+            cartographyReady: snapshot.cartographyReady,
+            etaReady: snapshot.etaReady,
+          }),
+          document(`adminCatalogDrafts/${snapshot.dataVersion}`, {
+            status: 'published',
+            checkedAt: snapshot.publishedAt,
+            dataVersion: snapshot.dataVersion,
+            publishedBy: snapshot.publishedBy,
+            validation,
+          }),
+        ],
+      }),
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json().catch(() => null) as { error?: { status?: string } } | null;
+    throw new Error(`Firestore REST rechazó la publicación (${response.status}${error?.error?.status ? ` ${error.error.status}` : ''}).`);
+  }
+  return { published: true as const, validation };
+}
 
 async function main(): Promise<void> {
   const args = new Set(process.argv.slice(2));
@@ -26,9 +102,17 @@ async function main(): Promise<void> {
     throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
   }
 
+  const catalogRoutes = getAllRoutes();
+  const etaReady = catalogRoutes.every((route) =>
+    route.travelProfile?.evidence === 'field' &&
+    route.service.dispatchReferenceKind !== 'none' &&
+    Number.isFinite(route.service.dispatchReferenceMinute)
+  );
   const snapshot: PublishedSnapshot = {
     schemaVersion: 1,
     status: 'published',
+    cartographyReady: true,
+    etaReady,
     dataVersion: ROUTE_CATALOG_METADATA.version,
     source: ROUTE_CATALOG_METADATA.source,
     sourceDate: ROUTE_CATALOG_METADATA.sourceDate,
@@ -36,7 +120,12 @@ async function main(): Promise<void> {
     decision: ROUTE_CATALOG_METADATA.decision,
     publishedAt: new Date().toISOString(),
     publishedBy: responsible,
-    routes: getAllRoutes(),
+    routes: catalogRoutes.map((route) => ({
+      ...route,
+      // Los pesos supuestos sirven para pruebas locales, pero nunca se publican
+      // como datos operacionales. La geometría puede publicarse por separado.
+      travelProfile: etaReady ? route.travelProfile : null,
+    })),
   };
   if (target === 'production') {
     const readiness = validateProductionReadiness(snapshot);
@@ -45,9 +134,14 @@ async function main(): Promise<void> {
     }
   }
 
-  initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-avanza-ilo' });
-  const firestore = getFirestore();
-  const result = await publishValidatedSnapshot(firestore, snapshot);
+  const projectId = process.env.GCLOUD_PROJECT || 'demo-avanza-ilo';
+  const ephemeralAccessToken = process.env.AVANZA_FIREBASE_ACCESS_TOKEN;
+  const result = target === 'production' && ephemeralAccessToken
+    ? await publishWithEphemeralAccessToken(projectId, ephemeralAccessToken, snapshot)
+    : await (async () => {
+        initializeApp({ projectId });
+        return publishValidatedSnapshot(getFirestore(), snapshot);
+      })();
   if (!result.published) {
     throw new Error(`Snapshot rechazado: ${result.validation.issues.map((issue) => issue.code).join(', ')}`);
   }

@@ -214,7 +214,7 @@ export function inferArrivalFromService(
 function getGraph(routeName: string, sequenceId: string): Graph | null {
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
-  if (!route || !sequence) return null;
+  if (!route || !sequence || !route.travelProfile) return null;
   const key = `${routeName}:${sequenceId}:${route.travelProfile.id}`;
   const cached = graphCache.get(key);
   if (cached) return cached;

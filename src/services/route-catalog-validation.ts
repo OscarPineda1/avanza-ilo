@@ -119,6 +119,13 @@ export function validateRouteCatalog(
     });
   }
 
+  if (metadata.cartographyReady !== true || typeof metadata.etaReady !== 'boolean') {
+    issues.push({
+      code: 'metadata.readiness',
+      message: 'El catálogo debe declarar cartografía disponible y el estado explícito del ETA.',
+    });
+  }
+
   for (const route of routes) {
     if (!isNonEmpty(route.id) || routeIds.has(route.id)) {
       issues.push({
@@ -208,16 +215,16 @@ export function validateRouteCatalog(
       });
     }
 
-    if (
-      !isNonEmpty(route.travelProfile.id) ||
-      !Number.isFinite(route.travelProfile.averageSpeedKmh) ||
-      route.travelProfile.averageSpeedKmh <= 0 ||
-      !Number.isFinite(route.travelProfile.stopPenaltyMinutes) ||
-      route.travelProfile.stopPenaltyMinutes < 0 ||
-      !isNonEmpty(route.travelProfile.source) ||
-      route.travelProfile.weightUnit !== 'seconds' ||
-      !isIsoDate(route.travelProfile.sourceDate)
-    ) {
+    if ((metadata.etaReady || route.travelProfile !== null) && (
+      !isNonEmpty(route.travelProfile?.id) ||
+      !Number.isFinite(route.travelProfile?.averageSpeedKmh) ||
+      (route.travelProfile?.averageSpeedKmh ?? 0) <= 0 ||
+      !Number.isFinite(route.travelProfile?.stopPenaltyMinutes) ||
+      (route.travelProfile?.stopPenaltyMinutes ?? -1) < 0 ||
+      !isNonEmpty(route.travelProfile?.source) ||
+      route.travelProfile?.weightUnit !== 'seconds' ||
+      !isIsoDate(route.travelProfile?.sourceDate)
+    )) {
       issues.push({
         code: 'pilot.travel-profile',
         message: `La ruta ${route.nombre} debe declarar fuente, unidad y pesos temporales válidos.`,
@@ -491,6 +498,7 @@ export function validateRouteCatalog(
         });
       }
 
+      if (!route.travelProfile) continue;
       try {
         const graph = buildDirectedRouteGraph(
           sequence.coordinates,

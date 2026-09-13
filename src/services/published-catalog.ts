@@ -22,6 +22,8 @@ export async function fetchPublishedRouteDataset(): Promise<PublishedRouteDatase
   const snapshot = snapshotDocument.data();
   if (
     snapshot.status !== 'published' ||
+    snapshot.cartographyReady !== true ||
+    typeof snapshot.etaReady !== 'boolean' ||
     snapshot.dataVersion !== current.dataVersion ||
     typeof snapshot.publishedAt !== 'string' ||
     Number.isNaN(Date.parse(snapshot.publishedAt)) ||
@@ -35,6 +37,8 @@ export async function fetchPublishedRouteDataset(): Promise<PublishedRouteDatase
     geometrySourceDate: snapshot.geometrySourceDate,
     approvedPilotRouteNames: ['1A', 'D', '14'],
     decision: snapshot.decision,
+    cartographyReady: snapshot.cartographyReady,
+    etaReady: snapshot.etaReady,
   };
   const validation = validateRouteCatalog(snapshot.routes as Route[], metadata);
   if (!validation.valid) throw new Error('published-snapshot-validation-failed');

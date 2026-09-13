@@ -143,3 +143,18 @@ test('HU-08/13: la app no vuelve al catálogo empaquetado cuando falla Firestore
   assert.doesNotMatch(catalogContext, /getAllRoutes|ROUTE_CATALOG_METADATA/);
   assert.match(catalogContext, /cached\.validatedAt/);
 });
+
+test('HU-12/22: el binario nativo inicializa App Check y conserva cierre seguro si falta el módulo', () => {
+  const entrypoint = readFileSync('index.js', 'utf8');
+  const appCheck = readFileSync('src/services/app-check.ts', 'utf8');
+  assert.match(entrypoint, /initializeAppCheckProtection/);
+  assert.match(appCheck, /import\('@react-native-firebase\/app-check'\)/);
+  assert.match(appCheck, /playIntegrity/);
+  assert.match(appCheck, /configureAppCheckTokenProvider/);
+});
+
+test('HU-08/17: el mapa no consulta ETA cuando el snapshot es solo cartográfico', () => {
+  const mapScreen = readFileSync('src/screens/MapScreen.js', 'utf8');
+  assert.match(mapScreen, /!metadata\.etaReady/);
+  assert.match(mapScreen, /cartografía está disponible/);
+});

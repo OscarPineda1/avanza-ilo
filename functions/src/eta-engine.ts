@@ -24,12 +24,14 @@ function distanceMeters(left: Coordinate, right: Coordinate): number {
 }
 
 function buildDirectedEdges(route: PublishedRoute, sequence: PublishedSequence): Edge[] {
-  const metersPerSecond = (route.travelProfile.averageSpeedKmh * 1000) / 3600;
+  const profile = route.travelProfile;
+  if (!profile) throw new Error('eta-profile-unavailable');
+  const metersPerSecond = (profile.averageSpeedKmh * 1000) / 3600;
   const referenceIndexes = new Set(sequence.stops.map((reference) => reference.coordinateIndex));
   return sequence.coordinates.slice(0, -1).map((coordinate, index) => {
     const distance = distanceMeters(coordinate, sequence.coordinates[index + 1]);
     const stopPenalty = referenceIndexes.has(index + 1)
-      ? route.travelProfile.stopPenaltyMinutes * 60
+      ? profile.stopPenaltyMinutes * 60
       : 0;
     const weightSeconds = distance / metersPerSecond + stopPenalty;
     if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(weightSeconds) || weightSeconds < 0) {
@@ -187,6 +189,12 @@ export function inferEta(snapshot: PublishedSnapshot, request: EtaRequest, now: 
   const sequence = route?.sequences.find((candidate) => candidate.id === request.directionId);
   if (!route || !sequence) {
     return { ...baseResponse(snapshot.dataVersion, 'La ruta o el sentido no pertenecen al snapshot publicado.'), status: 'no_route' };
+  }
+  if (!snapshot.etaReady || !route.travelProfile) {
+    return baseResponse(
+      snapshot.dataVersion,
+      'La cartografía está disponible, pero el ETA permanece desactivado hasta publicar pesos y despachos validados.'
+    );
   }
   let spatial;
   try {

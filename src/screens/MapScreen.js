@@ -77,6 +77,11 @@ export default function MapScreen({ route, navigation }) {
             return;
         }
 
+        if (!metadata.etaReady) {
+            setEta({ status: 'insufficient_data', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: 'La cartografía está disponible. El ETA se habilitará cuando existan pesos y despachos validados.' } });
+            return;
+        }
+
         let cancelled = false;
         const requestController = new AbortController();
         setEta({ etaMinutes: null, loading: true });

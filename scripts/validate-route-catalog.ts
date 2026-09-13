@@ -34,7 +34,7 @@ getAllRoutes()
         sequence.coordinates,
         route.nombre,
         sequence.id,
-        route.travelProfile,
+        route.travelProfile!,
         sequence.stops.map((stop) => stop.coordinateIndex)
       );
       const inverseEdges = graph.adjacency.filter(
@@ -56,7 +56,7 @@ const reverseIsUnreachable = sampleSequence
         sampleSequence.coordinates,
         sampleRoute!.nombre,
         sampleSequence.id,
-        sampleRoute!.travelProfile
+        sampleRoute!.travelProfile!
       ),
       sampleSequence.coordinates.length - 1
     )[0] === Infinity

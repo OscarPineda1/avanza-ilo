@@ -44,7 +44,7 @@ export type Route = {
   defaultSequenceId: string;
   sequences: RouteSequence[];
   service: ServiceProfile;
-  travelProfile: TravelTimeProfile;
+  travelProfile: TravelTimeProfile | null;
 };
 
 export type ServiceProfile = {
@@ -66,6 +66,8 @@ export type RouteCatalogMetadata = {
   geometrySourceDate: string;
   approvedPilotRouteNames: string[];
   decision: string;
+  cartographyReady: boolean;
+  etaReady: boolean;
 };
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
@@ -78,6 +80,8 @@ export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
     'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Cada retorno se declara dentro de su secuencia; no se generan conexiones automaticas entre rutas.',
+  cartographyReady: true,
+  etaReady: false,
 };
 
 const SERVICE_SOURCE = 'Ficha operativa del catálogo piloto; fase de despacho pendiente de validación de campo';

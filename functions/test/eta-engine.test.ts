@@ -17,6 +17,8 @@ function syntheticSnapshot(): PublishedSnapshot {
   return {
     schemaVersion: 1,
     status: 'published',
+    cartographyReady: true,
+    etaReady: true,
     dataVersion: 'synthetic-test-v1',
     source: 'Fixture sintético para pruebas automatizadas',
     sourceDate: '2026-09-12',
@@ -137,4 +139,19 @@ test('HU-15/18/19: producción rechaza pesos de prueba y fase de despacho ausent
   assert.equal(validation.valid, false);
   assert.ok(validation.issues.some((issue) => issue.code === 'route.weights.unverified'));
   assert.ok(validation.issues.some((issue) => issue.code === 'route.dispatch.unverified'));
+});
+
+test('HU-08/17: producción admite cartografía sin pesos y mantiene el ETA desactivado', () => {
+  const snapshot = syntheticSnapshot();
+  snapshot.etaReady = false;
+  snapshot.routes.forEach((route) => { route.travelProfile = null; });
+  const validation = validateProductionReadiness(snapshot);
+  assert.equal(validation.valid, true);
+
+  const result = inferEta(snapshot, {
+    routeId: '1', directionId: '1A-synthetic', referenceId: '1A-b',
+  }, new Date('2026-09-12T12:12:00.000Z'));
+  assert.equal(result.status, 'insufficient_data');
+  assert.equal(result.etaMinutes, null);
+  assert.match(result.assumptions.note, /cartografía está disponible/i);
 });
