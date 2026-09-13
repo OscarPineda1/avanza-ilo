@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAllRoutes, ROUTE_CATALOG_METADATA } from '../../src/services/routes';
 import type { PublishedSnapshot } from '../src/contracts';
 import { publishValidatedSnapshot } from '../src/publication';
+import { validateProductionReadiness } from '../src/snapshot-validator';
 
 async function main(): Promise<void> {
   const args = new Set(process.argv.slice(2));
@@ -25,8 +26,6 @@ async function main(): Promise<void> {
     throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
   }
 
-  initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-avanza-ilo' });
-  const firestore = getFirestore();
   const snapshot: PublishedSnapshot = {
     schemaVersion: 1,
     status: 'published',
@@ -39,6 +38,15 @@ async function main(): Promise<void> {
     publishedBy: responsible,
     routes: getAllRoutes(),
   };
+  if (target === 'production') {
+    const readiness = validateProductionReadiness(snapshot);
+    if (!readiness.valid) {
+      throw new Error(`Snapshot no apto para producción: ${readiness.issues.map((issue) => issue.code).join(', ')}`);
+    }
+  }
+
+  initializeApp({ projectId: process.env.GCLOUD_PROJECT || 'demo-avanza-ilo' });
+  const firestore = getFirestore();
   const result = await publishValidatedSnapshot(firestore, snapshot);
   if (!result.published) {
     throw new Error(`Snapshot rechazado: ${result.validation.issues.map((issue) => issue.code).join(', ')}`);

@@ -21,7 +21,7 @@ console.log(
   `Resumen: ${result.summary.routes} rutas, ${result.summary.pilots} pilotos, ` +
     `${result.summary.sequences} secuencias, ${result.summary.layers} capas, ` +
     `${result.summary.coordinates} coordenadas, ${result.summary.references} referencias y ` +
-    `${result.summary.weights} pesos verificados.`
+    `${result.summary.weights} pesos estructuralmente válidos (calibración de campo pendiente).`
 );
 
 console.log('| Ruta | Secuencia | Tipo | Capas conservadas | Coordenadas | Aristas inversas |');

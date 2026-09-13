@@ -41,6 +41,8 @@ npm run test:emulators
 
 El emulador usa el proyecto aislado `demo-avanza-ilo`; el publicador exige `FIRESTORE_EMULATOR_HOST`. Los fixtures sintéticos viven solo en pruebas y están etiquetados como tales.
 
+La validación estructural admite perfiles sintéticos o supuestos únicamente para pruebas locales. `publish:production` aplica además una barrera previa que rechaza pesos sin evidencia de campo y rutas sin fase de despacho validada, antes de inicializar Firestore.
+
 ## Configuración externa pendiente antes de producción
 
 1. En Firebase Console, confirmar que el proyecto existente corresponde exactamente al `projectId` autorizado; no crear otro proyecto.

@@ -17,7 +17,7 @@ Los datos reales actuales no incluyen una fase de despacho validada. La interfaz
 ## Requisitos
 
 - Node.js 20.19.4 o superior.
-- Expo SDK 54 / Expo Go compatible.
+- Expo SDK 54; la interfaz puede revisarse en Expo Go, pero Firebase App Check nativo requiere un development/release build.
 
 ## Ejecución
 

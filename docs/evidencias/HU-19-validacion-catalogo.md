@@ -34,7 +34,7 @@ Los puntos generados son referencias matematicas sobre el trazo; este reporte no
 
 ```text
 Pilotos aprobados: 1A, D, 14
-Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos verificados.
+Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos estructuralmente válidos; su calibración de campo permanece pendiente.
 Resultado: VALIDO
 ```
 

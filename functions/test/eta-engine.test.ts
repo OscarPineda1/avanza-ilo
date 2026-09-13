@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { dijkstra, inferEta, validateEtaRequest } from '../src/eta-engine';
-import { validatePublishedSnapshot } from '../src/snapshot-validator';
+import { validateProductionReadiness, validatePublishedSnapshot } from '../src/snapshot-validator';
 import type { PublishedSnapshot } from '../src/contracts';
 
 function haversineMeters() {
@@ -127,4 +127,14 @@ test('HU-08/22: la publicación rechaza documentos que exceden el margen seguro 
   const validation = validatePublishedSnapshot(snapshot);
   assert.equal(validation.valid, false);
   assert.ok(validation.issues.some((issue) => issue.code === 'snapshot.size'));
+});
+
+test('HU-15/18/19: producción rechaza pesos de prueba y fase de despacho ausente', () => {
+  const snapshot = syntheticSnapshot();
+  snapshot.routes[0].service.dispatchReferenceKind = 'none';
+  snapshot.routes[0].service.dispatchReferenceMinute = null;
+  const validation = validateProductionReadiness(snapshot);
+  assert.equal(validation.valid, false);
+  assert.ok(validation.issues.some((issue) => issue.code === 'route.weights.unverified'));
+  assert.ok(validation.issues.some((issue) => issue.code === 'route.dispatch.unverified'));
 });

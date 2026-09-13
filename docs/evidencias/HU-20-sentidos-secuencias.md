@@ -62,7 +62,7 @@ Comando de validacion:
 
 ```text
 npm run validate:catalog
-Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos verificados.
+Resumen: 3 rutas, 3 pilotos, 3 secuencias, 8 capas, 3033 coordenadas, 27 referencias y 3030 pesos estructuralmente válidos; su calibración de campo permanece pendiente.
 Resultado: VALIDO
 ```
 

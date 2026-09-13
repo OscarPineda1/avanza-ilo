@@ -184,3 +184,35 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
     summary: { routes: snapshot.routes.length, directions, coordinates, references, edges },
   };
 }
+
+/**
+ * La validación estructural admite fixtures sintéticos y supuestos para que el
+ * motor pueda probarse en emuladores. Esta segunda barrera se usa únicamente
+ * antes de una publicación real y evita promoverlos como datos operacionales.
+ */
+export function validateProductionReadiness(snapshot: PublishedSnapshot): SnapshotValidation {
+  const validation = validatePublishedSnapshot(snapshot);
+  const issues = [...validation.issues];
+
+  for (const route of snapshot.routes ?? []) {
+    if (route.travelProfile?.evidence !== 'field') {
+      issues.push({
+        code: 'route.weights.unverified',
+        message: 'Producción requiere pesos respaldados por medición de campo.',
+        routeId: route.id,
+      });
+    }
+    if (
+      route.service?.dispatchReferenceKind === 'none' ||
+      !finite(route.service?.dispatchReferenceMinute)
+    ) {
+      issues.push({
+        code: 'route.dispatch.unverified',
+        message: 'Producción requiere una fase de despacho validada para generar llegadas candidatas.',
+        routeId: route.id,
+      });
+    }
+  }
+
+  return { ...validation, valid: issues.length === 0, issues };
+}
