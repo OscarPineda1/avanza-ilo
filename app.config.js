@@ -7,6 +7,10 @@ module.exports = {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
+    plugins: [
+      "@react-native-firebase/app",
+      "@react-native-firebase/app-check",
+    ],
     extra: {
       mapsConfigured: {
         android: Boolean(process.env.GOOGLE_MAPS_ANDROID_API_KEY),
@@ -30,6 +34,7 @@ module.exports = {
     },
     android: {
       package: "com.avanzailo.app",
+      googleServicesFile: "./google-services.json",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
