@@ -41,15 +41,24 @@ npm run test:emulators
 
 El emulador usa el proyecto aislado `demo-avanza-ilo`; el publicador exige `FIRESTORE_EMULATOR_HOST`. Los fixtures sintéticos viven solo en pruebas y están etiquetados como tales.
 
-La validación estructural admite perfiles sintéticos o supuestos únicamente para pruebas locales. `publish:production` aplica además una barrera previa que rechaza pesos sin evidencia de campo y rutas sin fase de despacho validada, antes de inicializar Firestore.
+La validación estructural admite perfiles sintéticos o supuestos únicamente para pruebas locales. `publish:production` permite publicar la cartografía validada con `etaReady=false`, pero elimina los pesos provisionales. Para publicar `etaReady=true`, la barrera de producción exige pesos con evidencia de campo y una fase de despacho validada.
 
-## Configuración externa pendiente antes de producción
+## Estado real de Firebase al 2026-09-13
 
-1. En Firebase Console, confirmar que el proyecto existente corresponde exactamente al `projectId` autorizado; no crear otro proyecto.
-2. Confirmar que la aplicación Android registrada usa `com.avanzailo.app` y obtener su configuración pública por el canal acordado, sin versionar `.env` ni archivos de credenciales.
-3. Confirmar plan Blaze, región de Functions, APIs necesarias, presupuesto y alertas de consumo.
-4. Registrar la aplicación Android y Play Integrity en App Check. Descargar `google-services.json` por un canal seguro, sin versionarlo; instalar `@react-native-firebase/app` y `@react-native-firebase/app-check`; declarar ambos plugins en Expo; inicializar el proveedor antes de montar la aplicación y conectar `getToken()` con `configureAppCheckTokenProvider`. Esta integración requiere un development/release build (no Expo Go). Activar la exigencia en Console solo después de verificar tokens reales. El backend y el cliente ya fallan de forma cerrada sin token fuera del emulador.
-5. Definir el responsable de la publicación (`AVANZA_PUBLICATION_RESPONSIBLE`) y usar credenciales administrativas temporales/ADC con mínimo privilegio.
-6. Confirmar la fase de despacho y mediciones de viaje que se publicarán; mientras falten, el servicio devuelve espera promedio etiquetada y no una llegada de unidad.
+Completado:
 
-No se ha ejecutado publicación ni despliegue real. Una vez autorizados los seis puntos, el orden es reglas/índices, Function, snapshot y prueba completa. `publish:production` requiere además `--confirm-production`, `GCLOUD_PROJECT` real y responsable explícito.
+- La aplicación Android está registrada con el paquete `com.avanzailo.app`; `google-services.json` permanece local e ignorado por Git.
+- Las huellas del certificado de desarrollo están registradas.
+- App Check usa debug en development builds y Play Integrity en release; el token del emulador fue validado y el enforcement productivo permanece desactivado.
+- Las reglas e índices restrictivos están desplegados.
+- El snapshot cartográfico `2026-09-09-oe1-nucleo-v1` está publicado con 3 rutas, 3033 coordenadas y `etaReady=false`.
+
+Pendiente antes de desplegar la Function:
+
+1. Cambiar el proyecto de Spark a Blaze y configurar presupuesto y alertas.
+2. Autorizar una región de Functions; el código conserva `us-central1` como valor predeterminado hasta recibir esa decisión.
+3. Confirmar las APIs requeridas por Cloud Functions/Cloud Run y autorizar expresamente el despliegue con costo.
+4. Aportar pesos de tramos, mediciones de viaje y fases de despacho validados; hasta entonces el backend devuelve `insufficient_data` y no una llegada de unidad.
+5. Registrar la huella SHA-256 de la firma release definitiva cuando exista y validar Play Integrity antes de activar enforcement.
+
+`publish:production` requiere `--confirm-production`, `GCLOUD_PROJECT` real, responsable explícito y credencial temporal. El token OAuth no se almacena en el repositorio.
