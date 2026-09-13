@@ -2,12 +2,12 @@
 
 Estado: procedimiento preparado. El despliegue cloud, la publicación real, la instalación en Android objetivo y su video siguen pendientes de autorización/evidencia.
 
-## Compilación local ejecutada el 2026-09-12
+## Compilación local ejecutada el 2026-09-13
 
-- `assembleRelease`: satisfactorio (480 tareas; 169 ejecutadas).
-- Commit de código y lockfile usado: `8be2687`.
-- APK de comprobación: `android/app/build/outputs/apk/release/app-release.apk`, 69,878,393 bytes.
-- SHA-256: `269C51B9613D5020481E7D395E2C02F456FDBFA3B515F246427015EAEDE1D11E`.
+- `assembleRelease`: satisfactorio (480 tareas; 387 ejecutadas y 93 actualizadas).
+- Commit de aplicación usado: `b39fffa`.
+- APK de comprobación: `android/app/build/outputs/apk/release/app-release.apk`, 69,878,553 bytes.
+- SHA-256: `473F1631DD7632446A06961B27FADA3C1E9582776D2CD68D22D8DC035BB462F3`.
 - Manifest: `com.avanzailo.app`, minSdk 24 (compatible por nivel de API con Android 8/API 26).
 - Firma: verificada con APK Signature Scheme v2, usando la configuración de depuración existente; **no es firma de distribución**.
 - No había dispositivo conectado, por lo que instalación, inicio frío y flujo contra entorno real permanecen pendientes.
