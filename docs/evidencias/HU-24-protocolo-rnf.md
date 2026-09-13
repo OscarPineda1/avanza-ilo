@@ -35,3 +35,14 @@ La app emite una única línea no personal `AVANZA_METRIC app_ready_ms=<n>` cuan
 6. Revisar texto recortado, contraste, lectores de accesibilidad y permisos en Android 8 o superior.
 
 La cobertura dentro de cinco minutos no pertenece a esta matriz de rendimiento; se calcula únicamente con observaciones de campo reservadas en HU-25.
+
+## Evidencia automatizada local (no sustituye la prueba en dispositivo)
+
+Registro del 2026-09-13:
+
+- `npm run verify`: 28 pruebas de aplicación/dominio y 7 de Functions satisfactorias, además de TypeScript, build de Functions y validación estructural del catálogo.
+- Firebase Emulator Suite: 3 pruebas integradas satisfactorias para reglas, publicación, contrato ETA, versión obsoleta, métodos, cuerpo máximo y límite de solicitudes.
+- Expo Doctor: 18/18 comprobaciones satisfactorias en la revisión de dependencias del SDK 54.
+- Auditoría de producción de Functions: 0 vulnerabilidades. La aplicación conserva 24 avisos transitivos (15 moderados y 9 altos, 0 críticos) de la cadena Expo/Metro/navegación; el arreglo sugerido exige una actualización mayor incompatible, por lo que no se aplicó `--force`.
+
+No se convierten estos resultados en tiempos de inicio/ETA, compatibilidad Android ni accesibilidad: faltan dispositivo, red y backend reales. El emulador local ejecutó con Node 24 del host aunque `functions/package.json` declara Node 22 para el runtime objetivo; la equivalencia exacta debe verificarse antes del despliegue.
