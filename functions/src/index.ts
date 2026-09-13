@@ -36,6 +36,11 @@ function clientKey(request: Request): string {
 }
 
 function exceedsRateLimit(request: Request, now = Date.now()): boolean {
+  if (rateLimits.size > 1_000) {
+    for (const [candidate, value] of rateLimits) {
+      if (value.resetAt <= now) rateLimits.delete(candidate);
+    }
+  }
   const key = clientKey(request);
   const entry = rateLimits.get(key);
   if (!entry || entry.resetAt <= now) {
@@ -74,7 +79,8 @@ export const eta = onRequest(
       return;
     }
     const contentLength = Number(request.header('content-length') ?? '0');
-    if (!Number.isFinite(contentLength) || contentLength > MAX_BODY_BYTES) {
+    const receivedBytes = Math.max(contentLength, request.rawBody?.byteLength ?? 0);
+    if (!Number.isFinite(receivedBytes) || receivedBytes > MAX_BODY_BYTES) {
       response.status(413).json(errorResponse('invalid_input', 'La consulta supera el tamaño permitido.'));
       return;
     }

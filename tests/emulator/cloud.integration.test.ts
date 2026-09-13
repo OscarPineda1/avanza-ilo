@@ -86,3 +86,37 @@ test('HU-22/23: Function valida el contrato y responde con el snapshot de Firest
   assert.equal(body.assumptions.vehicleTracking, false);
   assert.equal(body.assumptions.realTimeTraffic, false);
 });
+
+test('HU-22/23: Function limita método, tamaño y abuso con respuestas controladas', async () => {
+  const endpoint = `http://127.0.0.1:5001/${projectId}/us-central1/eta`;
+  const wrongMethod = await fetch(endpoint);
+  assert.equal(wrongMethod.status, 405);
+  assert.equal((await wrongMethod.json()).status, 'invalid_input');
+
+  const oversized = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ routeId: 'x'.repeat(9_000) }),
+  });
+  assert.equal(oversized.status, 413);
+  assert.equal((await oversized.json()).status, 'invalid_input');
+
+  for (let requestIndex = 0; requestIndex < 27; requestIndex += 1) {
+    const allowed = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ routeId: 'missing-fields' }),
+    });
+    assert.equal(allowed.status, 400);
+  }
+  const limited = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ routeId: 'missing-fields' }),
+  });
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get('retry-after'), '60');
+  const body = await limited.json();
+  assert.equal(body.status, 'invalid_input');
+  assert.equal('stack' in body, false);
+});
