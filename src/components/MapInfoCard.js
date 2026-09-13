@@ -13,6 +13,7 @@ export default function MapInfoCard({
     eta,
     waitPointName,
     dataVersion,
+    publishedAt,
     catalogSource,
 }) {
     const etaVisible = hasCoordinates && eta && !eta.loading && eta.etaMinutes !== null;
@@ -92,7 +93,7 @@ export default function MapInfoCard({
                 </View>
             </View>
 
-            {dataVersion ? <Text style={styles.dataVersion}>Datos {dataVersion}{catalogSource === 'cache' ? ' · copia guardada' : ''}</Text> : null}
+            {dataVersion ? <Text style={styles.dataVersion}>Datos {dataVersion}{publishedAt ? ` · ${publishedAt.slice(0, 10)}` : ''}{catalogSource === 'cache' ? ' · copia guardada' : ''}</Text> : null}
             {datosRuta.service?.source ? (
                 <Text style={styles.dataSource} numberOfLines={2}>
                     Fuente operativa: {datosRuta.service.source}{datosRuta.service.sourceDate ? ` · ${datosRuta.service.sourceDate}` : ''}

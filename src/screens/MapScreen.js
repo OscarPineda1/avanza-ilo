@@ -28,7 +28,7 @@ export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
     const requestedSequenceId = route.params?.sequenceId;
     const requestedWaitPointId = route.params?.waitPointId;
-    const { routes, metadata, source: catalogSource } = useCatalog();
+    const { routes, metadata, publishedAt, source: catalogSource } = useCatalog();
     const { locationEnabled } = useLocationConsent();
     const routeData = routeId
         ? routes.find((item) => item.id === routeId)
@@ -205,6 +205,7 @@ export default function MapScreen({ route, navigation }) {
                     eta={eta}
                     waitPointName={waitPoint?.name}
                     dataVersion={metadata?.version}
+                    publishedAt={publishedAt}
                     catalogSource={catalogSource}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}

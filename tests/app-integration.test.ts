@@ -30,6 +30,7 @@ test('HU-12: distingue sin red, Wi-Fi sin Internet y conectividad utilizable', (
 
 test('HU-12/17: el cliente conserva el contrato HTTPS sin recalcular el ETA', async () => {
   let body = '';
+  let appCheckHeader = '';
   const result = await requestEta(
     { routeId: '1', directionId: '1a', referenceId: 'ref', expectedDataVersion: 'synthetic-test-v1' },
     {
@@ -37,12 +38,33 @@ test('HU-12/17: el cliente conserva el contrato HTTPS sin recalcular el ETA', as
       token: 'synthetic-app-check-token',
       fetchImpl: async (_url, init) => {
         body = String(init?.body);
+        appCheckHeader = String((init?.headers as Record<string, string>)['X-Firebase-AppCheck']);
         return new Response(JSON.stringify(validResponse), { status: 200, headers: { 'Content-Type': 'application/json' } });
       },
     }
   );
   assert.deepEqual(result, validResponse);
   assert.equal(JSON.parse(body).expectedDataVersion, 'synthetic-test-v1');
+  assert.equal(appCheckHeader, 'synthetic-app-check-token');
+});
+
+test('HU-12/22: el cliente no llama al endpoint productivo sin App Check', async () => {
+  let called = false;
+  await assert.rejects(
+    requestEta(
+      { routeId: '1', directionId: '1a', referenceId: 'ref' },
+      {
+        endpoint: 'https://example.test/eta',
+        token: null,
+        fetchImpl: async () => {
+          called = true;
+          return new Response(JSON.stringify(validResponse));
+        },
+      }
+    ),
+    (error: unknown) => error instanceof EtaClientError && error.code === 'app_check'
+  );
+  assert.equal(called, false);
 });
 
 test('HU-12: timeout y respuesta 5xx se convierten en errores controlados', async () => {
@@ -114,4 +136,10 @@ test('Arquitectura: ninguna pantalla importa el motor ETA local', () => {
   assert.doesNotMatch(mapScreen, /eta-core|computeEta/);
   assert.doesNotMatch(etaClient, /eta-core|computeEta/);
   assert.match(etaClient, /fetch/);
+});
+
+test('HU-08/13: la app no vuelve al catálogo empaquetado cuando falla Firestore', () => {
+  const catalogContext = readFileSync('src/context/CatalogContext.js', 'utf8');
+  assert.doesNotMatch(catalogContext, /getAllRoutes|ROUTE_CATALOG_METADATA/);
+  assert.match(catalogContext, /cached\.validatedAt/);
 });

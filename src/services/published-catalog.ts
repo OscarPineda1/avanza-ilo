@@ -23,6 +23,8 @@ export async function fetchPublishedRouteDataset(): Promise<PublishedRouteDatase
   if (
     snapshot.status !== 'published' ||
     snapshot.dataVersion !== current.dataVersion ||
+    typeof snapshot.publishedAt !== 'string' ||
+    Number.isNaN(Date.parse(snapshot.publishedAt)) ||
     !Array.isArray(snapshot.routes)
   ) throw new Error('published-snapshot-inconsistent');
   const metadata: RouteCatalogMetadata = {
