@@ -14,6 +14,7 @@
     "test:emulators:inside": "tsx --test tests/emulator/*.test.ts",
     "verify": "npm run typecheck && npm test && npm run validate:catalog && npm --prefix functions run build && npm --prefix functions test",
     "demo:arrival": "tsx scripts/demo-arrival.ts",
+    "export:oe2-data": "tsx scripts/export-oe2-research-data.ts",
     "analyze:field": "tsx scripts/analyze-field-observations.ts"
   },
   "engines": {
