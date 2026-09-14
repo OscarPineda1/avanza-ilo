@@ -66,6 +66,7 @@ async function verifyAppCheck(request: Request): Promise<boolean> {
 export const eta = onRequest(
   {
     cors: false,
+    region: 'us-central1',
     timeoutSeconds: 15,
     memory: '256MiB',
     maxInstances: 10,

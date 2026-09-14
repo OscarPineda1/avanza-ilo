@@ -51,12 +51,12 @@ Completado:
 - Las huellas del certificado de desarrollo están registradas.
 - App Check usa debug en development builds y Play Integrity en release; el token del emulador fue validado y el enforcement productivo permanece desactivado.
 - Las reglas e índices restrictivos están desplegados.
-- El snapshot cartográfico `2026-09-09-oe1-nucleo-v1` está publicado con 3 rutas, 3033 coordenadas y `etaReady=false`.
+- El snapshot cartográfico publicado conserva 3 rutas y 3033 coordenadas con `etaReady=false`; la siguiente versión elimina de los maestros los horarios, frecuencias, tarifas, operadores y pesos que no tienen fuente vigente.
 
 Pendiente antes de desplegar la Function:
 
 1. Cambiar el proyecto de Spark a Blaze y configurar presupuesto y alertas.
-2. Autorizar una región de Functions; el código conserva `us-central1` como valor predeterminado hasta recibir esa decisión.
+2. La base Firestore real está en `nam5`; por recomendación oficial de colocación, la Function declara explícitamente `us-central1`.
 3. Confirmar las APIs requeridas por Cloud Functions/Cloud Run y autorizar expresamente el despliegue con costo.
 4. Aportar pesos de tramos, mediciones de viaje y fases de despacho validados; hasta entonces el backend devuelve `insufficient_data` y no una llegada de unidad.
 5. Registrar la huella SHA-256 de la firma release definitiva cuando exista y validar Play Integrity antes de activar enforcement.
