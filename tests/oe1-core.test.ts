@@ -10,6 +10,7 @@ import {
 import { findRoutePositionCandidates, positionFromStop } from '../src/services/route-position';
 import { searchRoutes } from '../src/services/route-search';
 import { getAllRoutes, getRouteSequence, type ServiceProfile } from '../src/services/routes';
+import { BASELINE_TRAVEL_PROFILE } from '../src/services/graph';
 import { absoluteErrorMinutes, calibrateTravelProfile } from '../src/services/travel-calibration';
 
 const syntheticService: ServiceProfile = {
@@ -25,7 +26,7 @@ const syntheticService: ServiceProfile = {
 
 test('HU-02: búsqueda normaliza mayúsculas, espacios y tildes sin inventar rutas', () => {
   const routes = getAllRoutes();
-  assert.deepEqual(searchRoutes(routes, '  ruta   TRONCAL  ').map((route) => route.nombre), ['14']);
+  assert.deepEqual(searchRoutes(routes, '  ruta   14  ').map((route) => route.nombre), ['14']);
   assert.deepEqual(searchRoutes(routes, 'pampa inalambrica').map((route) => route.nombre), ['1A']);
   assert.deepEqual(searchRoutes(routes, '').map((route) => route.nombre), ['1A', 'D', '14']);
   assert.deepEqual(searchRoutes(routes, '99'), []);
@@ -39,7 +40,7 @@ test('HU-06/07: una referencia conserva ruta, sentido, tramo y posición', () =>
   assert.equal(position.sequenceId, sequence.id);
   assert.equal(position.segmentIndex, sequence.stops[3].coordinateIndex);
   assert.equal(position.source, 'reference');
-  assert.ok(travelMinutesToPosition(route.nombre, position)! > 0);
+  assert.ok(travelMinutesToPosition(route.nombre, position, BASELINE_TRAVEL_PROFILE)! > 0);
 });
 
 test('HU-06: tocar la línea crea una selección asociada al segmento y rechaza puntos lejanos', () => {
@@ -98,9 +99,21 @@ test('HU-11/16: cubre llegada exacta, antes del servicio, última unidad en ruta
 test('HU-08/11/17: sin fase temporal no fabrica una próxima unidad', () => {
   const route = getAllRoutes()[0];
   const sequence = getRouteSequence(route.nombre)!;
-  const result = computeEta(route.nombre, sequence.stops[2].id, 12 * 60, sequence.id);
+  const serviceWithoutDispatch: ServiceProfile = {
+    ...syntheticService,
+    dispatchReferenceKind: 'none',
+    dispatchReferenceMinute: null,
+  };
+  const result = computeEta(
+    route.nombre,
+    sequence.stops[2].id,
+    7 * 60 + 12,
+    sequence.id,
+    serviceWithoutDispatch,
+    BASELINE_TRAVEL_PROFILE
+  );
   assert.equal(result.status, 'average-wait');
-  assert.equal(result.minutes, route.service.headwayMinutes / 2);
+  assert.equal(result.minutes, serviceWithoutDispatch.headwayMinutes / 2);
   assert.equal(result.estimatedArrival, null);
   assert.match(result.condition, /no existe una fase/i);
 });

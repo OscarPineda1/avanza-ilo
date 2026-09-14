@@ -7,7 +7,7 @@ import {
   type Route,
 } from '../src/services/routes';
 import { validateRouteCatalog } from '../src/services/route-catalog-validation';
-import { buildDirectedRouteGraph, dijkstra, shortestPath } from '../src/services/graph';
+import { BASELINE_TRAVEL_PROFILE, buildDirectedRouteGraph, dijkstra, shortestPath } from '../src/services/graph';
 import {
   readValidatedRouteDataset,
   saveValidatedRouteDataset,
@@ -41,7 +41,7 @@ test('HU-05/08/10: catálogo, secuencias, referencias y pesos son válidos', () 
   );
   assert.ok(result.summary.coordinates > 0);
   assert.ok(result.summary.references > 0);
-  assert.ok(result.summary.weights > result.summary.references);
+  assert.equal(result.summary.weights, 0);
 });
 
 test('HU-05/20: las capas cierran los circuitos sin inventar un inverso', () => {
@@ -56,7 +56,7 @@ test('HU-05/20: las capas cierran los circuitos sin inventar un inverso', () => 
       sequence.coordinates,
       route.nombre,
       sequence.id,
-      route.travelProfile!
+      BASELINE_TRAVEL_PROFILE
     );
     assert.equal(shortestPath(graph, graph.nodes.length - 1, 0), null);
     assert.equal(dijkstra(graph, graph.nodes.length - 1)[0], Infinity);
@@ -70,7 +70,7 @@ test('HU-10/11: Dijkstra devuelve cero en el mismo nodo y reconstruye el camino 
     sequence.coordinates.slice(0, 4),
     route.nombre,
     sequence.id,
-    route.travelProfile!
+    BASELINE_TRAVEL_PROFILE
   );
   assert.deepEqual(shortestPath(graph, 2, 2), { distance: 0, path: [2] });
   assert.deepEqual(shortestPath(graph, 0, 3)?.path, [0, 1, 2, 3]);
@@ -96,32 +96,47 @@ test('HU-10/18: el peso suma penalidad solo al alcanzar una parada declarada', (
   const route = getAllRoutes()[0];
   const coordinates = route.sequences[0].coordinates.slice(0, 3);
   const baseGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-base', {
-    ...route.travelProfile!,
+    ...BASELINE_TRAVEL_PROFILE,
     stopPenaltyMinutes: 0,
   }, [1]);
   const penalizedGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-penalizado', {
-    ...route.travelProfile!,
+    ...BASELINE_TRAVEL_PROFILE,
     stopPenaltyMinutes: 1.5,
   }, [1]);
   assert.ok(Math.abs(penalizedGraph.adjacency[0].weight - baseGraph.adjacency[0].weight - 90) < 1e-9);
   assert.equal(penalizedGraph.adjacency[1].weight, baseGraph.adjacency[1].weight);
 });
 
-test('HU-08: frecuencias mostradas y usadas comparten el mismo dato maestro', () => {
+test('HU-08: el catálogo cartográfico no publica datos operativos sin fuente vigente', () => {
   for (const route of getAllRoutes()) {
-    assert.equal(route.frecuencia, `${route.service.headwayMinutes} min`);
-    assert.ok(route.service.source.length > 0);
-    assert.match(route.service.sourceDate, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(route.frecuencia, '');
+    assert.equal(route.horario, '');
+    assert.equal(route.tarifa, '');
+    assert.equal(route.service, null);
+    assert.equal(route.travelProfile, null);
   }
 });
 
 test('HU-08/10: el validador rechaza frecuencia incoherente y pesos inválidos', () => {
   const routes = cloneRoutes();
-  routes[0].service.headwayMinutes = -1;
+  for (const route of routes) {
+    route.frecuencia = '10 min';
+    route.service = {
+      startMinute: 420,
+      endMinute: 1260,
+      headwayMinutes: 10,
+      dispatchReferenceMinute: 420,
+      dispatchReferenceKind: 'scheduled',
+      timezone: 'America/Lima',
+      source: 'Fixture sintético de prueba',
+      sourceDate: '2026-09-14',
+    };
+    route.travelProfile = { ...BASELINE_TRAVEL_PROFILE };
+  }
+  routes[0].service!.headwayMinutes = -1;
   routes[1].travelProfile!.averageSpeedKmh = 0;
-  routes[2].service.dispatchReferenceKind = 'scheduled';
-  routes[2].service.dispatchReferenceMinute = null;
-  const result = validateRouteCatalog(routes, ROUTE_CATALOG_METADATA);
+  routes[2].service!.dispatchReferenceMinute = null;
+  const result = validateRouteCatalog(routes, { ...ROUTE_CATALOG_METADATA, etaReady: true });
   assert.equal(result.valid, false);
   assert.ok(result.issues.some((issue) => issue.code === 'pilot.service-profile' && issue.routeId === routes[2].id));
   assert.ok(result.issues.some((issue) => issue.code === 'pilot.travel-profile'));

@@ -2,6 +2,7 @@ import {
   buildDirectedRouteGraph,
   dijkstra,
   type Graph,
+  type TravelTimeProfile,
 } from './graph';
 import {
   getRouteByName,
@@ -211,18 +212,23 @@ export function inferArrivalFromService(
   };
 }
 
-function getGraph(routeName: string, sequenceId: string): Graph | null {
+function getGraph(
+  routeName: string,
+  sequenceId: string,
+  profileOverride?: TravelTimeProfile
+): Graph | null {
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
-  if (!route || !sequence || !route.travelProfile) return null;
-  const key = `${routeName}:${sequenceId}:${route.travelProfile.id}`;
+  const profile = profileOverride ?? route?.travelProfile;
+  if (!route || !sequence || !profile) return null;
+  const key = `${routeName}:${sequenceId}:${profile.id}`;
   const cached = graphCache.get(key);
   if (cached) return cached;
   const graph = buildDirectedRouteGraph(
     sequence.coordinates,
     routeName,
     sequenceId,
-    route.travelProfile,
+    profile,
     sequence.stops.map((stop) => stop.coordinateIndex)
   );
   graphCache.set(key, graph);
@@ -231,10 +237,11 @@ function getGraph(routeName: string, sequenceId: string): Graph | null {
 
 export function travelMinutesToPosition(
   routeName: string,
-  position: RoutePosition
+  position: RoutePosition,
+  profileOverride?: TravelTimeProfile
 ): number | null {
   const sequence = getRouteSequence(routeName, position.sequenceId);
-  const graph = getGraph(routeName, position.sequenceId);
+  const graph = getGraph(routeName, position.sequenceId, profileOverride);
   if (
     !sequence ||
     !graph ||
@@ -257,7 +264,8 @@ export function computeEta(
   waitPoint: RoutePosition | string,
   queryMinute = minuteOfDay(new Date()),
   sequenceId?: string,
-  serviceOverride?: ServiceProfile
+  serviceOverride?: ServiceProfile,
+  travelProfileOverride?: TravelTimeProfile
 ): EtaResult {
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
@@ -279,13 +287,18 @@ export function computeEta(
     return unavailable('unavailable', queryMinute, 'El punto no pertenece a la ruta y sentido seleccionados.', routePosition.name);
   }
 
-  const travelMinutes = travelMinutesToPosition(routeName, routePosition);
+  const travelMinutes = travelMinutesToPosition(routeName, routePosition, travelProfileOverride);
   if (travelMinutes === null) {
     return unavailable('unavailable', queryMinute, 'No existe un recorrido dirigido hasta este punto.', routePosition.name);
   }
 
+  const service = serviceOverride ?? route.service;
+  if (!service) {
+    return unavailable('unavailable', queryMinute, 'No existe un perfil operativo validado para esta ruta.', routePosition.name);
+  }
+
   return inferArrivalFromService(
-    serviceOverride ?? route.service,
+    service,
     travelMinutes,
     queryMinute,
     routePosition.name

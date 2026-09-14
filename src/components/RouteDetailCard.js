@@ -26,7 +26,7 @@ export default function RouteDetailCard({ item, onPress }) {
                 </View>
             </View>
 
-            <View style={styles.metaRow}><View style={styles.metaItem}><Ionicons name="cash-outline" size={16} color={item.color} /><Text style={styles.metaText}>{item.tarifa || 'Tarifa por definir'}</Text></View><View style={styles.metaItem}><Ionicons name="time-outline" size={16} color={item.color} /><Text style={styles.metaText}>Cada {item.frecuencia || '—'}</Text></View></View>
+            <View style={styles.metaRow}><View style={styles.metaItem}><Ionicons name="cash-outline" size={16} color={item.color} /><Text style={styles.metaText}>{item.tarifa || 'Tarifa por confirmar'}</Text></View><View style={styles.metaItem}><Ionicons name="time-outline" size={16} color={item.color} /><Text style={styles.metaText}>{item.frecuencia ? `Cada ${item.frecuencia}` : 'Frecuencia por confirmar'}</Text></View></View>
 
             <View style={styles.cardAction}>
                 <Text style={[styles.actionText, { color: item.color }]}>{item.coordinates?.length ? 'Ver recorrido en mapa' : 'Ver información de la ruta'}</Text>

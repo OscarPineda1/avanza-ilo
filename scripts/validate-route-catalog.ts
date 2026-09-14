@@ -3,7 +3,7 @@ import {
   ROUTE_CATALOG_METADATA,
 } from '../src/services/routes';
 import { validateRouteCatalog } from '../src/services/route-catalog-validation';
-import { buildDirectedRouteGraph, dijkstra } from '../src/services/graph';
+import { BASELINE_TRAVEL_PROFILE, buildDirectedRouteGraph, dijkstra } from '../src/services/graph';
 
 const result = validateRouteCatalog(
   getAllRoutes(),
@@ -34,7 +34,7 @@ getAllRoutes()
         sequence.coordinates,
         route.nombre,
         sequence.id,
-        route.travelProfile!,
+        BASELINE_TRAVEL_PROFILE,
         sequence.stops.map((stop) => stop.coordinateIndex)
       );
       const inverseEdges = graph.adjacency.filter(
@@ -56,7 +56,7 @@ const reverseIsUnreachable = sampleSequence
         sampleSequence.coordinates,
         sampleRoute!.nombre,
         sampleSequence.id,
-        sampleRoute!.travelProfile!
+        BASELINE_TRAVEL_PROFILE
       ),
       sampleSequence.coordinates.length - 1
     )[0] === Infinity

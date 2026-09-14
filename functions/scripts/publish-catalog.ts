@@ -105,6 +105,7 @@ async function main(): Promise<void> {
   const catalogRoutes = getAllRoutes();
   const etaReady = catalogRoutes.every((route) =>
     route.travelProfile?.evidence === 'field' &&
+    route.service !== null &&
     route.service.dispatchReferenceKind !== 'none' &&
     Number.isFinite(route.service.dispatchReferenceMinute)
   );

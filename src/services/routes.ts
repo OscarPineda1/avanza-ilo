@@ -14,10 +14,7 @@ import {
   createRouteSequence,
   type RouteSequence,
 } from './route-sequences';
-import {
-  BASELINE_TRAVEL_PROFILE,
-  type TravelTimeProfile,
-} from './graph';
+import { type TravelTimeProfile } from './graph';
 
 export type LatLng = {
   latitude: number;
@@ -43,7 +40,7 @@ export type Route = {
   sentido: string;
   defaultSequenceId: string;
   sequences: RouteSequence[];
-  service: ServiceProfile;
+  service: ServiceProfile | null;
   travelProfile: TravelTimeProfile | null;
 };
 
@@ -72,51 +69,16 @@ export type RouteCatalogMetadata = {
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   id: 'avanza-ilo-rutas-piloto',
-  version: '2026-09-09-oe1-nucleo-v1',
+  version: '2026-09-14-cartografia-v2',
   source:
-    'Google My Maps, correccion del responsable de datos en HU-19 y aclaracion funcional de HU-20',
-  sourceDate: '2026-09-09',
+    'Google My Maps, validacion del responsable de datos y contraste con publicaciones oficiales de la Municipalidad Provincial de Ilo',
+  sourceDate: '2026-09-14',
   geometrySourceDate: '2026-08-19',
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
-    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Cada retorno se declara dentro de su secuencia; no se generan conexiones automaticas entre rutas.',
+    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Los campos de operador, tarifa, horario, frecuencia y despacho quedan sin publicar porque no se encontro una fuente oficial vigente; la cartografia no se reemplaza por recorridos oficiales incompatibles.',
   cartographyReady: true,
   etaReady: false,
-};
-
-const SERVICE_SOURCE = 'Ficha operativa del catálogo piloto; fase de despacho pendiente de validación de campo';
-
-const serviceProfiles: Record<'1A' | 'D' | '14', ServiceProfile> = {
-  '1A': {
-    startMinute: 6 * 60,
-    endMinute: 21 * 60,
-    headwayMinutes: 10,
-    dispatchReferenceMinute: null,
-    dispatchReferenceKind: 'none',
-    timezone: 'America/Lima',
-    source: SERVICE_SOURCE,
-    sourceDate: '2026-09-09',
-  },
-  D: {
-    startMinute: 6 * 60 + 15,
-    endMinute: 20 * 60 + 45,
-    headwayMinutes: 12,
-    dispatchReferenceMinute: null,
-    dispatchReferenceKind: 'none',
-    timezone: 'America/Lima',
-    source: SERVICE_SOURCE,
-    sourceDate: '2026-09-09',
-  },
-  '14': {
-    startMinute: 6 * 60,
-    endMinute: 21 * 60,
-    headwayMinutes: 15,
-    dispatchReferenceMinute: null,
-    dispatchReferenceKind: 'none',
-    timezone: 'America/Lima',
-    source: SERVICE_SOURCE,
-    sourceDate: '2026-09-09',
-  },
 };
 
 const RUTA_1A_CRUCE_REGRESO_INDEX = 324;
@@ -213,15 +175,15 @@ const routes: Route[] = [
   {
     id: '1',
     nombre: '1A',
-    descripcion: 'Consorcio Ilo 1A',
+    descripcion: 'Ruta 1A',
     origen: 'Alto Ilo',
     destino: 'Pampa Inalámbrica',
     color: theme.colors.ruta1A,
-    empresa: 'Consorcio Ilo 1A',
+    empresa: 'Operador por confirmar',
     zona: 'Pampa',
-    horario: '6:00 AM - 9:00 PM',
-    tarifa: 'S/. 1.50',
-    frecuencia: '10 min',
+    horario: '',
+    tarifa: '',
+    frecuencia: '',
     coordinates: ruta1ASequence.coordinates,
     stops: ruta1ASequence.stops,
     available: true,
@@ -229,21 +191,21 @@ const routes: Route[] = [
     sentido: ruta1ASequence.label,
     defaultSequenceId: ruta1ASequence.id,
     sequences: [ruta1ASequence],
-    service: serviceProfiles['1A'],
-    travelProfile: BASELINE_TRAVEL_PROFILE,
+    service: null,
+    travelProfile: null,
   },
   {
     id: '2',
     nombre: 'D',
-    descripcion: 'Transportes Pampa I.',
+    descripcion: 'Ruta D',
     origen: 'Plaza de Armas',
     destino: 'Ciudad Nueva',
     color: theme.colors.rutaD,
-    empresa: 'Transportes Pampa I.',
+    empresa: 'Operador por confirmar',
     zona: 'Centro',
-    horario: '6:15 AM - 8:45 PM',
-    tarifa: 'S/. 1.50',
-    frecuencia: '12 min',
+    horario: '',
+    tarifa: '',
+    frecuencia: '',
     coordinates: rutaDSequence.coordinates,
     stops: rutaDSequence.stops,
     available: true,
@@ -251,21 +213,21 @@ const routes: Route[] = [
     sentido: rutaDSequence.label,
     defaultSequenceId: rutaDSequence.id,
     sequences: [rutaDSequence],
-    service: serviceProfiles.D,
-    travelProfile: BASELINE_TRAVEL_PROFILE,
+    service: null,
+    travelProfile: null,
   },
   {
     id: '4',
     nombre: '14',
-    descripcion: 'Ruta Troncal 14',
+    descripcion: 'Ruta 14',
     origen: 'Mercado Pacocha',
     destino: 'Tren al Sur',
     color: theme.colors.ruta14,
-    empresa: 'Ruta Troncal 14',
+    empresa: 'Operador por confirmar',
     zona: 'Sur',
-    horario: '6:00 AM - 9:00 PM',
-    tarifa: 'S/. 1.70',
-    frecuencia: '15 min',
+    horario: '',
+    tarifa: '',
+    frecuencia: '',
     coordinates: ruta14Sequence.coordinates,
     stops: ruta14Sequence.stops,
     available: true,
@@ -273,8 +235,8 @@ const routes: Route[] = [
     sentido: ruta14Sequence.label,
     defaultSequenceId: ruta14Sequence.id,
     sequences: [ruta14Sequence],
-    service: serviceProfiles['14'],
-    travelProfile: BASELINE_TRAVEL_PROFILE,
+    service: null,
+    travelProfile: null,
   },
 ];
 

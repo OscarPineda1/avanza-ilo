@@ -19,7 +19,7 @@ La prueba `OE2/HU-20` verifica en las tres rutas que la igualdad es exacta y que
 
 ## Límite metodológico
 
-Las coordenadas permiten calcular distancias geométricas, orden de nodos y cierre del circuito. No permiten deducir por sí solas tiempos reales de tramo, velocidad operativa, frecuencia, horario o despachos. Esos campos permanecen como supuestos identificados o pendientes y no habilitan el ETA productivo.
+Las coordenadas permiten calcular distancias geométricas, orden de nodos y cierre del circuito. No permiten deducir por sí solas tiempos reales de tramo, velocidad operativa, frecuencia, horario o despachos. Tras el contraste de fuentes públicas del 2026-09-14, esos campos quedan nulos en el catálogo cartográfico y no habilitan el ETA productivo.
 
 MAE, RMSE, sesgo, cobertura dentro del umbral, observaciones de llegada y grupo focal pertenecen a la ejecución posterior de OE3/HU-25. Los instrumentos quedan preparados, pero no se declaran resultados.
 

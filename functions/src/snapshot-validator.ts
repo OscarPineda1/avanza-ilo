@@ -92,17 +92,18 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
     const validDispatch = service?.dispatchReferenceKind === 'none'
       ? service.dispatchReferenceMinute === null
       : finite(service?.dispatchReferenceMinute);
-    if (
+    const serviceIsInvalid = service !== null && (
       !finite(service?.startMinute) ||
       !finite(service?.endMinute) ||
-      service.endMinute <= service.startMinute ||
+      service!.endMinute <= service!.startMinute ||
       !finite(service?.headwayMinutes) ||
-      service.headwayMinutes <= 0 ||
+      service!.headwayMinutes <= 0 ||
       !validDispatch ||
       service?.timezone !== OPERATION_TIME_ZONE ||
       !nonEmpty(service?.source) ||
       !isoDate(service?.sourceDate)
-    ) {
+    );
+    if ((snapshot.etaReady && service === null) || serviceIsInvalid) {
       issues.push({ code: 'route.service', message: 'El perfil de servicio es incompleto o inválido.', routeId: route.id });
     }
 

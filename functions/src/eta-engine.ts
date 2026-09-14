@@ -190,7 +190,7 @@ export function inferEta(snapshot: PublishedSnapshot, request: EtaRequest, now: 
   if (!route || !sequence) {
     return { ...baseResponse(snapshot.dataVersion, 'La ruta o el sentido no pertenecen al snapshot publicado.'), status: 'no_route' };
   }
-  if (!snapshot.etaReady || !route.travelProfile) {
+  if (!snapshot.etaReady || !route.travelProfile || !route.service) {
     return baseResponse(
       snapshot.dataVersion,
       'La cartografía está disponible, pero el ETA permanece desactivado hasta publicar pesos y despachos validados.'

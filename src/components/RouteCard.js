@@ -23,7 +23,7 @@ export default function RouteCard({ item, onPress }) {
             <View style={styles.routeInfo}>
                 <View style={styles.titleRow}><Text style={styles.routeName}>Ruta {item.nombre}</Text><View style={[styles.status, { backgroundColor: `${item.color}1A` }]}><Text style={[styles.statusText, { color: item.color }]}>DISPONIBLE</Text></View></View>
                 <RouteDirectionBadge origin={item.origen} destination={item.destino} color={item.color} compact isCircuit={isCircuit} />
-                <Text style={styles.meta}>{item.tarifa} · Cada {item.frecuencia}</Text>
+                <Text style={styles.meta}>{item.tarifa || 'Tarifa por confirmar'} · {item.frecuencia ? `Cada ${item.frecuencia}` : 'Frecuencia por confirmar'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color={theme.colors.border} />
         </TouchableOpacity>

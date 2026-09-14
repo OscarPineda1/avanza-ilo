@@ -64,7 +64,7 @@ export type PublishedRoute = {
   sentido: string;
   defaultSequenceId: string;
   sequences: PublishedSequence[];
-  service: PublishedServiceProfile;
+  service: PublishedServiceProfile | null;
   travelProfile: PublishedTravelProfile | null;
 };
 

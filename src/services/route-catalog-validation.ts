@@ -183,7 +183,7 @@ export function validateRouteCatalog(
       });
     }
 
-    if (parsePositiveMinutes(route.frecuencia) === undefined) {
+    if (metadata.etaReady && parsePositiveMinutes(route.frecuencia) === undefined) {
       issues.push({
         code: 'pilot.frequency',
         message: `La frecuencia de la ruta ${route.nombre} debe ser positiva y expresarse en minutos.`,
@@ -192,22 +192,25 @@ export function validateRouteCatalog(
     }
 
     const parsedFrequency = parsePositiveMinutes(route.frecuencia);
-    const hasValidDispatchReference = route.service.dispatchReferenceKind === 'none'
-      ? route.service.dispatchReferenceMinute === null
-      : route.service.dispatchReferenceMinute !== null &&
-        Number.isFinite(route.service.dispatchReferenceMinute);
-    if (
-      !Number.isFinite(route.service.startMinute) ||
-      !Number.isFinite(route.service.endMinute) ||
-      route.service.endMinute <= route.service.startMinute ||
-      !Number.isFinite(route.service.headwayMinutes) ||
-      route.service.headwayMinutes <= 0 ||
+    const service = route.service;
+    const hasValidDispatchReference = service?.dispatchReferenceKind === 'none'
+      ? service.dispatchReferenceMinute === null
+      : service !== null && service !== undefined &&
+        service.dispatchReferenceMinute !== null &&
+        Number.isFinite(service.dispatchReferenceMinute);
+    const hasInvalidPublishedService = service !== null && (
+      !Number.isFinite(service.startMinute) ||
+      !Number.isFinite(service.endMinute) ||
+      service.endMinute <= service.startMinute ||
+      !Number.isFinite(service.headwayMinutes) ||
+      service.headwayMinutes <= 0 ||
       !hasValidDispatchReference ||
-      parsedFrequency !== route.service.headwayMinutes ||
-      route.service.timezone !== 'America/Lima' ||
-      !isNonEmpty(route.service.source) ||
-      !isIsoDate(route.service.sourceDate)
-    ) {
+      parsedFrequency !== service.headwayMinutes ||
+      service.timezone !== 'America/Lima' ||
+      !isNonEmpty(service.source) ||
+      !isIsoDate(service.sourceDate)
+    );
+    if ((metadata.etaReady && service === null) || hasInvalidPublishedService) {
       issues.push({
         code: 'pilot.service-profile',
         message: `La ruta ${route.nombre} debe usar un único perfil de servicio válido y coherente con la frecuencia mostrada.`,
