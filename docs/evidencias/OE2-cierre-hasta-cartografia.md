@@ -31,3 +31,7 @@ npm run verify
 ```
 
 El archivo exportado alimenta el Excel de recolección separando cartografía publicada, cálculos derivados, datos operativos provisionales y evidencia externa pendiente.
+
+## Escenario de presentación
+
+El cierre técnico completo de OE1/OE2 se demuestra en emuladores con `2026-09-14-demo-oe1-oe2-v1`: agrega únicamente despachos y pesos simulados, activa ETA y conserva los datos productivos intactos. La evidencia y los comandos están en `OE1-OE2-cierre-demostracion-2026-09-14.md`.
