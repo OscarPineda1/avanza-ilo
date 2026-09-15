@@ -12,6 +12,7 @@ if (-not ($devices -match "\tdevice$")) {
 
 & $adb.Source reverse tcp:8080 tcp:8080 | Out-Null
 & $adb.Source reverse tcp:5001 tcp:5001 | Out-Null
+& $adb.Source reverse tcp:8081 tcp:8081 | Out-Null
 
 $env:EXPO_PUBLIC_FIREBASE_USE_EMULATORS = 'true'
 $env:EXPO_PUBLIC_FIREBASE_EMULATOR_HOST = '127.0.0.1'
@@ -21,5 +22,5 @@ $env:EXPO_PUBLIC_FIREBASE_APP_ID = '1:000000000000:android:demo-local-only'
 $env:EXPO_PUBLIC_ETA_ENDPOINT = ''
 
 Write-Host 'AVANZA ILO: iniciando development build contra Firebase Emulator Suite.'
-Write-Host 'Mantén en otra terminal: npm run demo:emulators'
-npx expo start --dev-client -c --android
+Write-Host 'Manten en otra terminal: npm run demo:emulators'
+npx expo start --dev-client -c --localhost --android

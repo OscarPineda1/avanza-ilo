@@ -2,6 +2,7 @@ module.exports = {
   expo: {
     name: "avanza-ilo",
     slug: "avanza-ilo",
+    scheme: "avanza-ilo",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
