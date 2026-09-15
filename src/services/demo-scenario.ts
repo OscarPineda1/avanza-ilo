@@ -54,7 +54,7 @@ export function buildDemoRoutes(routes: Route[] = getAllRoutes()): Route[] {
     return {
       ...route,
       horario: '00:00–23:59 · demostración',
-      frecuencia: `${service.headwayMinutes} min · demostración`,
+      frecuencia: `${service.headwayMinutes} min`,
       service,
       travelProfile,
       sequences: route.sequences.map((sequence) => ({

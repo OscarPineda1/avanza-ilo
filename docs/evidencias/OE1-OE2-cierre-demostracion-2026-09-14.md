@@ -33,7 +33,7 @@ Este cierre es técnico, no una validación de campo. Los despachos y pesos se c
 | HU-21 | Lista | interfaz existente conectada al estado publicado, sin rediseño |
 | HU-22 | Lista | Function `eta` desplegada en `us-central1`; demo positiva en emuladores |
 | HU-23 | Lista | pruebas unitarias, contrato y recorrido integral en emuladores |
-| HU-24 | Lista para protocolo | controles de rendimiento, errores y seguridad; medición final por dispositivo pendiente |
+| HU-24 | Parcial | controles de errores y seguridad implementados; medición RNF en build comparable a producción pendiente |
 
 HU-25 permanece en OE3: protocolo preparado, sin participantes ni resultados fabricados. HU-26 es cierre reproducible final y no se adelanta aquí.
 
@@ -45,6 +45,13 @@ HU-25 permanece en OE3: protocolo preparado, sin participantes ni resultados fab
 - 360 despachos simulados con fase temporal y zona `America/Lima`.
 - 9 consultas de muestra, sin completar llegada observada ni métricas OE3.
 - 27 ubicaciones de espera expresadas por origen/cierre o kilómetro acumulado; se retiró “Punto de referencia N”.
+
+## Verificación Android
+
+- Development build instalado en un emulador Android con `expo-dev-client`.
+- Firestore emulado cargó las 3 rutas y el snapshot `2026-09-14-demo-oe1-oe2-v1`.
+- La ficha de Ruta 1A mostró `LLEGADA ESTIMADA` y `5.3 min`; la Function registró la ejecución HTTPS.
+- Recarga de desarrollo medida en `app_ready_ms=1511`. No se usa como evidencia final de HU-24 porque no es un build comparable a producción.
 
 ## Reproducción
 

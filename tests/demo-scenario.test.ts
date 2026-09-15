@@ -7,6 +7,8 @@ import {
   validateDemoWeights,
 } from '../src/services/demo-scenario';
 import { computeEta } from '../src/services/eta-core';
+import { validateRouteCatalog } from '../src/services/route-catalog-validation';
+import { ROUTE_CATALOG_METADATA } from '../src/services/routes';
 
 test('OE1/OE2 demo: completa despachos y pesos sin alterar maestros oficiales', () => {
   const routes = buildDemoRoutes();
@@ -37,4 +39,15 @@ test('HU-10/11/16/17: el escenario completo devuelve ETA para las tres rutas', (
     assert.ok(result.minutes !== null && result.minutes >= 0);
     assert.equal(result.dataVersion, DEMO_DATA_VERSION);
   }
+});
+
+test('HU-12: el catálogo de demostración cumple el contrato consumido por la app', () => {
+  const result = validateRouteCatalog(buildDemoRoutes(), {
+    ...ROUTE_CATALOG_METADATA,
+    version: DEMO_DATA_VERSION,
+    source: 'Escenario de demostración AVANZA ILO',
+    decision: 'Escenario temporal para demostrar OE1/OE2 con ETA activo.',
+    etaReady: true,
+  });
+  assert.deepEqual(result.issues, []);
 });
