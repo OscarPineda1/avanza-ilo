@@ -42,6 +42,14 @@ test('HU-05/08/10: catálogo, secuencias, referencias y pesos son válidos', () 
   assert.ok(result.summary.coordinates > 0);
   assert.ok(result.summary.references > 0);
   assert.equal(result.summary.weights, 0);
+  assert.equal(
+    getAllRoutes().some((route) =>
+      route.sequences.some((sequence) =>
+        sequence.stops.some((stop) => /punto de referencia/i.test(stop.name))
+      )
+    ),
+    false
+  );
 });
 
 test('HU-05/20: las capas cierran los circuitos sin inventar un inverso', () => {

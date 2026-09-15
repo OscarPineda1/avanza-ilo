@@ -1,4 +1,5 @@
 import type { LatLng } from './routes';
+import { haversineDistance } from './haversine';
 
 export type Stop = {
   id: string;
@@ -25,6 +26,18 @@ export function buildStops(
   const total = coordinates.length;
   const step = Math.max(1, Math.floor((total - 1) / (count - 1)));
   const result: Stop[] = [];
+  const cumulativeMeters = new Array<number>(total).fill(0);
+  for (let index = 1; index < total; index += 1) {
+    cumulativeMeters[index] =
+      cumulativeMeters[index - 1] +
+      haversineDistance(coordinates[index - 1], coordinates[index]);
+  }
+
+  const locationName = (coordinateIndex: number, isOrigin: boolean, isDestination: boolean) => {
+    if (isOrigin) return `Inicio · Ruta ${routeName}`;
+    if (isDestination) return `Final · Ruta ${routeName}`;
+    return `Ruta ${routeName} · km ${(cumulativeMeters[coordinateIndex] / 1000).toFixed(1)}`;
+  };
 
   for (let i = 0; i < total; i += step) {
     const coordinate = coordinates[i];
@@ -34,11 +47,7 @@ export function buildStops(
       id: `${sequenceId.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
       sequenceId,
-      name: isOrigin
-        ? 'Punto de referencia inicial'
-        : isDestination
-        ? 'Punto de referencia final'
-        : `Punto de referencia ${result.length + 1}`,
+      name: locationName(i, isOrigin, isDestination),
       coordinate,
       isOrigin,
       isDestination,
@@ -60,12 +69,12 @@ export function buildStops(
   ) {
     // The previous sampled stop was incorrectly marked as the destination.
     lastStop.isDestination = false;
-    lastStop.name = `Punto de referencia ${result.length}`;
+    lastStop.name = locationName(lastStop.coordinateIndex, false, false);
     result.push({
       id: `${sequenceId.toLowerCase()}-stop-${result.length + 1}`,
       routeName,
       sequenceId,
-      name: 'Punto de referencia final',
+      name: locationName(total - 1, false, true),
       coordinate: last,
       isOrigin: false,
       isDestination: true,

@@ -55,8 +55,8 @@ export function createRouteSequence(
   const stops = buildStops(routeName, definition.id, coordinates, referenceCount);
 
   if (definition.kind === 'circuit' && stops.length > 1) {
-    stops[0].name = 'Inicio y fin del circuito';
-    stops.at(-1)!.name = 'Cierre del circuito';
+    stops[0].name = `Inicio y fin · Ruta ${routeName}`;
+    stops.at(-1)!.name = `Cierre · Ruta ${routeName}`;
   }
 
   return {
