@@ -12,8 +12,12 @@
     "test": "tsx --test tests/*.test.ts",
     "test:emulators": "npx --yes firebase-tools@15.23.0 emulators:exec --project demo-avanza-ilo --only firestore,functions \"npm run test:emulators:inside\"",
     "test:emulators:inside": "tsx --test tests/emulator/*.test.ts",
+    "test:demo:emulators": "npx --yes firebase-tools@15.23.0 emulators:exec --project demo-avanza-ilo --only firestore,functions \"npm --prefix functions run publish:emulator:demo && tsx scripts/verify-demo-endpoint.ts\"",
     "verify": "npm run typecheck && npm test && npm run validate:catalog && npm --prefix functions run build && npm --prefix functions test",
     "demo:arrival": "tsx scripts/demo-arrival.ts",
+    "demo:export": "tsx scripts/export-demo-scenario.ts",
+    "demo:emulators": "npx --yes firebase-tools@15.23.0 emulators:start --project demo-avanza-ilo --only firestore,functions --import=firebase-export/demo-oe1-oe2",
+    "demo:app": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-demo-app.ps1",
     "export:oe2-data": "tsx scripts/export-oe2-research-data.ts",
     "analyze:field": "tsx scripts/analyze-field-observations.ts"
   },

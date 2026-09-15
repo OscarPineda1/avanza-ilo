@@ -265,7 +265,8 @@ export function computeEta(
   queryMinute = minuteOfDay(new Date()),
   sequenceId?: string,
   serviceOverride?: ServiceProfile,
-  travelProfileOverride?: TravelTimeProfile
+  travelProfileOverride?: TravelTimeProfile,
+  dataVersion?: string
 ): EtaResult {
   const route = getRouteByName(routeName);
   const sequence = getRouteSequence(routeName, sequenceId);
@@ -301,6 +302,7 @@ export function computeEta(
     service,
     travelMinutes,
     queryMinute,
-    routePosition.name
+    routePosition.name,
+    dataVersion
   );
 }

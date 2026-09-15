@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAllRoutes, ROUTE_CATALOG_METADATA } from '../../src/services/routes';
+import { DEMO_DATA_VERSION, DEMO_SOURCE, buildDemoRoutes } from '../../src/services/demo-scenario';
 import type { PublishedSnapshot } from '../src/contracts';
 import { publishValidatedSnapshot } from '../src/publication';
 import { validateProductionReadiness, validatePublishedSnapshot } from '../src/snapshot-validator';
@@ -96,14 +97,18 @@ async function main(): Promise<void> {
   if (target === 'production' && (!process.env.GCLOUD_PROJECT || process.env.GCLOUD_PROJECT.startsWith('demo-'))) {
     throw new Error('GCLOUD_PROJECT debe identificar explícitamente el proyecto Firebase real autorizado.');
   }
+  const demoScenario = args.has('--scenario=demo');
+  if (target === 'production' && demoScenario) {
+    throw new Error('El escenario de demostración solo puede publicarse en Firebase Emulator Suite.');
+  }
   const responsible = process.env.AVANZA_PUBLICATION_RESPONSIBLE
     || (target === 'emulator' ? 'firebase-emulator-suite' : '');
   if (!responsible) {
     throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
   }
 
-  const catalogRoutes = getAllRoutes();
-  const etaReady = catalogRoutes.every((route) =>
+  const catalogRoutes = demoScenario ? buildDemoRoutes() : getAllRoutes();
+  const etaReady = demoScenario || catalogRoutes.every((route) =>
     route.travelProfile?.evidence === 'field' &&
     route.service !== null &&
     route.service.dispatchReferenceKind !== 'none' &&
@@ -114,11 +119,13 @@ async function main(): Promise<void> {
     status: 'published',
     cartographyReady: true,
     etaReady,
-    dataVersion: ROUTE_CATALOG_METADATA.version,
-    source: ROUTE_CATALOG_METADATA.source,
+    dataVersion: demoScenario ? DEMO_DATA_VERSION : ROUTE_CATALOG_METADATA.version,
+    source: demoScenario ? DEMO_SOURCE : ROUTE_CATALOG_METADATA.source,
     sourceDate: ROUTE_CATALOG_METADATA.sourceDate,
     geometrySourceDate: ROUTE_CATALOG_METADATA.geometrySourceDate,
-    decision: ROUTE_CATALOG_METADATA.decision,
+    decision: demoScenario
+      ? 'Escenario temporal para demostrar OE1/OE2 con ETA activo; no sustituye evidencia operativa ni se admite en producción.'
+      : ROUTE_CATALOG_METADATA.decision,
     publishedAt: new Date().toISOString(),
     publishedBy: responsible,
     routes: catalogRoutes.map((route) => ({
