@@ -18,6 +18,8 @@
     "demo:export": "tsx scripts/export-demo-scenario.ts",
     "demo:emulators": "npx --yes firebase-tools@15.23.0 emulators:start --project demo-avanza-ilo --only firestore,functions --import=firebase-export/demo-oe1-oe2",
     "demo:app": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-demo-app.ps1",
+    "device:android": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-physical-android.ps1",
+    "android:build:debug": "cd android && gradlew.bat assembleDebug",
     "export:oe2-data": "tsx scripts/export-oe2-research-data.ts",
     "analyze:field": "tsx scripts/analyze-field-observations.ts"
   },
