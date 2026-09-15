@@ -43,7 +43,7 @@ export type PublishedTravelProfile = {
   stopPenaltyMinutes: number;
   source: string;
   sourceDate: string;
-  evidence: 'field' | 'synthetic' | 'assumption';
+  evidence: 'field' | 'validated' | 'synthetic' | 'assumption';
   weightUnit: 'seconds';
 };
 
@@ -80,6 +80,14 @@ export type PublishedSnapshot = {
   decision: string;
   publishedAt: string;
   publishedBy: string;
+  operationalApproval?: {
+    status: 'approved';
+    approvedAt: string;
+    approvedBy: string[];
+    scope: Array<'travel_weights' | 'dispatch_schedule'>;
+    sourceArtifact: string;
+    sourceSha256: string;
+  };
   routes: PublishedRoute[];
 };
 
@@ -116,7 +124,7 @@ export type EtaResponse = {
     travelProfileId?: string;
     weightUnit?: 'seconds';
     weightSource?: string;
-    weightEvidence?: 'field' | 'synthetic' | 'assumption';
+    weightEvidence?: 'field' | 'validated' | 'synthetic' | 'assumption';
     dispatchReferenceKind?: 'none' | 'scheduled' | 'estimated';
     vehicleTracking: false;
     realTimeTraffic: false;

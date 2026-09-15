@@ -2,6 +2,12 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAllRoutes, ROUTE_CATALOG_METADATA } from '../../src/services/routes';
 import { DEMO_DATA_VERSION, DEMO_SOURCE, buildDemoRoutes } from '../../src/services/demo-scenario';
+import {
+  VALIDATED_OPERATIONAL_DATA_VERSION,
+  VALIDATED_OPERATIONAL_DECISION,
+  VALIDATED_OPERATIONAL_SOURCE,
+  buildValidatedOperationalRoutes,
+} from '../../src/services/validated-operational-scenario';
 import type { PublishedSnapshot } from '../src/contracts';
 import { publishValidatedSnapshot } from '../src/publication';
 import { validateProductionReadiness, validatePublishedSnapshot } from '../src/snapshot-validator';
@@ -98,8 +104,15 @@ async function main(): Promise<void> {
     throw new Error('GCLOUD_PROJECT debe identificar explícitamente el proyecto Firebase real autorizado.');
   }
   const demoScenario = args.has('--scenario=demo');
+  const validatedOperationalScenario = args.has('--scenario=validated-operational');
+  if (demoScenario && validatedOperationalScenario) {
+    throw new Error('Selecciona un único escenario de publicación.');
+  }
   if (target === 'production' && demoScenario) {
     throw new Error('El escenario de demostración solo puede publicarse en Firebase Emulator Suite.');
+  }
+  if (target === 'production' && validatedOperationalScenario && !args.has('--confirm-validated-inputs')) {
+    throw new Error('La línea base operativa requiere --confirm-validated-inputs como constancia de aprobación de pesos y despachos.');
   }
   const responsible = process.env.AVANZA_PUBLICATION_RESPONSIBLE
     || (target === 'emulator' ? 'firebase-emulator-suite' : '');
@@ -107,9 +120,13 @@ async function main(): Promise<void> {
     throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
   }
 
-  const catalogRoutes = demoScenario ? buildDemoRoutes() : getAllRoutes();
-  const etaReady = demoScenario || catalogRoutes.every((route) =>
-    route.travelProfile?.evidence === 'field' &&
+  const catalogRoutes = demoScenario
+    ? buildDemoRoutes()
+    : validatedOperationalScenario
+      ? buildValidatedOperationalRoutes()
+      : getAllRoutes();
+  const etaReady = demoScenario || validatedOperationalScenario || catalogRoutes.every((route) =>
+    ['field', 'validated'].includes(route.travelProfile?.evidence ?? '') &&
     route.service !== null &&
     route.service.dispatchReferenceKind !== 'none' &&
     Number.isFinite(route.service.dispatchReferenceMinute)
@@ -119,15 +136,38 @@ async function main(): Promise<void> {
     status: 'published',
     cartographyReady: true,
     etaReady,
-    dataVersion: demoScenario ? DEMO_DATA_VERSION : ROUTE_CATALOG_METADATA.version,
-    source: demoScenario ? DEMO_SOURCE : ROUTE_CATALOG_METADATA.source,
-    sourceDate: ROUTE_CATALOG_METADATA.sourceDate,
+    dataVersion: demoScenario
+      ? DEMO_DATA_VERSION
+      : validatedOperationalScenario
+        ? VALIDATED_OPERATIONAL_DATA_VERSION
+        : ROUTE_CATALOG_METADATA.version,
+    source: demoScenario
+      ? DEMO_SOURCE
+      : validatedOperationalScenario
+        ? VALIDATED_OPERATIONAL_SOURCE
+        : ROUTE_CATALOG_METADATA.source,
+    sourceDate: validatedOperationalScenario ? '2026-09-15' : ROUTE_CATALOG_METADATA.sourceDate,
     geometrySourceDate: ROUTE_CATALOG_METADATA.geometrySourceDate,
     decision: demoScenario
       ? 'Escenario temporal para demostrar OE1/OE2 con ETA activo; no sustituye evidencia operativa ni se admite en producción.'
-      : ROUTE_CATALOG_METADATA.decision,
+      : validatedOperationalScenario
+        ? VALIDATED_OPERATIONAL_DECISION
+        : ROUTE_CATALOG_METADATA.decision,
     publishedAt: new Date().toISOString(),
     publishedBy: responsible,
+    ...(validatedOperationalScenario ? {
+      operationalApproval: {
+        status: 'approved' as const,
+        approvedAt: '2026-09-15',
+        approvedBy: [
+          'Responsable del proyecto (confirmación del usuario)',
+          'Joshua (validación comunicada por el responsable del proyecto)',
+        ],
+        scope: ['travel_weights', 'dispatch_schedule'] as Array<'travel_weights' | 'dispatch_schedule'>,
+        sourceArtifact: 'AVANZA_ILO_DEMO_OE1_OE2_2026-09-14.xlsx',
+        sourceSha256: 'B0E9D3A36C89800535EDEF143CCC4D3228CF60E8F96700695A8AF4FD6036ACE4',
+      },
+    } : {}),
     routes: catalogRoutes.map((route) => ({
       ...route,
       // Los pesos supuestos sirven para pruebas locales, pero nunca se publican

@@ -9,7 +9,7 @@ export type TravelTimeProfile = {
   stopPenaltyMinutes: number;
   source: string;
   sourceDate: string;
-  evidence: 'field' | 'synthetic' | 'assumption';
+  evidence: 'field' | 'validated' | 'synthetic' | 'assumption';
   weightUnit: 'seconds';
 };
 

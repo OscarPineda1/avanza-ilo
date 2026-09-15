@@ -117,7 +117,7 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
       profile?.weightUnit !== 'seconds' ||
       !nonEmpty(profile?.source) ||
       !isoDate(profile?.sourceDate) ||
-      !['field', 'synthetic', 'assumption'].includes(profile?.evidence)
+      !['field', 'validated', 'synthetic', 'assumption'].includes(profile?.evidence)
     )) {
       issues.push({ code: 'route.weights', message: 'El perfil de pesos carece de unidad, fuente o valores válidos.', routeId: route.id });
     }
@@ -192,10 +192,33 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
  * La validación estructural admite fixtures sintéticos y supuestos para que el
  * motor pueda probarse en emuladores. Esta segunda barrera se usa únicamente
  * antes de una publicación real y evita promoverlos como datos operacionales.
+ * `validated` representa una línea base aprobada expresamente por los
+ * responsables del proyecto, aunque no se declare como medición de campo.
  */
 export function validateProductionReadiness(snapshot: PublishedSnapshot): SnapshotValidation {
   const validation = validatePublishedSnapshot(snapshot);
   const issues = [...validation.issues];
+  const usesValidatedInputs = (snapshot.routes ?? []).some(
+    (route) => route.travelProfile?.evidence === 'validated'
+  );
+  const approval = snapshot.operationalApproval;
+
+  if (usesValidatedInputs && (
+    approval?.status !== 'approved' ||
+    !isoDate(approval.approvedAt) ||
+    !Array.isArray(approval.approvedBy) ||
+    approval.approvedBy.length < 2 ||
+    approval.approvedBy.some((responsible) => !nonEmpty(responsible)) ||
+    !approval.scope?.includes('travel_weights') ||
+    !approval.scope?.includes('dispatch_schedule') ||
+    !nonEmpty(approval.sourceArtifact) ||
+    !/^[A-Fa-f0-9]{64}$/.test(approval.sourceSha256)
+  )) {
+    issues.push({
+      code: 'snapshot.operational-approval',
+      message: 'Los datos validados requieren trazabilidad completa de responsables, alcance y artefacto fuente.',
+    });
+  }
 
   for (const route of snapshot.routes ?? []) {
     if (!snapshot.cartographyReady) {
@@ -212,10 +235,10 @@ export function validateProductionReadiness(snapshot: PublishedSnapshot): Snapsh
         routeId: route.id,
       });
     }
-    if (snapshot.etaReady && route.travelProfile?.evidence !== 'field') {
+    if (snapshot.etaReady && !['field', 'validated'].includes(route.travelProfile?.evidence ?? '')) {
       issues.push({
         code: 'route.weights.unverified',
-        message: 'Producción requiere pesos respaldados por medición de campo.',
+        message: 'Producción requiere pesos de campo o validados expresamente por los responsables del proyecto.',
         routeId: route.id,
       });
     }

@@ -155,3 +155,34 @@ test('HU-08/17: producción admite cartografía sin pesos y mantiene el ETA desa
   assert.equal(result.etaMinutes, null);
   assert.match(result.assumptions.note, /cartografía está disponible/i);
 });
+
+test('HU-15/18: producción admite una línea base operativa con aprobación trazable', () => {
+  const snapshot = syntheticSnapshot();
+  snapshot.dataVersion = '2026-09-15-oe1-oe2-validado-v1';
+  snapshot.source = 'Matriz operativa OE1/OE2 aprobada por responsables del proyecto';
+  snapshot.decision = 'Activación autorizada para OE1/OE2.';
+  snapshot.routes.forEach((route) => {
+    route.travelProfile!.evidence = 'validated';
+  });
+  snapshot.operationalApproval = {
+    status: 'approved',
+    approvedAt: '2026-09-15',
+    approvedBy: ['Responsable del proyecto', 'Joshua'],
+    scope: ['travel_weights', 'dispatch_schedule'],
+    sourceArtifact: 'AVANZA_ILO_DEMO_OE1_OE2_2026-09-14.xlsx',
+    sourceSha256: 'B0E9D3A36C89800535EDEF143CCC4D3228CF60E8F96700695A8AF4FD6036ACE4',
+  };
+
+  assert.equal(validateProductionReadiness(snapshot).valid, true);
+});
+
+test('HU-15/18: producción rechaza evidencia validada sin aprobación trazable', () => {
+  const snapshot = syntheticSnapshot();
+  snapshot.routes.forEach((route) => {
+    route.travelProfile!.evidence = 'validated';
+  });
+
+  const validation = validateProductionReadiness(snapshot);
+  assert.equal(validation.valid, false);
+  assert.ok(validation.issues.some((issue) => issue.code === 'snapshot.operational-approval'));
+});
