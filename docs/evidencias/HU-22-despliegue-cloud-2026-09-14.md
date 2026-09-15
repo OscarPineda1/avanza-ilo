@@ -1,7 +1,7 @@
 # HU-22 · Despliegue HTTPS de ETA
 
-Fecha: 2026-09-14  
-Proyecto: `avanza-ilo`  
+Fecha: 2026-09-14
+Proyecto: `avanza-ilo`
 Región: `us-central1`
 
 ## Estado verificado
