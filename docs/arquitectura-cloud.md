@@ -43,7 +43,7 @@ El emulador usa el proyecto aislado `demo-avanza-ilo`; el publicador exige `FIRE
 
 La validación estructural admite perfiles sintéticos o supuestos únicamente para pruebas locales. `publish:production` permite publicar la cartografía validada con `etaReady=false`, pero elimina los pesos provisionales. Para publicar `etaReady=true`, la barrera de producción exige pesos con evidencia de campo y una fase de despacho validada.
 
-## Estado real de Firebase al 2026-09-13
+## Estado real de Firebase al 2026-09-14
 
 Completado:
 
@@ -52,13 +52,16 @@ Completado:
 - App Check usa debug en development builds y Play Integrity en release; el token del emulador fue validado y el enforcement productivo permanece desactivado.
 - Las reglas e índices restrictivos están desplegados.
 - El snapshot cartográfico publicado conserva 3 rutas y 3033 coordenadas con `etaReady=false`; la siguiente versión elimina de los maestros los horarios, frecuencias, tarifas, operadores y pesos que no tienen fuente vigente.
+- El proyecto usa Blaze con un presupuesto global de S/1 y alertas al 1%, 90% y 100%.
+- Cloud Run Functions tiene un límite de inversión mensual de S/1; al alcanzar el 100% se pausa el servicio durante el resto del período.
+- `eta` está desplegada como Function de segunda generación, Node.js 22, en `us-central1`, con escalado a cero y máximo de una instancia.
+- El endpoint productivo está configurado solo en el `.env` local ignorado por Git. En producción rechaza métodos distintos de POST y exige App Check.
+- Artifact Registry elimina automáticamente imágenes de Functions con más de un día para reducir almacenamiento facturable.
 
-Pendiente antes de desplegar la Function:
+Pendiente para habilitar ETA con datos reales:
 
-1. Cambiar el proyecto de Spark a Blaze y configurar presupuesto y alertas.
-2. La base Firestore real está en `nam5`; por recomendación oficial de colocación, la Function declara explícitamente `us-central1`.
-3. Confirmar las APIs requeridas por Cloud Functions/Cloud Run y autorizar expresamente el despliegue con costo.
-4. Aportar pesos de tramos, mediciones de viaje y fases de despacho validados; hasta entonces el backend devuelve `insufficient_data` y no una llegada de unidad.
-5. Registrar la huella SHA-256 de la firma release definitiva cuando exista y validar Play Integrity antes de activar enforcement.
+1. Aportar pesos de tramos, mediciones de viaje y fases de despacho validados; hasta entonces el backend devuelve `insufficient_data` y no una llegada de unidad.
+2. Obtener un token App Check desde el development build y ejecutar la prueba HTTPS positiva contra producción.
+3. Registrar la huella SHA-256 de la firma release definitiva cuando exista y validar Play Integrity antes de activar enforcement.
 
 `publish:production` requiere `--confirm-production`, `GCLOUD_PROJECT` real, responsable explícito y credencial temporal. El token OAuth no se almacena en el repositorio.

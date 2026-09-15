@@ -1,6 +1,6 @@
 # HU-26 · Compilación, despliegue y respaldo reproducibles
 
-Estado: procedimiento preparado. El despliegue cloud, la publicación real, la instalación en Android objetivo y su video siguen pendientes de autorización/evidencia.
+Estado: procedimiento preparado. Las reglas, índices, snapshot cartográfico y Function HTTPS ya están desplegados; la instalación en Android objetivo, la prueba positiva con App Check y su video siguen pendientes de evidencia.
 
 ## Compilación local ejecutada el 2026-09-13
 
@@ -11,7 +11,7 @@ Estado: procedimiento preparado. El despliegue cloud, la publicación real, la i
 - Manifest: `com.avanzailo.app`, minSdk 24 (compatible por nivel de API con Android 8/API 26).
 - Firma: verificada con APK Signature Scheme v2, usando la configuración de depuración existente; **no es firma de distribución**.
 - No había dispositivo conectado, por lo que instalación, inicio frío y flujo contra entorno real permanecen pendientes.
-- La configuración local no define todavía un endpoint ETA autorizado; este APK solo demuestra compilación y no es el APK evaluable de cierre.
+- El APK citado se generó antes del despliegue del endpoint ETA y no es el APK evaluable de cierre. El `.env` local actual ya apunta a la Function autorizada, pero la recompilación integral queda reservada para el cierre final de HU-26.
 
 ## Manifiesto de la entrega
 
@@ -31,9 +31,9 @@ Set-Location android
 
 El APK se obtiene en `android/app/build/outputs/apk/release/`. El directorio nativo y los APK están ignorados; copiar el artefacto a un almacén aprobado y registrar su hash. No afirmar compatibilidad hasta instalar y completar el flujo del protocolo HU-24 en Android 8 o superior.
 
-## Despliegue autorizado
+## Despliegue autorizado y ejecutado el 2026-09-14
 
-Antes de ejecutar, registrar confirmación de `projectId`, app Android, paquete, Blaze, región, secretos/variables, APIs, presupuesto y alertas. Ejecutar con una identidad de mínimo privilegio y revisar el diff de configuración.
+Se confirmó `projectId=avanza-ilo`, aplicación Android `com.avanzailo.app`, Blaze, región `us-central1`, APIs requeridas, presupuesto global de S/1, alerta temprana al 1% y límite de inversión de S/1 para Cloud Run Functions. La Function `eta` quedó activa; el siguiente bloque conserva el procedimiento reproducible.
 
 ```powershell
 npx firebase-tools use <PROJECT_ID>

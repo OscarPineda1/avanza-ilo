@@ -69,7 +69,7 @@ export const eta = onRequest(
     region: 'us-central1',
     timeoutSeconds: 15,
     memory: '256MiB',
-    maxInstances: 10,
+    maxInstances: 1,
     concurrency: 20,
   },
   async (request, response) => {
