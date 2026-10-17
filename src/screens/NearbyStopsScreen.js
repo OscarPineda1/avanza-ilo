@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { theme } from '../styles/global-styles';
 import { useCatalog } from '../context/CatalogContext';
-import { OFFICIAL_STOPS_BY_ROUTE } from '../services/official-stops';
+import { getOfficialDirectionGuide, OFFICIAL_STOPS_BY_ROUTE } from '../services/official-stops';
 import ScreenHeader from '../components/ScreenHeader';
 
 const ROUTE_NAMES = ['1A', 'D', '14'];
@@ -17,8 +17,8 @@ export default function NearbyStopsScreen({ navigation }) {
     const selectedSequence = selectedRoute?.sequences.find((item) => item.id === selectedRoute.defaultSequenceId);
     const stops = OFFICIAL_STOPS_BY_ROUTE[selectedRouteName] || [];
     const groups = useMemo(() => [
-        { direction: 'ida', label: 'Ida', stops: stops.filter((item) => item.direction === 'ida') },
-        { direction: 'vuelta', label: 'Vuelta', stops: stops.filter((item) => item.direction === 'vuelta') },
+        { direction: 'ida', ...getOfficialDirectionGuide(selectedRouteName, 'ida'), stops: stops.filter((item) => item.direction === 'ida') },
+        { direction: 'vuelta', ...getOfficialDirectionGuide(selectedRouteName, 'vuelta'), stops: stops.filter((item) => item.direction === 'vuelta') },
     ], [stops]);
 
     const chooseStop = (stop) => {
@@ -27,6 +27,7 @@ export default function NearbyStopsScreen({ navigation }) {
             routeId: selectedRoute.id,
             sequenceId: selectedSequence.id,
             suggestedWaitPointId: stop.id,
+            direction: stop.direction,
         });
     };
 
@@ -55,8 +56,16 @@ export default function NearbyStopsScreen({ navigation }) {
                 {groups.map((group) => (
                     <View key={group.direction} style={styles.group}>
                         <View style={styles.groupHeader}>
-                            <Ionicons name={group.direction === 'ida' ? 'arrow-forward-circle-outline' : 'return-down-back-outline'} size={21} color={selectedRoute?.color || theme.colors.primary} />
-                            <Text style={styles.groupTitle}>{group.label}</Text>
+                            <View style={[styles.directionIcon, { backgroundColor: `${selectedRoute?.color || theme.colors.primary}18` }]}>
+                                <Ionicons name={group.direction === 'ida' ? 'arrow-forward' : 'return-down-back'} size={20} color={selectedRoute?.color || theme.colors.primary} />
+                            </View>
+                            <View style={styles.groupCopy}>
+                                <View style={styles.groupTitleRow}>
+                                    <Text style={styles.groupTitle}>{group.label}</Text>
+                                    <Text style={styles.directionTag}>{group.shortLabel}</Text>
+                                </View>
+                                <Text style={styles.groupPath}>{group.path}</Text>
+                            </View>
                         </View>
                         <View style={styles.stopList}>
                             {group.stops.map((stop, index) => (
@@ -87,8 +96,13 @@ const styles = StyleSheet.create({
     routeTabText: { color: theme.colors.textDark, fontSize: 14, fontWeight: '800' },
     routeTabTextSelected: { color: theme.colors.surface },
     group: { marginBottom: 24 },
-    groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+    groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+    directionIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    groupCopy: { flex: 1 },
+    groupTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     groupTitle: { color: theme.colors.textDark, fontSize: 18, fontWeight: '800' },
+    directionTag: { color: theme.colors.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: .5, textTransform: 'uppercase' },
+    groupPath: { color: theme.colors.textMuted, fontSize: 13, marginTop: 2 },
     stopList: { overflow: 'hidden', borderRadius: 16, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
     item: { minHeight: 68, paddingHorizontal: 14, paddingVertical: 11, gap: 12, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border },
     order: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },

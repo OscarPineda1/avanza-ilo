@@ -48,3 +48,16 @@ export const OFFICIAL_STOPS_BY_ROUTE: Record<string, OfficialStopDefinition[]> =
     { id: '14-oficial-06', name: 'Óvalo Nuevo Ilo', direction: 'vuelta', dwellMinutes: 5, coordinate: { latitude: -17.65046, longitude: -71.32934 }, coordinateIndex: 909 },
   ],
 };
+
+export function getOfficialDirectionGuide(routeName: string, direction: StopDirection) {
+  const stops = (OFFICIAL_STOPS_BY_ROUTE[routeName] || []).filter((stop) => stop.direction === direction);
+  const origin = stops[0]?.name;
+  const destination = stops.at(-1)?.name;
+  const fallbackLabel = direction === 'vuelta' ? 'Vuelta' : 'Ida';
+  return {
+    shortLabel: fallbackLabel,
+    destination,
+    label: destination ? `Hacia ${destination}` : fallbackLabel,
+    path: origin && destination ? `${origin} → ${destination}` : fallbackLabel,
+  };
+}
