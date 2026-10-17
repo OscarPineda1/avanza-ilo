@@ -74,7 +74,7 @@ export function validateDemoWeights(routes: Route[] = buildDemoRoutes()) {
       route.nombre,
       sequence.id,
       route.travelProfile!,
-      sequence.stops.map((stop) => stop.coordinateIndex)
+      sequence.stops
     );
     return {
       routeName: route.nombre,

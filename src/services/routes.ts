@@ -15,6 +15,7 @@ import {
   type RouteSequence,
 } from './route-sequences';
 import { type TravelTimeProfile } from './graph';
+import { OFFICIAL_STOPS_BY_ROUTE, OFFICIAL_STOPS_SOURCE } from './official-stops';
 
 export type LatLng = {
   latitude: number;
@@ -69,14 +70,14 @@ export type RouteCatalogMetadata = {
 
 export const ROUTE_CATALOG_METADATA: RouteCatalogMetadata = {
   id: 'avanza-ilo-rutas-piloto',
-  version: '2026-09-14-cartografia-v2',
+  version: '2026-10-16-paraderos-oficiales-v1',
   source:
-    'Google My Maps, validacion del responsable de datos y contraste con publicaciones oficiales de la Municipalidad Provincial de Ilo',
-  sourceDate: '2026-09-14',
+    `Google My Maps para la geometría. ${OFFICIAL_STOPS_SOURCE}`,
+  sourceDate: '2026-10-16',
   geometrySourceDate: '2026-08-19',
   approvedPilotRouteNames: ['1A', 'D', '14'],
   decision:
-    'El trazo incorporado inicialmente como ruta 12 pertenece a la ruta 14. Las rutas 1A, D y 14 son circuitos: completan su lazo y regresan al punto inicial por el mismo tramo compartido. Los campos de operador, tarifa, horario, frecuencia y despacho quedan sin publicar porque no se encontro una fuente oficial vigente; la cartografia no se reemplaza por recorridos oficiales incompatibles.',
+    'Las rutas 1A, D y 14 conservan sus circuitos publicados e incorporan los paraderos oficiales y sus tiempos promedio de detención proporcionados por el responsable del proyecto. Los campos de operador, tarifa, horario, frecuencia y despacho permanecen sujetos a su evidencia operativa validada.',
   cartographyReady: true,
   etaReady: false,
 };
@@ -100,6 +101,7 @@ const ruta1ASequence = createRouteSequence('1A', 8, {
   id: '1a-publicado',
   label: 'Circuito Alto Ilo · vía Pampa Inalámbrica',
   kind: 'circuit',
+  officialStops: OFFICIAL_STOPS_BY_ROUTE['1A'],
   layers: [
     {
       id: '1a-tramo-1',
@@ -127,6 +129,7 @@ const rutaDSequence = createRouteSequence('D', 8, {
   id: 'd-publicado',
   label: 'Circuito Plaza de Armas · vía Ciudad Nueva',
   kind: 'circuit',
+  officialStops: OFFICIAL_STOPS_BY_ROUTE.D,
   layers: [
     {
       id: 'd-trazo-publicado',
@@ -148,6 +151,7 @@ const ruta14Sequence = createRouteSequence('14', 8, {
   id: '14-publicado',
   label: 'Circuito Mercado Pacocha · vía Tren al Sur',
   kind: 'circuit',
+  officialStops: OFFICIAL_STOPS_BY_ROUTE['14'],
   layers: [
     {
       id: '14-tramo-1',

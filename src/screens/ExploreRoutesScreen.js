@@ -1,63 +1,58 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useMemo } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { globalStyles } from '../styles/global-styles';
+
+import { globalStyles, theme } from '../styles/global-styles';
 import { useCatalog } from '../context/CatalogContext';
 import RouteDetailCard from '../components/RouteDetailCard';
 import EmptyState from '../components/EmptyState';
 
-const filtros = ['Todas', 'Pampa', 'Centro', 'Sur'];
+const ROUTE_ORDER = ['1A', 'D', '14'];
 
 export default function ExploreRoutesScreen({ navigation }) {
-    const [filtroActivo, setFiltroActivo] = useState('Todas');
-    const { routes: rutasDirectorio } = useCatalog();
-    const rutasMostradas = rutasDirectorio.filter(ruta =>
-        filtroActivo === 'Todas' ? true : ruta.zona === filtroActivo
-    );
+    const { routes, status, refresh } = useCatalog();
+    const officialRoutes = useMemo(() => routes
+        .filter((item) => item.pilot && item.available && ROUTE_ORDER.includes(item.nombre))
+        .sort((left, right) => ROUTE_ORDER.indexOf(left.nombre) - ROUTE_ORDER.indexOf(right.nombre)), [routes]);
+    const isInitialLoading = status === 'loading' && officialRoutes.length === 0;
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={globalStyles.header}>
-                <Text style={globalStyles.title}>Directorio de Rutas</Text>
-                <Text style={globalStyles.subtitle}>Compara recorridos, horarios y tarifas antes de salir.</Text>
-            </View>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.header}>
+                    <Text style={globalStyles.title}>Rutas oficiales</Text>
+                    <Text style={globalStyles.subtitle}>Consulta el recorrido y los paraderos de cada ruta.</Text>
+                </View>
 
-            {/* Filtros */}
-            <View style={styles.filterContainer}>
-                {filtros.map((filtro, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={[globalStyles.filterPill, filtroActivo === filtro && globalStyles.filterPillActive]}
-                        onPress={() => setFiltroActivo(filtro)}
-                    >
-                        <Text style={[globalStyles.filterText, filtroActivo === filtro && globalStyles.filterTextActive]}>
-                            {filtro}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            {/* Lista de Rutas */}
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.countText}>
-                    {rutasMostradas.length} {rutasMostradas.length === 1 ? 'ruta encontrada' : 'rutas encontradas'}
-                </Text>
-
-                {rutasMostradas.length ? rutasMostradas.map((item) => (
+                {isInitialLoading ? (
+                    <View style={styles.loadingState}>
+                        <ActivityIndicator color={theme.colors.primary} />
+                        <Text style={styles.loadingText}>Cargando rutas…</Text>
+                    </View>
+                ) : officialRoutes.length ? officialRoutes.map((item) => (
                     <RouteDetailCard
                         key={item.id}
                         item={item}
-                        onPress={() => navigation.navigate(item.coordinates?.length ? 'RouteDetails' : 'Status', item.coordinates?.length ? { routeId: item.id, sequenceId: item.defaultSequenceId } : { type: 'offline', routeName: item.nombre })}
+                        onPress={() => navigation.navigate('RouteDetails', { routeId: item.id, sequenceId: item.defaultSequenceId })}
                     />
-                )) : <EmptyState icon="bus-outline" title="No hay rutas en esta zona" message="Prueba con otro filtro para ver los recorridos disponibles." actionLabel="Ver todas" onAction={() => setFiltroActivo('Todas')} />}
+                )) : (
+                    <EmptyState
+                        icon="bus-outline"
+                        title="No pudimos cargar las rutas"
+                        message="Comprueba tu conexión e inténtalo nuevamente."
+                        actionLabel="Reintentar"
+                        onAction={refresh}
+                    />
+                )}
             </ScrollView>
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#F9F9F9' },
-    filterContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 110 },
-    countText: { marginBottom: 10, color: '#666', fontSize: 14 },
+    safeArea: { flex: 1, backgroundColor: theme.colors.background },
+    scrollContent: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 110 },
+    header: { marginBottom: 18 },
+    loadingState: { minHeight: 180, alignItems: 'center', justifyContent: 'center', gap: 10 },
+    loadingText: { color: theme.colors.textMuted, fontSize: 14, fontWeight: '600' },
 });

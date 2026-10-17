@@ -9,6 +9,13 @@ const result = validateRouteCatalog(
   getAllRoutes(),
   ROUTE_CATALOG_METADATA
 );
+const officialDwellWeights = getAllRoutes().reduce(
+  (total, route) => total + route.sequences.reduce(
+    (sequenceTotal, sequence) => sequenceTotal + sequence.stops.filter((stop) => stop.official).length,
+    0
+  ),
+  0
+);
 
 console.log(`Catalogo: ${ROUTE_CATALOG_METADATA.id}`);
 console.log(`Version: ${ROUTE_CATALOG_METADATA.version}`);
@@ -20,8 +27,8 @@ console.log(
 console.log(
   `Resumen: ${result.summary.routes} rutas, ${result.summary.pilots} pilotos, ` +
     `${result.summary.sequences} secuencias, ${result.summary.layers} capas, ` +
-    `${result.summary.coordinates} coordenadas, ${result.summary.references} referencias y ` +
-    `${result.summary.weights} pesos estructuralmente válidos (calibración de campo pendiente).`
+    `${result.summary.coordinates} coordenadas, ${result.summary.references} paraderos/referencias, ` +
+    `${officialDwellWeights} pesos de detención por paradero y ${result.summary.weights} aristas temporales publicadas.`
 );
 
 console.log('| Ruta | Secuencia | Tipo | Capas conservadas | Coordenadas | Aristas inversas |');
@@ -35,7 +42,7 @@ getAllRoutes()
         route.nombre,
         sequence.id,
         BASELINE_TRAVEL_PROFILE,
-        sequence.stops.map((stop) => stop.coordinateIndex)
+        sequence.stops
       );
       const inverseEdges = graph.adjacency.filter(
         (edge) => edge.to < edge.from

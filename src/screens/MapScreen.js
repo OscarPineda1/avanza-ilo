@@ -28,6 +28,7 @@ export default function MapScreen({ route, navigation }) {
     const routeName = route.params?.routeName;
     const requestedSequenceId = route.params?.sequenceId;
     const requestedWaitPointId = route.params?.waitPointId;
+    const requestedWaitPoint = route.params?.waitPoint;
     const { routes, metadata, publishedAt, source: catalogSource } = useCatalog();
     const { locationEnabled } = useLocationConsent();
     const routeData = routeId
@@ -60,11 +61,20 @@ export default function MapScreen({ route, navigation }) {
     }, [routeData]);
 
     useEffect(() => {
-        if (stops.length > 0) {
-            const requestedPoint = stops.find((stop) => stop.id === requestedWaitPointId) || stops[0];
-            setWaitPoint(positionFromStop(requestedPoint, selectedSequence));
+        if (!selectedSequence) return;
+        const publishedPoint = stops.find((stop) => stop.id === requestedWaitPointId);
+        if (publishedPoint) {
+            setWaitPoint(positionFromStop(publishedPoint, selectedSequence));
+            return;
         }
-    }, [routeData?.nombre, selectedSequence?.id, requestedWaitPointId]);
+        if (requestedWaitPoint?.coordinate && Number.isInteger(requestedWaitPoint.coordinateIndex)) {
+            setWaitPoint({ ...positionFromStop(requestedWaitPoint, selectedSequence), source: 'map' });
+            return;
+        }
+        if (stops.length > 0) {
+            setWaitPoint(positionFromStop(stops[0], selectedSequence));
+        }
+    }, [routeData?.nombre, selectedSequence?.id, requestedWaitPointId, requestedWaitPoint]);
 
     useEffect(() => {
         if (!waitPoint || !routeData || !metadata) {
@@ -125,7 +135,7 @@ export default function MapScreen({ route, navigation }) {
     const handleRoutePress = useCallback((coordinate) => {
         if (!routeData || !selectedSequence) return;
         if (!Number.isFinite(coordinate?.latitude) || !Number.isFinite(coordinate?.longitude)) {
-            Alert.alert('Selección no disponible', 'Usa la lista de referencias para elegir dónde esperar.');
+            Alert.alert('Selección no disponible', 'Usa la lista de paraderos para elegir dónde esperar.');
             return;
         }
         const candidates = findRoutePositionCandidates(routeData.nombre, selectedSequence, coordinate);
@@ -168,7 +178,7 @@ export default function MapScreen({ route, navigation }) {
             >
                 <RouteMapLayers route={routeData} sequence={selectedSequence} selectedStopId={waitPoint?.id} selectedPosition={waitPoint} onStopPress={handleSelectStop} onRoutePress={handleRoutePress} />
             </MapView>
-            {!mapsConfigured && <View pointerEvents="none" style={styles.mapError}><Ionicons name="map-outline" size={22} color={theme.colors.textMuted} /><Text style={styles.mapErrorText}>El mapa base no está configurado. La ficha textual y las referencias siguen disponibles.</Text></View>}
+            {!mapsConfigured && <View pointerEvents="none" style={styles.mapError}><Ionicons name="map-outline" size={22} color={theme.colors.textMuted} /><Text style={styles.mapErrorText}>El mapa base no está configurado. La ficha textual y los paraderos siguen disponibles.</Text></View>}
 
             <SafeAreaView style={styles.topOverlay}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>

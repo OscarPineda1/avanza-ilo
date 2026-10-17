@@ -6,6 +6,7 @@ import { useCatalog } from '../context/CatalogContext';
 import { theme } from '../styles/global-styles';
 import ScreenHeader from '../components/ScreenHeader';
 import AppButton from '../components/AppButton';
+import { OFFICIAL_STOPS_BY_ROUTE } from '../services/official-stops';
 
 export default function StopSelectionScreen({ navigation, route }) {
     const { routes } = useCatalog();
@@ -13,12 +14,22 @@ export default function StopSelectionScreen({ navigation, route }) {
         ? routes.find((item) => item.id === route.params.routeId)
         : routes.find((item) => item.nombre.toLowerCase() === (route.params?.routeName || '').toLowerCase());
     const selectedSequence = selectedRoute?.sequences.find((item) => item.id === (route.params?.sequenceId || selectedRoute.defaultSequenceId));
-    const isCircuit = selectedSequence?.kind === 'circuit';
     const [selected, setSelected] = useState(null);
     const [query, setQuery] = useState('');
-    const eligibleStops = useMemo(() => (
-        selectedSequence?.stops || []
-    ).filter((item) => !isCircuit || !item.isDestination), [isCircuit, selectedSequence]);
+    const eligibleStops = useMemo(() => {
+        if (!selectedRoute || !selectedSequence) return [];
+        const definitions = OFFICIAL_STOPS_BY_ROUTE[selectedRoute.nombre];
+        if (!definitions) return selectedSequence.stops || [];
+        return definitions.map((stop, order) => ({
+            ...stop,
+            routeName: selectedRoute.nombre,
+            sequenceId: selectedSequence.id,
+            order,
+            isOrigin: false,
+            isDestination: false,
+            official: true,
+        }));
+    }, [selectedRoute, selectedSequence]);
     const stops = useMemo(() => eligibleStops.filter((item) => item.name.toLowerCase().includes(query.trim().toLowerCase())), [eligibleStops, query]);
 
     useEffect(() => {
@@ -29,14 +40,14 @@ export default function StopSelectionScreen({ navigation, route }) {
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScreenHeader title="Elige dónde esperar" subtitle={selectedSequence?.label} onBack={() => navigation.goBack()} />
-            <View style={styles.tip}><Ionicons name="bulb-outline" color="#C28100" size={18} /><Text style={styles.tipText}>No necesitas activar ubicación. Son posiciones sobre el recorrido, no paraderos oficiales.</Text></View>
+            <View style={styles.tip}><Ionicons name="bus-outline" color="#C28100" size={18} /><Text style={styles.tipText}>Paraderos oficiales ordenados según el recorrido. El tiempo indica la detención promedio para recoger pasajeros.</Text></View>
             <View style={styles.search}><Ionicons name="search-outline" size={19} color={theme.colors.textMuted} /><TextInput value={query} onChangeText={setQuery} placeholder="Busca una ubicación del recorrido" style={styles.input} /></View>
             <ScrollView contentContainerStyle={styles.list}>
-                {stops.map((item) => <TouchableOpacity key={item.id} onPress={() => setSelected(item)} style={[styles.stop, selected?.id === item.id && styles.selectedStop]}><View style={[styles.radio, selected?.id === item.id && styles.selectedRadio]} /><View style={styles.stopCopy}><Text style={styles.stopText}>{item.name}</Text>{item.isOrigin || item.isDestination ? <Text style={styles.endpointText}>{item.isOrigin ? (isCircuit ? `I/F · INICIO Y FIN · ${selectedRoute?.origen}` : `A · INICIO · ${selectedRoute?.origen}`) : `B · FINAL · ${selectedRoute?.destino}`}</Text> : null}</View></TouchableOpacity>)}
+                {stops.map((item) => <TouchableOpacity key={item.id} onPress={() => setSelected(item)} style={[styles.stop, selected?.id === item.id && styles.selectedStop]}><View style={[styles.radio, selected?.id === item.id && styles.selectedRadio]} /><View style={styles.stopCopy}><Text style={styles.stopText}>{item.name}</Text><Text style={styles.endpointText}>{item.official ? `${item.direction?.toUpperCase()} · detención promedio ${item.dwellMinutes} min` : 'PUNTO DE REFERENCIA DEL RECORRIDO'}</Text></View></TouchableOpacity>)}
                 {!stops.length && <Text style={styles.emptyText}>Esta ruta aún no tiene ubicaciones georreferenciadas.</Text>}
             </ScrollView>
             <View style={styles.footer}>
-                <AppButton disabled={!selected || !selectedRoute} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeId: selectedRoute?.id, sequenceId: selectedSequence?.id, waitPointId: selected.id })} />
+                <AppButton disabled={!selected || !selectedRoute} label="Confirmar punto de espera" onPress={() => navigation.navigate('RouteDetails', { routeId: selectedRoute?.id, sequenceId: selectedSequence?.id, waitPointId: selected.id, waitPoint: selected })} />
             </View>
         </SafeAreaView>
     );

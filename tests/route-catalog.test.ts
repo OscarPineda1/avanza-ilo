@@ -50,6 +50,13 @@ test('HU-05/08/10: catálogo, secuencias, referencias y pesos son válidos', () 
     ),
     false
   );
+  assert.deepEqual(
+    Object.fromEntries(getAllRoutes().map((route) => [route.nombre, route.sequences[0].stops.length])),
+    { '1A': 7, D: 9, '14': 6 }
+  );
+  assert.ok(getAllRoutes().every((route) => route.sequences[0].stops.every((stop) =>
+    stop.official && ['ida', 'vuelta'].includes(stop.direction) && [3, 5].includes(stop.dwellMinutes)
+  )));
 });
 
 test('HU-05/20: las capas cierran los circuitos sin inventar un inverso', () => {
@@ -100,19 +107,33 @@ test('HU-10/11: Dijkstra devuelve cero en el mismo nodo y reconstruye el camino 
   assert.deepEqual(shortestPath(branchedGraph, 0, 3), { distance: 5, path: [0, 2, 1, 3] });
 });
 
-test('HU-10/18: el peso suma penalidad solo al alcanzar una parada declarada', () => {
+test('HU-10/18: el peso específico se suma al salir del paradero', () => {
   const route = getAllRoutes()[0];
   const coordinates = route.sequences[0].coordinates.slice(0, 3);
   const baseGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-base', {
     ...BASELINE_TRAVEL_PROFILE,
     stopPenaltyMinutes: 0,
-  }, [1]);
+  }, [{ coordinateIndex: 1, dwellMinutes: 0 }]);
   const penalizedGraph = buildDirectedRouteGraph(coordinates, route.nombre, 'peso-penalizado', {
     ...BASELINE_TRAVEL_PROFILE,
     stopPenaltyMinutes: 1.5,
-  }, [1]);
-  assert.ok(Math.abs(penalizedGraph.adjacency[0].weight - baseGraph.adjacency[0].weight - 90) < 1e-9);
-  assert.equal(penalizedGraph.adjacency[1].weight, baseGraph.adjacency[1].weight);
+  }, [{ coordinateIndex: 1, dwellMinutes: 1.5 }]);
+  assert.equal(penalizedGraph.adjacency[0].weight, baseGraph.adjacency[0].weight);
+  assert.ok(Math.abs(penalizedGraph.adjacency[1].weight - baseGraph.adjacency[1].weight - 90) < 1e-9);
+});
+
+test('Compatibilidad: un snapshot anterior sin pesos individuales conserva sus rutas', () => {
+  const route = getAllRoutes()[0];
+  const coordinates = route.sequences[0].coordinates.slice(0, 3);
+  const graph = buildDirectedRouteGraph(
+    coordinates,
+    route.nombre,
+    'snapshot-anterior',
+    { ...BASELINE_TRAVEL_PROFILE, stopPenaltyMinutes: 1.5 },
+    [{ coordinateIndex: 1 } as { coordinateIndex: number; dwellMinutes: number }]
+  );
+  assert.ok(Math.abs(graph.adjacency[1].weight - graph.adjacency[0].weight) >= 0);
+  assert.ok(graph.adjacency[1].weight >= 90);
 });
 
 test('HU-08: el catálogo cartográfico no publica datos operativos sin fuente vigente', () => {

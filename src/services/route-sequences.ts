@@ -1,5 +1,6 @@
 import { haversineDistance } from './haversine';
-import { buildStops, type Stop } from './stops';
+import { buildOfficialStops, buildStops, type Stop } from './stops';
+import type { OfficialStopDefinition } from './official-stops';
 import type { LatLng } from './routes';
 
 export type RouteLayer = {
@@ -19,6 +20,10 @@ export type RouteSequence = {
   layers: RouteLayer[];
   coordinates: LatLng[];
   stops: Stop[];
+};
+
+type RouteSequenceDefinition = Omit<RouteSequence, 'coordinates' | 'stops'> & {
+  officialStops?: OfficialStopDefinition[];
 };
 
 export const MAX_LAYER_JOIN_DISTANCE_METERS = 50;
@@ -49,18 +54,21 @@ export function getDisplayCoordinates(coordinates: LatLng[]): LatLng[] {
 export function createRouteSequence(
   routeName: string,
   referenceCount: number,
-  definition: Omit<RouteSequence, 'coordinates' | 'stops'>
+  definition: RouteSequenceDefinition
 ): RouteSequence {
-  const coordinates = flattenRouteLayers(definition.layers);
-  const stops = buildStops(routeName, definition.id, coordinates, referenceCount);
+  const { officialStops, ...sequenceDefinition } = definition;
+  const coordinates = flattenRouteLayers(sequenceDefinition.layers);
+  const stops = officialStops
+    ? buildOfficialStops(routeName, sequenceDefinition.id, coordinates, officialStops)
+    : buildStops(routeName, sequenceDefinition.id, coordinates, referenceCount);
 
-  if (definition.kind === 'circuit' && stops.length > 1) {
+  if (!officialStops && sequenceDefinition.kind === 'circuit' && stops.length > 1) {
     stops[0].name = `Inicio y fin · Ruta ${routeName}`;
     stops.at(-1)!.name = `Cierre · Ruta ${routeName}`;
   }
 
   return {
-    ...definition,
+    ...sequenceDefinition,
     coordinates,
     stops,
   };

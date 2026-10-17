@@ -15,6 +15,10 @@ export type PublishedReference = {
   order: number;
   isOrigin?: boolean;
   isDestination?: boolean;
+  dwellMinutes?: number;
+  direction?: 'ida' | 'vuelta' | 'referencia';
+  official?: boolean;
+  sourceNote?: string;
 };
 
 export type PublishedSequence = {

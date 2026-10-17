@@ -229,7 +229,7 @@ function getGraph(
     routeName,
     sequenceId,
     profile,
-    sequence.stops.map((stop) => stop.coordinateIndex)
+    sequence.stops
   );
   graphCache.set(key, graph);
   return graph;

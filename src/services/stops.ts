@@ -11,7 +11,49 @@ export type Stop = {
   isDestination: boolean;
   order: number;
   coordinateIndex: number;
+  dwellMinutes: number;
+  direction: StopDirection;
+  official: boolean;
+  sourceNote?: string;
 };
+
+export type StopDirection = 'ida' | 'vuelta' | 'referencia';
+
+type ExplicitStopDefinition = Omit<Stop, 'routeName' | 'sequenceId' | 'order' | 'isOrigin' | 'isDestination' | 'official'>;
+
+export function buildOfficialStops(
+  routeName: string,
+  sequenceId: string,
+  coordinates: LatLng[],
+  definitions: ExplicitStopDefinition[]
+): Stop[] {
+  let previousCoordinateIndex = -1;
+  return definitions.map((definition, order) => {
+    if (
+      !Number.isInteger(definition.coordinateIndex) ||
+      definition.coordinateIndex <= previousCoordinateIndex ||
+      definition.coordinateIndex >= coordinates.length ||
+      !Number.isFinite(definition.dwellMinutes) ||
+      definition.dwellMinutes < 0
+    ) {
+      throw new Error(`El paradero oficial ${definition.id} no respeta el recorrido o tiene un peso inválido.`);
+    }
+    const routeCoordinate = coordinates[definition.coordinateIndex];
+    if (haversineDistance(definition.coordinate, routeCoordinate) > 75) {
+      throw new Error(`El paradero oficial ${definition.id} está demasiado lejos del recorrido.`);
+    }
+    previousCoordinateIndex = definition.coordinateIndex;
+    return {
+      ...definition,
+      routeName,
+      sequenceId,
+      order,
+      isOrigin: false,
+      isDestination: false,
+      official: true,
+    };
+  });
+}
 
 export function buildStops(
   routeName: string,
@@ -53,6 +95,9 @@ export function buildStops(
       isDestination,
       order: result.length,
       coordinateIndex: i,
+      dwellMinutes: 0,
+      direction: 'referencia',
+      official: false,
     });
     if (isDestination) {
       break;
@@ -80,6 +125,9 @@ export function buildStops(
       isDestination: true,
       order: result.length,
       coordinateIndex: total - 1,
+      dwellMinutes: 0,
+      direction: 'referencia',
+      official: false,
     });
   }
 

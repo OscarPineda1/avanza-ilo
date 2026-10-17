@@ -65,10 +65,6 @@ function parsePositiveMinutes(value: string): number | undefined {
   return Number.isFinite(minutes) && minutes > 0 ? minutes : undefined;
 }
 
-function coordinateKey(latitude: number, longitude: number): string {
-  return `${latitude},${longitude}`;
-}
-
 function coordinatesMatch(
   left: RouteSequence['coordinates'] | null,
   right: RouteSequence['coordinates'] | null
@@ -382,8 +378,6 @@ export function validateRouteCatalog(
       }
 
       coordinateCount += coordinates.length;
-      const coordinateIndexes = new Map<string, number[]>();
-
       coordinates.forEach((coordinate, index) => {
         if (!isCoordinateInIlo(coordinate.latitude, coordinate.longitude)) {
           issues.push({
@@ -393,11 +387,6 @@ export function validateRouteCatalog(
             sequenceId: sequence.id,
           });
         }
-
-        const key = coordinateKey(coordinate.latitude, coordinate.longitude);
-        const indexes = coordinateIndexes.get(key) ?? [];
-        indexes.push(index);
-        coordinateIndexes.set(key, indexes);
 
         if (index === 0) return;
 
@@ -469,15 +458,14 @@ export function validateRouteCatalog(
           });
         }
 
-        const key = coordinateKey(
-          reference.coordinate.latitude,
-          reference.coordinate.longitude
-        );
-        const matchingIndex = (coordinateIndexes.get(key) ?? []).find(
-          (candidateIndex) => candidateIndex > previousCoordinateIndex
-        );
-
-        if (matchingIndex === undefined || matchingIndex !== reference.coordinateIndex) {
+        const routeCoordinate = coordinates[reference.coordinateIndex];
+        const followsDirection = reference.coordinateIndex > previousCoordinateIndex;
+        const maximumDistance = reference.official ? 75 : 0.5;
+        if (
+          !routeCoordinate ||
+          !followsDirection ||
+          haversineDistance(reference.coordinate, routeCoordinate) > maximumDistance
+        ) {
           issues.push({
             code: 'reference.direction',
             message: `Referencia ${reference.id} no sigue el sentido ${sequence.id}.`,
@@ -485,14 +473,27 @@ export function validateRouteCatalog(
             sequenceId: sequence.id,
           });
         } else {
-          previousCoordinateIndex = matchingIndex;
+          previousCoordinateIndex = reference.coordinateIndex;
+        }
+
+        if (reference.official && (
+          !Number.isFinite(reference.dwellMinutes) ||
+          reference.dwellMinutes < 0 ||
+          !['ida', 'vuelta'].includes(reference.direction)
+        )) {
+          issues.push({
+            code: 'reference.weight',
+            message: `El paradero oficial ${reference.id} debe declarar sentido y tiempo de detención.`,
+            routeId: route.id,
+            sequenceId: sequence.id,
+          });
         }
       });
 
-      if (
+      if (!sequenceStops.every((reference) => reference.official) && (
         !sequenceStops[0].isOrigin ||
         !sequenceStops.at(-1)?.isDestination
-      ) {
+      )) {
         issues.push({
           code: 'reference.endpoints',
           message: `Las referencias de ${sequence.id} no identifican correctamente inicio y final.`,
@@ -508,7 +509,7 @@ export function validateRouteCatalog(
           route.nombre,
           sequence.id,
           route.travelProfile,
-          sequenceStops.map((stop) => stop.coordinateIndex)
+          sequenceStops
         );
         weightCount += graph.adjacency.length;
         graph.adjacency.forEach((edge) => {

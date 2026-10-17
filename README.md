@@ -4,7 +4,8 @@ Prueba de concepto móvil para consultar los circuitos piloto 1A, D y 14, elegir
 
 ## Alcance actual
 
-- Snapshot cartográfico publicado y versionado en Firestore con rutas, secuencias, referencias y fuente.
+- Catálogo versionado con rutas, secuencias y 22 paraderos oficiales proporcionados por el responsable del proyecto.
+- Pesos específicos de 3 o 5 minutos por paradero, aplicados como detención promedio después de la llegada.
 - Última caché íntegra para orientación estática sin conexión; el ETA queda desactivado.
 - Circuitos dirigidos completos; un cruce no crea conexiones ni recorridos inversos.
 - Selección manual de una referencia o de un punto sobre la polilínea, sin requerir GPS.
@@ -12,7 +13,7 @@ Prueba de concepto móvil para consultar los circuitos piloto 1A, D y 14, elegir
 - Cloud Function HTTPS que ejecuta el motor temporal y elige llegadas candidatas cuando existe una fase de despacho sustentada.
 - Suite reproducible que incluye el ejemplo sintético 07:12 → 07:15.
 
-Los datos productivos actuales no incluyen pesos temporales ni una fase de despacho validados. Por eso producción conserva la cartografía y muestra el ETA como no disponible. Para exposiciones existe un escenario separado de demostración, bloqueado para publicación productiva, que activa el flujo completo con despachos y pesos simulados sin afirmar posición GPS ni precisión de campo.
+La versión preparada el 2026-10-16 incorpora pesos de detención por paradero. Su publicación productiva requiere conservar la línea base de velocidades y despachos validada y promover el nuevo snapshot a Firestore. El servicio cloud también requiere que la facturación del proyecto Firebase permanezca activa.
 
 ## Requisitos
 

@@ -27,12 +27,15 @@ function buildDirectedEdges(route: PublishedRoute, sequence: PublishedSequence):
   const profile = route.travelProfile;
   if (!profile) throw new Error('eta-profile-unavailable');
   const metersPerSecond = (profile.averageSpeedKmh * 1000) / 3600;
-  const referenceIndexes = new Set(sequence.stops.map((reference) => reference.coordinateIndex));
+  const dwellByIndex = new Map(sequence.stops.map((reference) => [
+    reference.coordinateIndex,
+    reference.dwellMinutes ?? profile.stopPenaltyMinutes,
+  ]));
   return sequence.coordinates.slice(0, -1).map((coordinate, index) => {
     const distance = distanceMeters(coordinate, sequence.coordinates[index + 1]);
-    const stopPenalty = referenceIndexes.has(index + 1)
-      ? profile.stopPenaltyMinutes * 60
-      : 0;
+    // La espera de pasajeros ocurre al salir del paradero. Así, la llegada al
+    // propio paradero no queda artificialmente retrasada por su detención.
+    const stopPenalty = (dwellByIndex.get(index) ?? 0) * 60;
     const weightSeconds = distance / metersPerSecond + stopPenalty;
     if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(weightSeconds) || weightSeconds < 0) {
       throw new Error(`invalid-edge:${index}`);

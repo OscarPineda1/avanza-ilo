@@ -29,7 +29,7 @@ export default function RouteDetailCard({ item, onPress }) {
             <View style={styles.metaRow}><View style={styles.metaItem}><Ionicons name="cash-outline" size={16} color={item.color} /><Text style={styles.metaText}>{item.tarifa || 'Tarifa por confirmar'}</Text></View><View style={styles.metaItem}><Ionicons name="time-outline" size={16} color={item.color} /><Text style={styles.metaText}>{item.frecuencia ? `Cada ${item.frecuencia}` : 'Frecuencia por confirmar'}</Text></View></View>
 
             <View style={styles.cardAction}>
-                <Text style={[styles.actionText, { color: item.color }]}>{item.coordinates?.length ? 'Ver recorrido en mapa' : 'Ver información de la ruta'}</Text>
+                <Text style={[styles.actionText, { color: item.color }]}>Ver recorrido y paraderos</Text>
                 <Ionicons name="arrow-forward" size={18} color={item.color} />
             </View>
         </TouchableOpacity>
@@ -38,7 +38,7 @@ export default function RouteDetailCard({ item, onPress }) {
 
 const styles = StyleSheet.create({
     routeCardDetail: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: 18, marginBottom: 16, ...theme.shadows.base },
-    cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
     routeBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
     routeBadgeText: { fontSize: 15, fontWeight: 'bold', color: theme.colors.surface },
     empresaText: { fontSize: 13, fontWeight: '600', color: theme.colors.textMuted },

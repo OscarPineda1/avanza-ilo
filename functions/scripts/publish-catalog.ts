@@ -146,7 +146,7 @@ async function main(): Promise<void> {
       : validatedOperationalScenario
         ? VALIDATED_OPERATIONAL_SOURCE
         : ROUTE_CATALOG_METADATA.source,
-    sourceDate: validatedOperationalScenario ? '2026-09-15' : ROUTE_CATALOG_METADATA.sourceDate,
+    sourceDate: validatedOperationalScenario ? '2026-10-16' : ROUTE_CATALOG_METADATA.sourceDate,
     geometrySourceDate: ROUTE_CATALOG_METADATA.geometrySourceDate,
     decision: demoScenario
       ? 'Escenario temporal para demostrar OE1/OE2 con ETA activo; no sustituye evidencia operativa ni se admite en producción.'
@@ -158,14 +158,14 @@ async function main(): Promise<void> {
     ...(validatedOperationalScenario ? {
       operationalApproval: {
         status: 'approved' as const,
-        approvedAt: '2026-09-15',
+        approvedAt: '2026-10-16',
         approvedBy: [
           'Responsable del proyecto (confirmación del usuario)',
-          'Joshua (validación comunicada por el responsable del proyecto)',
+          'Joshua (validación de la línea base operativa comunicada por el responsable del proyecto)',
         ],
         scope: ['travel_weights', 'dispatch_schedule'] as Array<'travel_weights' | 'dispatch_schedule'>,
-        sourceArtifact: 'AVANZA_ILO_DEMO_OE1_OE2_2026-09-14.xlsx',
-        sourceSha256: 'B0E9D3A36C89800535EDEF143CCC4D3228CF60E8F96700695A8AF4FD6036ACE4',
+        sourceArtifact: 'src/services/official-stops.ts',
+        sourceSha256: 'FAD321067D55E5FC04F2158FFBAA0EBE8250188A0BCAF26C17E28861C5F10B32',
       },
     } : {}),
     routes: catalogRoutes.map((route) => ({

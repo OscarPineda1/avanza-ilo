@@ -177,6 +177,13 @@ export function validatePublishedSnapshot(snapshot: PublishedSnapshot): Snapshot
           issues.push({ code: 'reference.sequence', message: 'La referencia no conserva ruta, sentido u orden.', routeId: route.id, directionId: sequence.id });
         }
         previousIndex = reference.coordinateIndex;
+        if (reference.official && (
+          !finite(reference.dwellMinutes) ||
+          reference.dwellMinutes < 0 ||
+          !['ida', 'vuelta'].includes(reference.direction ?? '')
+        )) {
+          issues.push({ code: 'reference.weight', message: 'El paradero oficial no tiene sentido o tiempo de detención válido.', routeId: route.id, directionId: sequence.id });
+        }
       });
     }
   }

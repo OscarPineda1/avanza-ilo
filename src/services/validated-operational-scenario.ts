@@ -1,11 +1,11 @@
 import { buildDirectedRouteGraph, type TravelTimeProfile } from './graph';
 import { getAllRoutes, type Route, type ServiceProfile } from './routes';
 
-export const VALIDATED_OPERATIONAL_DATA_VERSION = '2026-09-15-oe1-oe2-validado-v1';
+export const VALIDATED_OPERATIONAL_DATA_VERSION = '2026-10-16-paraderos-pesos-v1';
 export const VALIDATED_OPERATIONAL_SOURCE =
-  'Matriz operativa OE1/OE2 AVANZA ILO del 2026-09-14; pesos y despachos validados por el responsable del proyecto y Joshua.';
+  'Línea base operativa OE1/OE2 y paraderos oficiales con tiempos promedio de detención confirmados por el responsable del proyecto el 2026-10-16.';
 export const VALIDATED_OPERATIONAL_DECISION =
-  'Se habilita el ETA con la cartografía publicada de las rutas 1A, D y 14 y la línea base operativa de pesos y despachos aprobada por el responsable del proyecto y Joshua el 2026-09-15.';
+  'Se habilita el ETA con la cartografía publicada de las rutas 1A, D y 14, sus paraderos oficiales, pesos de detención por paradero y la línea base operativa de despachos.';
 
 type ValidatedRouteParameters = {
   headwayMinutes: number;
@@ -14,9 +14,9 @@ type ValidatedRouteParameters = {
 };
 
 const PARAMETERS: Record<string, ValidatedRouteParameters> = {
-  '1A': { headwayMinutes: 10, averageSpeedKmh: 24, stopPenaltyMinutes: 0.25 },
-  D: { headwayMinutes: 12, averageSpeedKmh: 22, stopPenaltyMinutes: 0.25 },
-  '14': { headwayMinutes: 15, averageSpeedKmh: 25, stopPenaltyMinutes: 0.25 },
+  '1A': { headwayMinutes: 10, averageSpeedKmh: 24, stopPenaltyMinutes: 0 },
+  D: { headwayMinutes: 12, averageSpeedKmh: 22, stopPenaltyMinutes: 0 },
+  '14': { headwayMinutes: 15, averageSpeedKmh: 25, stopPenaltyMinutes: 0 },
 };
 
 export function buildValidatedService(routeName: string): ServiceProfile {
@@ -30,7 +30,7 @@ export function buildValidatedService(routeName: string): ServiceProfile {
     dispatchReferenceKind: 'scheduled',
     timezone: 'America/Lima',
     source: VALIDATED_OPERATIONAL_SOURCE,
-    sourceDate: '2026-09-15',
+    sourceDate: '2026-10-16',
   };
 }
 
@@ -43,7 +43,7 @@ export function buildValidatedTravelProfile(routeName: string): TravelTimeProfil
     averageSpeedKmh: parameters.averageSpeedKmh,
     stopPenaltyMinutes: parameters.stopPenaltyMinutes,
     source: VALIDATED_OPERATIONAL_SOURCE,
-    sourceDate: '2026-09-15',
+    sourceDate: '2026-10-16',
     evidence: 'validated',
     weightUnit: 'seconds',
   };
@@ -76,7 +76,7 @@ export function validateOperationalWeights(routes: Route[] = buildValidatedOpera
       route.nombre,
       sequence.id,
       route.travelProfile!,
-      sequence.stops.map((stop) => stop.coordinateIndex)
+      sequence.stops
     );
     return {
       routeName: route.nombre,

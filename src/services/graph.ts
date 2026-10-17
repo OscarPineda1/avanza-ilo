@@ -60,19 +60,21 @@ function assertProfile(profile: TravelTimeProfile): void {
 function edgeWeightSeconds(
   distanceMeters: number,
   profile: TravelTimeProfile,
-  reachesStop: boolean
+  dwellMinutes: number
 ): number {
   const metersPerSecond = (profile.averageSpeedKmh * 1000) / 3600;
-  const stopPenaltySeconds = reachesStop ? profile.stopPenaltyMinutes * 60 : 0;
+  const stopPenaltySeconds = dwellMinutes * 60;
   return distanceMeters / metersPerSecond + stopPenaltySeconds;
 }
+
+type StopWeight = number | Pick<Stop, 'coordinateIndex' | 'dwellMinutes'>;
 
 export function buildDirectedRouteGraph(
   coordinates: LatLng[],
   routeName: string,
   sequenceId: string,
   profile: TravelTimeProfile = BASELINE_TRAVEL_PROFILE,
-  stopIndexes: number[] = []
+  stops: StopWeight[] = []
 ): Graph {
   assertProfile(profile);
   if (coordinates.length < 2) {
@@ -80,10 +82,24 @@ export function buildDirectedRouteGraph(
   }
 
   const adjacency: Edge[] = [];
-  const stopIndexSet = new Set(stopIndexes);
+  const stopDwellByIndex = new Map<number, number>();
+  for (const stop of stops) {
+    const coordinateIndex = typeof stop === 'number' ? stop : stop.coordinateIndex;
+    // Los snapshots anteriores a 2026-10-16 no incluyen dwellMinutes por
+    // paradero. Conservan compatibilidad usando la penalidad general del perfil.
+    const dwellMinutes = typeof stop === 'number' || !Number.isFinite(stop.dwellMinutes)
+      ? profile.stopPenaltyMinutes
+      : stop.dwellMinutes;
+    if (!Number.isInteger(coordinateIndex) || !Number.isFinite(dwellMinutes) || dwellMinutes < 0) {
+      throw new Error('El paradero tiene un índice o tiempo de detención inválido.');
+    }
+    stopDwellByIndex.set(coordinateIndex, dwellMinutes);
+  }
   for (let index = 0; index < coordinates.length - 1; index += 1) {
     const distance = haversineDistance(coordinates[index], coordinates[index + 1]);
-    const weight = edgeWeightSeconds(distance, profile, stopIndexSet.has(index + 1));
+    // La detención sucede después de llegar al paradero. Se carga sobre la
+    // arista de salida para que el ETA al propio paradero no incluya su espera.
+    const weight = edgeWeightSeconds(distance, profile, stopDwellByIndex.get(index) ?? 0);
     if (!Number.isFinite(distance) || distance <= 0 || !Number.isFinite(weight) || weight < 0) {
       throw new Error(`El segmento ${index}-${index + 1} tiene un peso inválido.`);
     }
@@ -94,7 +110,7 @@ export function buildDirectedRouteGraph(
     routeName,
     sequenceId,
     nodes: coordinates,
-    stopIndexes,
+    stopIndexes: [...stopDwellByIndex.keys()],
     adjacency,
     weightUnit: 'seconds',
     profileId: profile.id,
@@ -126,7 +142,7 @@ export function buildGraphFromStops(
     routeName,
     sequenceId,
     profile,
-    stops.map((stop) => stop.coordinateIndex)
+    stops
   );
 }
 

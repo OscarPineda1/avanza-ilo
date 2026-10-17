@@ -99,6 +99,30 @@ test('HU-16/17: 07:12 selecciona el despacho 07:10 que llega 07:15', () => {
   assert.equal(result.method, 'directed_dijkstra_with_dispatch_candidates');
 });
 
+test('HU-10/18: la detención del paradero afecta los puntos posteriores, no su propia llegada', () => {
+  const snapshot = syntheticSnapshot();
+  const sequence = snapshot.routes[0].sequences[0];
+  sequence.coordinates.splice(1, 0, { latitude: -17.6433, longitude: -71.3394 });
+  sequence.stops = [
+    { ...sequence.stops[0], coordinateIndex: 0, dwellMinutes: 0 },
+    {
+      id: '1A-mid', routeName: '1A', sequenceId: '1A-synthetic', name: 'Paradero medio',
+      coordinate: sequence.coordinates[1], coordinateIndex: 1, order: 1, dwellMinutes: 5,
+      direction: 'ida', official: true,
+    },
+    { ...sequence.stops[1], coordinateIndex: 2, order: 2, dwellMinutes: 0 },
+  ];
+  const atStop = inferEta(snapshot, {
+    routeId: '1', directionId: '1A-synthetic', referenceId: '1A-mid',
+  }, new Date('2026-09-12T12:00:00.000Z'));
+  const afterStop = inferEta(snapshot, {
+    routeId: '1', directionId: '1A-synthetic', referenceId: '1A-b',
+  }, new Date('2026-09-12T12:00:00.000Z'));
+  assert.equal(atStop.status, 'available');
+  assert.equal(afterStop.status, 'available');
+  assert.ok((afterStop.etaMinutes ?? 0) - (atStop.etaMinutes ?? 0) >= 7.4);
+});
+
 test('HU-15/17: sin fase de despacho solo devuelve espera promedio etiquetada', () => {
   const snapshot = syntheticSnapshot();
   snapshot.routes[0].service.dispatchReferenceKind = 'none';

@@ -66,11 +66,11 @@ function RouteMapLayers({ route, sequence, showStops = true, selectedStopId, sel
             <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={13} color="#FFFFFF" /></View>
         </Marker>)}
 
-        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination && stop.id === selectedStopId).map((stop) => {
+        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
             const isSelected = stop.id === selectedStopId;
             return <Marker key={`${stop.id}-${isSelected ? 'selected' : 'idle'}`} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={trackMarkers}>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>
-                <StopCallout title={stop.name} subtitle={`Ruta ${route.nombre} · Toca para esperar aquí`} />
+                <StopCallout title={stop.name} subtitle={stop.official ? `${stop.direction === 'vuelta' ? 'Vuelta' : 'Ida'} · detención promedio ${stop.dwellMinutes} min` : `Ruta ${route.nombre} · Toca para esperar aquí`} />
             </Marker>;
         })}
 
