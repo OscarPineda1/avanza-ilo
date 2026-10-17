@@ -17,7 +17,8 @@ let bootstrap: Promise<AppCheckBootstrapStatus> | null = null;
 export function initializeAppCheckProtection(): Promise<AppCheckBootstrapStatus> {
   if (bootstrap) return bootstrap;
 
-  bootstrap = (async () => {
+  let getConfiguredToken: (() => Promise<string | null>) | null = null;
+  const initialization = (async () => {
     if (process.env.EXPO_PUBLIC_FIREBASE_USE_EMULATORS === 'true') return 'emulator';
     if (Platform.OS !== 'android' && Platform.OS !== 'ios') return 'unsupported';
 
@@ -43,15 +44,24 @@ export function initializeAppCheckProtection(): Promise<AppCheckBootstrapStatus>
       });
     }
 
-    configureAppCheckTokenProvider(async () => {
+    getConfiguredToken = async () => {
       try {
         return (await appCheckModule.getToken(appCheck, false)).token || null;
       } catch {
         return null;
       }
-    });
+    };
     return 'configured';
   })();
 
-  return bootstrap;
+  // Se registra inmediatamente para que una consulta ETA realizada durante el
+  // arranque espere a App Check en vez de fallar antes de que termine de cargar.
+  configureAppCheckTokenProvider(async () => {
+    const status = await initialization;
+    if (status !== 'configured' || !getConfiguredToken) return null;
+    return getConfiguredToken();
+  });
+
+  bootstrap = initialization;
+  return initialization;
 }

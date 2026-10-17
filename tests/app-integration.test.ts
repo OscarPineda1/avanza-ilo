@@ -95,6 +95,29 @@ test('HU-12: timeout y respuesta 5xx se convierten en errores controlados', asyn
   );
 });
 
+test('HU-12/22: un rechazo 401 del backend se identifica como App Check', async () => {
+  await assert.rejects(
+    requestEta(
+      { routeId: '1', directionId: '1a', referenceId: 'ref' },
+      {
+        endpoint: 'https://example.test/eta',
+        token: 'rejected-app-check-token',
+        fetchImpl: async () => new Response(JSON.stringify({
+          ...validResponse,
+          status: 'invalid_input',
+          etaMinutes: null,
+          estimatedArrivalAt: null,
+          assumptions: {
+            ...validResponse.assumptions,
+            note: 'No fue posible verificar la integridad de la aplicación.',
+          },
+        }), { status: 401, headers: { 'Content-Type': 'application/json' } }),
+      }
+    ),
+    (error: unknown) => error instanceof EtaClientError && error.code === 'app_check' && error.httpStatus === 401
+  );
+});
+
 test('HU-12: una pantalla desmontada cancela la solicitud HTTPS pendiente', async () => {
   const caller = new AbortController();
   const pending = requestEta(
@@ -151,6 +174,7 @@ test('HU-12/22: el binario nativo inicializa App Check y conserva cierre seguro 
   assert.match(appCheck, /import\('@react-native-firebase\/app-check'\)/);
   assert.match(appCheck, /playIntegrity/);
   assert.match(appCheck, /configureAppCheckTokenProvider/);
+  assert.match(appCheck, /await initialization/);
 });
 
 test('HU-08/17: el mapa no consulta ETA cuando el snapshot es solo cartográfico', () => {

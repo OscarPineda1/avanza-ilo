@@ -122,7 +122,11 @@ export async function requestEta(
     }
     if (!response.ok) {
       throw new EtaClientError(
-        response.status >= 500 ? 'backend' : 'invalid_response',
+        response.status === 401
+          ? 'app_check'
+          : response.status >= 500
+            ? 'backend'
+            : 'invalid_response',
         body.assumptions.note,
         response.status
       );
