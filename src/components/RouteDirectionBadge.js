@@ -23,7 +23,7 @@ export default function RouteDirectionBadge({
             <View style={[styles.dot, { backgroundColor: color }]} />
             <Text style={[styles.value, compact && styles.compactValue]} numberOfLines={1}>
                 {isCircuit
-                    ? <>Inicio y fin: {originLabel} <Text style={styles.via}>· vía</Text> {destinationLabel}</>
+                    ? <>{originLabel} <Text style={[styles.arrow, { color }]}>↔</Text> {destinationLabel}</>
                     : <>{originLabel} <Text style={[styles.arrow, { color }]}>→</Text> {destinationLabel}</>}
             </Text>
         </View>

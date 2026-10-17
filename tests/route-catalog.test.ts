@@ -152,7 +152,8 @@ test('HU-08: el catálogo cartográfico no publica datos operativos sin fuente v
   for (const route of getAllRoutes()) {
     assert.equal(route.frecuencia, '');
     assert.equal(route.horario, '');
-    assert.equal(route.tarifa, '');
+    assert.equal(route.tarifa, 'S/ 1.50');
+    assert.equal(route.empresa, '');
     assert.equal(route.service, null);
     assert.equal(route.travelProfile, null);
   }

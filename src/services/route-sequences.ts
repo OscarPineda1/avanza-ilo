@@ -63,7 +63,7 @@ export function createRouteSequence(
     : buildStops(routeName, sequenceDefinition.id, coordinates, referenceCount);
 
   if (!officialStops && sequenceDefinition.kind === 'circuit' && stops.length > 1) {
-    stops[0].name = `Inicio y fin · Ruta ${routeName}`;
+    stops[0].name = `Punto principal · Ruta ${routeName}`;
     stops.at(-1)!.name = `Cierre · Ruta ${routeName}`;
   }
 

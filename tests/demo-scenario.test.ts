@@ -16,8 +16,8 @@ test('OE1/OE2 demo: completa despachos y pesos sin alterar maestros oficiales', 
   for (const route of routes) {
     assert.equal(route.service?.dispatchReferenceKind, 'estimated');
     assert.equal(route.travelProfile?.evidence, 'synthetic');
-    assert.equal(route.empresa, 'Operador por confirmar');
-    assert.equal(route.tarifa, '');
+    assert.equal(route.empresa, '');
+    assert.equal(route.tarifa, 'S/ 1.50');
   }
   assert.ok(validateDemoWeights(routes).every((result) => result.allFiniteNonNegative));
 });

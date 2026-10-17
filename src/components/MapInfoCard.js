@@ -2,60 +2,70 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
-import RouteDirectionBadge from './RouteDirectionBadge';
+import { getOfficialDirectionGuide } from '../services/official-stops';
 
 export default function MapInfoCard({
     datosRuta,
     isFavorite,
     onToggleFavorite,
+    onChooseStop,
     hasCoordinates,
-    isOffline,
     eta,
     waitPointName,
-    dataVersion,
-    publishedAt,
-    catalogSource,
 }) {
     const etaVisible = hasCoordinates && eta && !eta.loading && eta.etaMinutes !== null;
     const isArrival = eta?.status === 'available';
     const estimateLabel = eta?.loading
-        ? 'Calculando'
+        ? 'Calculando tu espera'
         : eta?.status === 'out_of_service'
-        ? 'Servicio no disponible'
+        ? 'Fuera del horario de atención'
         : eta?.status === 'offline'
-        ? 'ETA sin conexión'
+        ? 'Tiempo no disponible'
         : ['no_route', 'insufficient_data', 'version_mismatch', 'backend', 'network', 'timeout', 'app_check'].includes(eta?.status)
-        ? 'Estimación no disponible'
+        ? 'Tiempo no disponible'
         : isArrival
-        ? 'Llegada estimada'
-        : 'Espera promedio estimada';
-    const isCircuit = datosRuta.sequences?.some((sequence) => sequence.id === datosRuta.defaultSequenceId && sequence.kind === 'circuit');
+        ? 'Tu combi llega en'
+        : 'Espera aproximada';
+    const outward = getOfficialDirectionGuide(datosRuta.nombre, 'ida');
+    const returnTrip = getOfficialDirectionGuide(datosRuta.nombre, 'vuelta');
+    const routeSummary = returnTrip.destination && outward.destination
+        ? `${returnTrip.destination} ↔ ${outward.destination}`
+        : `${datosRuta.origen} ↔ ${datosRuta.destino}`;
+    const selectedStopName = waitPointName || eta?.assumptions?.waitPoint;
     const estimatedArrival = eta?.estimatedArrivalAt
         ? new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(eta.estimatedArrivalAt))
         : null;
+    const unavailableMessage = eta?.status === 'offline'
+        ? 'Conéctate a internet para calcular el tiempo de llegada.'
+        : eta?.status === 'out_of_service'
+        ? 'Esta ruta no está atendiendo en este momento.'
+        : 'Aún no podemos calcular el tiempo de llegada.';
 
     return (
         <View style={styles.cardContainer}>
+            <View style={styles.handle} />
             <View style={styles.cardHeader}>
-                <View>
-                    <Text style={styles.empresaText}>{datosRuta.empresa}</Text>
-                    <Text style={styles.subtext}>Servicio Urbano de Ilo</Text>
+                <View style={[styles.routeBadge, { backgroundColor: datosRuta.color }]}>
+                    <Text style={styles.routeBadgeLabel}>RUTA</Text>
+                    <Text style={styles.routeBadgeNumber}>{datosRuta.nombre}</Text>
                 </View>
-                <TouchableOpacity onPress={onToggleFavorite} activeOpacity={0.7}>
+                <View style={styles.routeCopy}>
+                    <Text style={styles.routeName}>Tu recorrido</Text>
+                    <Text style={styles.routeSummary} numberOfLines={1}>{routeSummary}</Text>
+                </View>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'} onPress={onToggleFavorite} activeOpacity={0.7} style={styles.favoriteButton}>
                     <Ionicons
                         name={isFavorite ? "star" : "star-outline"}
-                        size={26}
-                        color={isFavorite ? "#FFD700" : theme.colors.textLight}
+                        size={24}
+                        color={isFavorite ? theme.colors.ruta14 : theme.colors.textMuted}
                     />
                 </TouchableOpacity>
             </View>
 
-            <RouteDirectionBadge origin={datosRuta.origen} destination={datosRuta.destino} color={datosRuta.color} isCircuit={isCircuit} />
-
-            <View style={[styles.etaContainer, eta?.status === 'out_of_service' && styles.etaUnavailableContainer]}>
+            <View style={[styles.etaContainer, { backgroundColor: `${datosRuta.color}0D`, borderColor: `${datosRuta.color}30` }, eta?.status === 'out_of_service' && styles.etaUnavailableContainer]}>
                 <View style={styles.etaBadge}>
-                    <Ionicons name="time" size={20} color={theme.colors.primary} />
-                    <Text style={styles.etaLabel}>{estimateLabel}</Text>
+                    <View style={[styles.etaIcon, { backgroundColor: datosRuta.color }]}><Ionicons name="time" size={17} color={theme.colors.surface} /></View>
+                    <Text style={[styles.etaLabel, { color: datosRuta.color }]}>{estimateLabel}</Text>
                 </View>
                 <View style={styles.etaTimeRow}>
                     {eta?.loading ? (
@@ -63,51 +73,32 @@ export default function MapInfoCard({
                     ) : etaVisible ? (
                         <><Text style={styles.etaMinutes}>{eta.etaMinutes}</Text><Text style={styles.etaUnit}> min</Text></>
                     ) : (
-                        <Text style={styles.etaUnavailable}>
-                            {eta?.assumptions?.note || 'Estimación no disponible'}
-                        </Text>
+                        <Text style={styles.etaUnavailable}>{unavailableMessage}</Text>
                     )}
                 </View>
-                {waitPointName || eta?.assumptions?.waitPoint ? <Text style={styles.waitPointText}>Esperas en: {waitPointName || eta.assumptions.waitPoint}</Text> : null}
-                {isArrival && estimatedArrival ? <Text style={styles.arrivalText}>Hora estimada: {estimatedArrival}</Text> : null}
-                {etaVisible ? <Text style={styles.toleranceText}>{eta.assumptions.note}</Text> : null}
+                {isArrival && estimatedArrival ? <Text style={styles.arrivalText}>Llegaría cerca de las {estimatedArrival}</Text> : null}
             </View>
 
-            <View style={styles.detailsGrid}>
-                <View style={styles.detailBox}>
-                    <Ionicons name="cash-outline" size={18} color={theme.colors.textMuted} />
-                    <Text style={styles.detailTitle}>Tarifa</Text>
-                    <Text style={styles.detailValue}>{datosRuta.tarifa || 'Por definir'}</Text>
+            <View style={styles.tripInfoRow}>
+                <View style={styles.stopInfo}>
+                    <View style={[styles.infoIcon, { backgroundColor: `${datosRuta.color}14` }]}><Ionicons name="location" size={19} color={datosRuta.color} /></View>
+                    <View style={styles.stopCopy}>
+                        <Text style={styles.infoLabel}>Estás esperando en</Text>
+                        <Text style={styles.stopName} numberOfLines={1}>{selectedStopName || 'Elige un paradero'}</Text>
+                    </View>
                 </View>
-
-                <View style={styles.detailBox}>
-                    <Ionicons name="calendar-outline" size={18} color={theme.colors.textMuted} />
-                    <Text style={styles.detailTitle}>Horario</Text>
-                    <Text style={styles.detailValue} numberOfLines={1}>{datosRuta.horario || 'Por definir'}</Text>
-                </View>
-
-                <View style={styles.detailBox}>
-                    <Ionicons name="git-network-outline" size={18} color={theme.colors.textMuted} />
-                    <Text style={styles.detailTitle}>Frecuencia</Text>
-                    <Text style={styles.detailValue}>{datosRuta.frecuencia || 'Por definir'}</Text>
+                <View style={styles.farePill}>
+                    <Text style={styles.infoLabel}>Pasaje</Text>
+                    <Text style={styles.fareValue}>{datosRuta.tarifa || 'S/ 1.50'}</Text>
                 </View>
             </View>
 
-            {dataVersion ? <Text style={styles.dataVersion}>Datos {dataVersion}{publishedAt ? ` · ${publishedAt.slice(0, 10)}` : ''}{catalogSource === 'cache' ? ' · copia guardada' : ''}</Text> : null}
-            {datosRuta.service?.source ? (
-                <Text style={styles.dataSource} numberOfLines={2}>
-                    Fuente operativa: {datosRuta.service.source}{datosRuta.service.sourceDate ? ` · ${datosRuta.service.sourceDate}` : ''}
-                </Text>
-            ) : null}
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={selectedStopName ? 'Cambiar paradero' : 'Elegir paradero'} onPress={onChooseStop} activeOpacity={0.82} style={[styles.chooseStopButton, { backgroundColor: datosRuta.color }]}>
+                <Ionicons name="location-outline" size={19} color={theme.colors.surface} />
+                <Text style={styles.chooseStopText}>{selectedStopName ? 'Cambiar paradero' : 'Elegir paradero'}</Text>
+                <Ionicons name="chevron-forward" size={18} color={theme.colors.surface} />
+            </TouchableOpacity>
 
-            {isOffline && (
-                <View style={[styles.instructionBanner, { backgroundColor: theme.colors.danger + '15' }]}>
-                    <Ionicons name="wifi" size={18} color={theme.colors.danger} style={{ marginRight: 6 }} />
-                    <Text style={[styles.instructionText, { color: theme.colors.danger }]}>
-                        Modo offline: información estática guardada; ETA desactivado.
-                    </Text>
-                </View>
-            )}
         </View>
     );
 }
@@ -116,39 +107,40 @@ const styles = StyleSheet.create({
     cardContainer: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         backgroundColor: theme.colors.surface,
-        borderTopLeftRadius: 28, borderTopRightRadius: 28,
-        paddingHorizontal: 20, paddingTop: 20, paddingBottom: 25,
+        borderTopLeftRadius: 30, borderTopRightRadius: 30,
+        paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22,
         ...theme.shadows.heavy,
     },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    empresaText: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark },
-    subtext: { fontSize: 13, color: theme.colors.textMuted },
+    handle: { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: theme.colors.border, marginBottom: 12 },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    routeBadge: { width: 54, height: 54, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+    routeBadgeLabel: { color: '#FFFFFFCC', fontSize: 9, lineHeight: 11, fontWeight: '800', letterSpacing: 1 },
+    routeBadgeNumber: { color: theme.colors.surface, fontSize: 21, lineHeight: 24, fontWeight: '900' },
+    routeCopy: { flex: 1 },
+    routeName: { fontSize: 17, fontWeight: '800', color: theme.colors.textDark },
+    routeSummary: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600', marginTop: 3 },
+    favoriteButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: theme.colors.background },
     etaContainer: {
-        backgroundColor: theme.colors.background, borderRadius: 16, padding: 12,
-        alignItems: 'center', marginTop: 8, marginBottom: 14, borderWidth: 1, borderColor: theme.colors.border,
+        borderRadius: 20, paddingHorizontal: 16, paddingVertical: 13,
+        alignItems: 'center', marginTop: 14, borderWidth: 1,
     },
     etaUnavailableContainer: { backgroundColor: theme.colors.warningBg, borderColor: theme.colors.warningBorder },
-    etaBadge: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-    etaLabel: { fontSize: 14, fontWeight: '600', color: theme.colors.textMuted, marginLeft: 6, textTransform: 'uppercase' },
+    etaBadge: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    etaIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    etaLabel: { fontSize: 14, fontWeight: '800' },
     etaTimeRow: { flexDirection: 'row', alignItems: 'baseline', minHeight: 46, justifyContent: 'center' },
-    etaMinutes: { fontSize: 40, fontWeight: '800', color: theme.colors.textDark },
+    etaMinutes: { fontSize: 42, fontWeight: '900', color: theme.colors.textDark, fontVariant: ['tabular-nums'] },
     etaUnit: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
-    etaUnavailable: { fontSize: 18, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center' },
-    waitPointText: { fontSize: 14, color: theme.colors.textDark, fontWeight: '700', textAlign: 'center' },
-    arrivalText: { fontSize: 13, color: theme.colors.primary, fontWeight: '800', marginTop: 2 },
-    toleranceText: { fontSize: 12, color: theme.colors.textMuted, textAlign: 'center', marginTop: 3 },
-    detailsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
-    detailBox: {
-        flex: 1, backgroundColor: theme.colors.background, borderRadius: 12,
-        padding: 8, alignItems: 'center', marginHorizontal: 4, borderWidth: 1, borderColor: theme.colors.border,
-    },
-    detailTitle: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600', marginTop: 4 },
-    detailValue: { fontSize: 14, fontWeight: '700', color: theme.colors.textDark, marginTop: 2 },
-    dataVersion: { color: theme.colors.textMuted, fontSize: 11, textAlign: 'center', marginBottom: 10 },
-    dataSource: { color: theme.colors.textMuted, fontSize: 10, lineHeight: 14, textAlign: 'center', marginTop: -6, marginBottom: 10 },
-    instructionBanner: {
-        flexDirection: 'row', backgroundColor: theme.colors.warningBg, borderRadius: 10,
-        padding: 10, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.warningBorder,
-    },
-    instructionText: { flex: 1, fontSize: 14, color: theme.colors.warningText, fontWeight: '600', lineHeight: 19 },
+    etaUnavailable: { fontSize: 14, lineHeight: 19, fontWeight: '700', color: theme.colors.textDark, textAlign: 'center', paddingVertical: 6 },
+    arrivalText: { fontSize: 13, color: theme.colors.primary, fontWeight: '800', marginTop: 3 },
+    tripInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+    stopInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 9, minWidth: 0 },
+    infoIcon: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    stopCopy: { flex: 1, minWidth: 0 },
+    infoLabel: { color: theme.colors.textMuted, fontSize: 11, fontWeight: '700' },
+    stopName: { color: theme.colors.textDark, fontSize: 14, fontWeight: '800', marginTop: 2 },
+    farePill: { minWidth: 72, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: theme.colors.background, alignItems: 'center' },
+    fareValue: { color: theme.colors.textDark, fontSize: 16, fontWeight: '800' },
+    chooseStopButton: { minHeight: 50, borderRadius: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    chooseStopText: { flex: 1, color: theme.colors.surface, fontSize: 15, fontWeight: '800', textAlign: 'center' },
 });

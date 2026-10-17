@@ -40,6 +40,8 @@ function RouteMapLayers({ route, sequence, showStops = true, showDirectionMarker
         .filter((layer) => layer.visible !== false)
         .map((layer) => ({ ...layer, displayCoordinates: getDisplayCoordinates(layer.coordinates) })), [layers]);
     const stops = selectedSequence?.stops || route?.stops || [];
+    const hasOfficialStops = stops.some((stop) => stop.official);
+    const visibleStops = hasOfficialStops ? stops : stops.filter((stop) => !stop.isOrigin && !stop.isDestination);
     const isCircuit = selectedSequence?.kind === 'circuit';
     const directionMarkers = useMemo(() => getDirectionMarkers(visibleLayers.flatMap((layer) => layer.displayCoordinates), isCircuit), [visibleLayers, isCircuit]);
     const firstCoordinate = coordinates[0];
@@ -70,7 +72,7 @@ function RouteMapLayers({ route, sequence, showStops = true, showDirectionMarker
             <View style={[styles.directionMarker, { backgroundColor: route.color }]}><Ionicons name="arrow-up" size={13} color="#FFFFFF" /></View>
         </Marker>)}
 
-        {showStops && stops.filter((stop) => !stop.isOrigin && !stop.isDestination).map((stop) => {
+        {showStops && visibleStops.map((stop) => {
             const isSelected = stop.id === selectedStopId;
             return <Marker key={`${stop.id}-${isSelected ? 'selected' : 'idle'}`} coordinate={stop.coordinate} anchor={{ x: .5, y: .5 }} onPress={() => onStopPress?.(stop)} tracksViewChanges={trackMarkers}>
                 <View style={[styles.stopMarker, { borderColor: route.color }, isSelected && { backgroundColor: route.color, transform: [{ scale: 1.16 }] }]}><Text style={[styles.stopMarkerText, isSelected && styles.stopMarkerTextSelected]}>{stop.order + 1}</Text></View>
@@ -83,10 +85,10 @@ function RouteMapLayers({ route, sequence, showStops = true, showDirectionMarker
             <StopCallout title={selectedPosition.name || 'Punto de espera elegido'} subtitle={selectedPosition.direction ? `${getOfficialDirectionGuide(route.nombre, selectedPosition.direction).label} · Ruta ${route.nombre}` : `${selectedPosition.passageLabel} · Ruta ${route.nombre}`} />
         </Marker> : null}
 
-        {showStops ? <>
+        {showStops && !hasOfficialStops ? <>
             <Marker coordinate={firstCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
-                <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, isCircuit && styles.circuitEndpointText, { color: route.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
-                <StopCallout title={`${isCircuit ? 'Inicio y fin' : 'Inicio'} · Ruta ${route.nombre}`} subtitle={route.origen} />
+                <View style={[styles.endpointMarker, { borderColor: route.color }]}><Text style={[styles.endpointMarkerText, { color: route.color }]}>{isCircuit ? 'R' : 'A'}</Text></View>
+                <StopCallout title={`${isCircuit ? 'Recorrido' : 'Salida'} · Ruta ${route.nombre}`} subtitle={route.origen} />
             </Marker>
             {isCircuit && returnCoordinate ? <Marker coordinate={returnCoordinate} anchor={{ x: .5, y: .5 }} tracksViewChanges={trackMarkers} zIndex={3}>
                 <View style={[styles.returnMarker, { borderColor: route.color }]}><Text style={[styles.returnMarkerText, { color: route.color }]}>R</Text></View>

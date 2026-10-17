@@ -29,7 +29,7 @@ export default function MapScreen({ route, navigation }) {
     const requestedSequenceId = route.params?.sequenceId;
     const requestedWaitPointId = route.params?.waitPointId;
     const requestedWaitPoint = route.params?.waitPoint;
-    const { routes, metadata, publishedAt, source: catalogSource } = useCatalog();
+    const { routes, metadata } = useCatalog();
     const { locationEnabled } = useLocationConsent();
     const routeData = routeId
         ? routes.find((item) => item.id === routeId)
@@ -37,12 +37,11 @@ export default function MapScreen({ route, navigation }) {
         ? routes.find((item) => item.nombre.toLowerCase() === routeName.toLowerCase())
         : undefined;
     const selectedSequence = routeData?.sequences.find((item) => item.id === (requestedSequenceId || routeData.defaultSequenceId));
-    const isCircuit = selectedSequence?.kind === 'circuit';
     const coordinates = selectedSequence?.coordinates || null;
     const displayCoordinates = useMemo(() => selectedSequence
         ? selectedSequence.layers.filter((layer) => layer.visible !== false).flatMap((layer) => getDisplayCoordinates(layer.coordinates))
         : coordinates, [coordinates, selectedSequence]);
-    const { isOffline, availability } = useNetwork();
+    const { availability } = useNetwork();
     const mapRef = useRef(null);
     const mapsConfigured = Platform.OS === 'android'
         ? Constants.expoConfig?.extra?.mapsConfigured?.android
@@ -83,12 +82,12 @@ export default function MapScreen({ route, navigation }) {
         }
 
         if (availability !== 'online') {
-            setEta({ status: 'offline', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: availability === 'no-internet' ? 'La red no tiene acceso a Internet. El ETA quedó invalidado.' : 'Sin conexión. El ETA quedó invalidado.' } });
+            setEta({ status: 'offline', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: 'Conéctate a internet para calcular el tiempo de llegada.' } });
             return;
         }
 
         if (!metadata.etaReady) {
-            setEta({ status: 'insufficient_data', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: 'La cartografía está disponible. El ETA se habilitará cuando existan pesos y despachos validados.' } });
+            setEta({ status: 'insufficient_data', etaMinutes: null, estimatedArrivalAt: null, assumptions: { note: 'La cartografía está disponible. Aún no podemos calcular el tiempo de llegada.' } });
             return;
         }
 
@@ -106,12 +105,12 @@ export default function MapScreen({ route, navigation }) {
                 if (!cancelled) {
                     const code = error?.code || 'backend';
                     const note = code === 'timeout'
-                        ? 'La consulta agotó el tiempo de espera. Reintenta con conexión estable.'
+                        ? 'El cálculo tardó demasiado. Inténtalo nuevamente.'
                         : code === 'network'
-                        ? 'No fue posible contactar el servicio ETA.'
+                        ? 'Conéctate a internet para calcular el tiempo de llegada.'
                         : code === 'app_check'
-                        ? 'La verificación de la aplicación no está configurada.'
-                        : 'El servicio ETA no está disponible temporalmente.';
+                        ? 'El tiempo de llegada no está disponible por ahora.'
+                        : 'El tiempo de llegada no está disponible por ahora.';
                     setEta({ status: code, etaMinutes: null, estimatedArrivalAt: null, assumptions: { note } });
                 }
             });
@@ -161,7 +160,7 @@ export default function MapScreen({ route, navigation }) {
         if (displayCoordinates?.length > 1) {
             mapRef.current?.fitToCoordinates(displayCoordinates, {
                 animated: false,
-                edgePadding: { top: 110, right: 45, bottom: 280, left: 45 },
+                edgePadding: { top: 110, right: 45, bottom: 340, left: 45 },
             });
         }
     }, [displayCoordinates]);
@@ -194,36 +193,18 @@ export default function MapScreen({ route, navigation }) {
                         <Text style={styles.routeTitle}>Mapa en vivo</Text>
                     </View>
                 )}
-                {stops.length > 0 && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Elegir punto de espera manualmente" style={styles.manualStopButton} onPress={() => navigation.navigate('StopSelection', { routeId: routeData.id, sequenceId: selectedSequence?.id })}>
-                    <Ionicons name="location-outline" size={20} color={theme.colors.primary} />
-                </TouchableOpacity>}
+                <View style={styles.topSpacer} />
             </SafeAreaView>
-
-            {routeData?.coordinates?.length > 1 && <View pointerEvents="none" style={styles.endpointLegend}>
-                <View style={styles.endpointItem}>
-                    <View style={[styles.endpointLetter, { borderColor: routeData.color }]}><Text style={[styles.endpointLetterText, isCircuit && styles.circuitEndpointLetterText, { color: routeData.color }]}>{isCircuit ? 'I/F' : 'A'}</Text></View>
-                    <Text style={[styles.endpointKey, isCircuit && styles.circuitEndpointKey]}>{isCircuit ? 'Inicio y fin' : 'Inicio'}</Text>
-                    <Text style={styles.endpointValue} numberOfLines={1}>{routeData.origen}</Text>
-                </View>
-                <View style={styles.endpointItem}>
-                    <View style={[styles.endpointLetter, isCircuit && styles.returnLetter, { borderColor: routeData.color }]}><Text style={[styles.endpointLetterText, { color: routeData.color }]}>{isCircuit ? 'R' : 'B'}</Text></View>
-                    <Text style={[styles.endpointKey, isCircuit && styles.circuitEndpointKey]}>{isCircuit ? 'Regreso' : 'Final'}</Text>
-                    <Text style={styles.endpointValue} numberOfLines={1}>{isCircuit ? `hacia ${routeData.origen}` : routeData.destino}</Text>
-                </View>
-            </View>}
 
             {routeData && (
                 <MapInfoCard
                     datosRuta={routeData}
                     hasCoordinates={stops.length > 0 || !!coordinates}
-                    isOffline={isOffline}
                     eta={eta}
                     waitPointName={waitPoint?.name}
-                    dataVersion={metadata?.version}
-                    publishedAt={publishedAt}
-                    catalogSource={catalogSource}
                     isFavorite={isFavorite}
                     onToggleFavorite={handleToggleFavorite}
+                    onChooseStop={() => navigation.navigate('StopSelection', { routeId: routeData.id, sequenceId: selectedSequence?.id })}
                 />
             )}
         </View>
@@ -249,27 +230,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20,
         ...theme.shadows.base,
     },
-    manualStopButton: {
-        backgroundColor: theme.colors.surface,
-        width: 48, height: 48, borderRadius: 24,
-        alignItems: 'center', justifyContent: 'center',
-        ...theme.shadows.base,
-    },
-    endpointLegend: {
-        position: 'absolute', top: 112, left: 20,
-        gap: 5, maxWidth: '72%', backgroundColor: theme.colors.surface,
-        borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10,
-        borderWidth: 1, borderColor: theme.colors.border,
-        ...theme.shadows.base,
-    },
-    endpointItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    endpointLetter: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1.5 },
-    endpointLetterText: { fontSize: 10, fontWeight: '900' },
-    circuitEndpointLetterText: { fontSize: 8 },
-    returnLetter: { width: 18, height: 18, borderRadius: 9, marginHorizontal: 1 },
-    endpointKey: { color: theme.colors.textMuted, fontSize: 10, fontWeight: '800', width: 30 },
-    circuitEndpointKey: { width: 54 },
-    endpointValue: { color: theme.colors.textDark, fontSize: 11, fontWeight: '700', flexShrink: 1 },
+    topSpacer: { width: 48, height: 48 },
     colorIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
     routeTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.textDark },
     mapError: { position: 'absolute', top: 172, left: 20, right: 20, flexDirection: 'row', gap: 8, alignItems: 'center', padding: 12, borderRadius: 12, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },

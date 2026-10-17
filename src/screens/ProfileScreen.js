@@ -61,7 +61,7 @@ export default function ProfileScreen({ navigation }) {
                                 <View style={[styles.favoriteBadge, { backgroundColor: route.color }]}>
                                     <Text style={styles.favoriteBadgeText}>Ruta {route.nombre}</Text>
                                 </View>
-                                <Text style={styles.favoriteText}>{route.empresa}</Text>
+                                <Text style={styles.favoriteText}>Ver recorrido y paraderos</Text>
                                 <Ionicons name="chevron-forward" size={20} color={theme.colors.textLight} />
                             </TouchableOpacity>
                         ))}

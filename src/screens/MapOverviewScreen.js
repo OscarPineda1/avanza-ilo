@@ -40,12 +40,8 @@ export default function MapOverviewScreen({ navigation }) {
         ? Constants.expoConfig?.extra?.mapsConfigured?.android
         : Constants.expoConfig?.extra?.mapsConfigured?.ios;
     const routes = useMemo(() => catalogRoutes.filter((item) => item.available && item.coordinates?.length).slice(0, 3), [catalogRoutes]);
-    const selectedRoute = routes.find((item) => item.id === selectedRouteId) || routes[0];
-    const orderedRoutes = useMemo(() => [...routes].sort((left, right) => {
-        if (left.id === selectedRoute?.id) return 1;
-        if (right.id === selectedRoute?.id) return -1;
-        return 0;
-    }), [routes, selectedRoute?.id]);
+    const selectedRoute = routes.find((item) => item.id === selectedRouteId) || null;
+    const visibleRoutes = selectedRoute ? [selectedRoute] : routes;
     const loading = status === 'loading' && routes.length === 0;
 
     useEffect(() => {
@@ -62,7 +58,8 @@ export default function MapOverviewScreen({ navigation }) {
         moveMap(coordinates.length ? regionFromCoordinates(coordinates, 1.3, 1.35) : iloRoutesRegion);
     };
 
-    const centerRoutes = () => {
+    const showAllRoutes = () => {
+        setSelectedRouteId(null);
         moveMap(iloRoutesRegion);
     };
 
@@ -77,30 +74,30 @@ export default function MapOverviewScreen({ navigation }) {
                 showsMyLocationButton={false}
                 toolbarEnabled={false}
             >
-                {orderedRoutes.map((item) => <RouteMapLayers key={item.id} route={item} showStops={false} showDirectionMarkers={false} muted={item.id !== selectedRoute?.id} />)}
+                {visibleRoutes.map((item) => <RouteMapLayers key={item.id} route={item} showStops={false} showDirectionMarkers={false} />)}
             </MapView>
 
             {!mapsConfigured ? <View pointerEvents="none" style={styles.mapNotice}><Ionicons name="map-outline" size={17} color={theme.colors.surface} /><Text style={styles.mapNoticeText}>El mapa no está disponible</Text></View> : null}
 
             <View style={styles.topBar}>
-                <View style={styles.titlePill}><Ionicons name="map-outline" size={20} color={theme.colors.primary} /><Text style={styles.titlePillText}>Rutas de Ilo</Text></View>
+                <View style={styles.titlePill}><Ionicons name={selectedRoute ? 'navigate-outline' : 'map-outline'} size={20} color={theme.colors.primary} /><Text style={styles.titlePillText}>{selectedRoute ? `Ruta ${selectedRoute.nombre}` : 'Rutas de Ilo'}</Text></View>
                 <View style={styles.mapActions}>
-                    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Centrar las rutas" onPress={centerRoutes} style={styles.iconButton}><Ionicons name="scan-outline" size={21} color={theme.colors.textDark} /></TouchableOpacity>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={selectedRoute ? 'Mostrar todas las rutas' : 'Centrar las rutas'} onPress={showAllRoutes} style={styles.iconButton}><Ionicons name={selectedRoute ? 'layers-outline' : 'scan-outline'} size={21} color={theme.colors.textDark} /></TouchableOpacity>
                     <TouchableOpacity accessibilityRole="button" accessibilityLabel="Buscar ruta" onPress={() => navigation.navigate('SearchResults')} style={styles.iconButton}><Ionicons name="search-outline" size={21} color={theme.colors.textDark} /></TouchableOpacity>
                 </View>
             </View>
 
             <View style={styles.sheet}>
                 <View style={styles.handle} />
-                <Text style={styles.sheetTitle}>Explora las rutas</Text>
-                <Text style={styles.sheetSubtitle}>Toca una ruta para acercar el mapa.</Text>
+                <Text style={styles.sheetTitle}>{selectedRoute ? `Recorrido de la Ruta ${selectedRoute.nombre}` : 'Explora las rutas'}</Text>
+                <Text style={styles.sheetSubtitle}>{selectedRoute ? 'Las demás rutas están ocultas para que veas mejor el recorrido.' : 'Toca una ruta para verla sin cruces.'}</Text>
 
                 {loading ? (
                     <View style={styles.loading}><ActivityIndicator color={theme.colors.primary} /><Text style={styles.loadingText}>Cargando rutas…</Text></View>
                 ) : routes.length ? (
                     <View style={styles.routeRow}>
                         {routes.map((item) => {
-                            const active = item.id === selectedRoute?.id;
+                            const active = item.id === selectedRouteId;
                             return (
                                 <TouchableOpacity
                                     accessibilityRole="button"
@@ -121,8 +118,8 @@ export default function MapOverviewScreen({ navigation }) {
 
                 {selectedRoute ? <View style={styles.actionsRow}>
                     <TouchableOpacity accessibilityRole="button" onPress={() => navigation.navigate('RouteDetails', { routeId: selectedRoute.id, sequenceId: selectedRoute.defaultSequenceId })} style={[styles.primaryAction, { backgroundColor: selectedRoute.color }]}><Ionicons name="map" size={18} color={theme.colors.surface} /><Text style={styles.primaryActionText}>Abrir ruta {selectedRoute.nombre}</Text></TouchableOpacity>
-                    <TouchableOpacity accessibilityRole="button" onPress={() => navigation.navigate('NearbyStops')} style={styles.secondaryAction}><Ionicons name="location-outline" size={18} color={theme.colors.primary} /><Text style={styles.secondaryActionText}>Paraderos</Text></TouchableOpacity>
-                </View> : null}
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Mostrar todas las rutas" onPress={showAllRoutes} style={styles.secondaryAction}><Ionicons name="layers-outline" size={18} color={theme.colors.primary} /><Text style={styles.secondaryActionText}>Ver todas</Text></TouchableOpacity>
+                </View> : routes.length ? <TouchableOpacity accessibilityRole="button" onPress={() => navigation.navigate('NearbyStops')} style={styles.allStopsAction}><Ionicons name="location-outline" size={18} color={theme.colors.primary} /><Text style={styles.secondaryActionText}>Ver paraderos oficiales</Text></TouchableOpacity> : null}
             </View>
         </SafeAreaView>
     );
@@ -149,6 +146,7 @@ const styles = StyleSheet.create({
     primaryAction: { flex: 1.25, minHeight: 50, paddingHorizontal: 12, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
     primaryActionText: { color: theme.colors.surface, fontSize: 14, fontWeight: '800' },
     secondaryAction: { flex: 1, minHeight: 50, paddingHorizontal: 10, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
+    allStopsAction: { minHeight: 50, marginTop: 12, paddingHorizontal: 12, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     secondaryActionText: { color: theme.colors.primary, fontSize: 14, fontWeight: '800' },
     loading: { minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
     loadingText: { color: theme.colors.textMuted, fontSize: 14 },
