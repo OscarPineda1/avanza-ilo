@@ -2,6 +2,7 @@ module.exports = {
   expo: {
     name: "avanza-ilo",
     slug: "avanza-ilo",
+    owner: "oscar-pineda",
     scheme: "avanza-ilo",
     version: "1.0.0",
     orientation: "portrait",
@@ -16,6 +17,9 @@ module.exports = {
       mapsConfigured: {
         android: Boolean(process.env.GOOGLE_MAPS_ANDROID_API_KEY),
         ios: Boolean(process.env.GOOGLE_MAPS_IOS_API_KEY),
+      },
+      eas: {
+        projectId: "e346e34f-8ee5-4a35-ac5b-4fffa3746cf3",
       },
     },
     splash: {
@@ -35,7 +39,8 @@ module.exports = {
     },
     android: {
       package: "com.avanzailo.app",
-      googleServicesFile: "./google-services.json",
+      googleServicesFile:
+        process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
