@@ -1,6 +1,6 @@
 import type { LatLng } from './routes';
 import type { RouteSequence } from './route-sequences';
-import type { Stop } from './stops';
+import type { Stop, StopDirection } from './stops';
 
 export type RoutePosition = {
   id: string;
@@ -13,6 +13,7 @@ export type RoutePosition = {
   layerId: string;
   passageLabel: string;
   source: 'reference' | 'map';
+  direction?: StopDirection;
 };
 
 type ProjectedPosition = RoutePosition & { distanceMeters: number };
@@ -71,6 +72,7 @@ export function positionFromStop(stop: Stop, sequence: RouteSequence): RoutePosi
     layerId: layer.id,
     passageLabel: passageLabel(layer.id),
     source: 'reference',
+    direction: stop.direction,
   };
 }
 

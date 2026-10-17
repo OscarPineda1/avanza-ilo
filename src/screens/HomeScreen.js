@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
+    ActivityIndicator,
     StyleSheet,
     View,
     Text,
@@ -14,17 +15,20 @@ import { globalStyles, theme } from '../styles/global-styles';
 import { useCatalog } from '../context/CatalogContext';
 import RouteCard from '../components/RouteCard';
 import LiveMapCard from '../components/LiveMapCard';
+import EmptyState from '../components/EmptyState';
 import { searchRoutes } from '../services/route-search';
 
 export default function HomeScreen({ navigation }) {
     const [searchQuery, setSearchQuery] = useState('');
-    const { routes, source, status, error } = useCatalog();
+    const { routes, status, refresh } = useCatalog();
     const pilotRoutes = useMemo(() => routes.filter((item) => item.pilot && item.available), [routes]);
 
     const rutasFiltradas = useMemo(
         () => searchRoutes(pilotRoutes, searchQuery),
-        [searchQuery]
+        [pilotRoutes, searchQuery]
     );
+    const hasQuery = searchQuery.trim().length > 0;
+    const isInitialLoading = status === 'loading' && pilotRoutes.length === 0;
 
     const irAlMapaVivo = () => {
         navigation.navigate('Map');
@@ -44,28 +48,27 @@ export default function HomeScreen({ navigation }) {
             >
                 <View style={styles.header}>
                     <View style={styles.brandRow}>
-                        <View><Text style={globalStyles.headerTitle}>Avanza Ilo</Text><View style={styles.statusRow}><View style={styles.statusDot} /><Text style={styles.statusText}>{status === 'loading' ? 'Actualizando rutas…' : source === 'cache' ? 'Última información publicada guardada' : 'Rutas y referencias publicadas'}</Text></View></View>
-                        <TouchableOpacity style={styles.locationButton} accessibilityRole="button" accessibilityLabel="Usar mi ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /></TouchableOpacity>
+                        <Text style={globalStyles.headerTitle}>Avanza Ilo</Text>
+                        <TouchableOpacity style={styles.locationButton} accessibilityRole="button" accessibilityLabel="Usar mi ubicación" onPress={() => navigation.navigate('LocationPermission')}><Ionicons name="location-outline" size={19} color={theme.colors.primary} /><Text style={styles.locationText}>Mi ubicación</Text></TouchableOpacity>
                     </View>
-                    <Text style={globalStyles.subtitle}>Encuentra tu ruta y conoce por dónde pasa.</Text>
+                    <Text style={globalStyles.subtitle}>Encuentra cómo llegar y dónde esperar.</Text>
                 </View>
-
-                {error ? <View style={styles.dataNotice}><Text style={styles.dataNoticeText}>{error}</Text></View> : null}
 
                 <View style={styles.searchContainer}>
                     <Ionicons name="search" size={24} color={theme.colors.primary} style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
-                        placeholder="Buscar ruta (ej. 1A, D, 14)..."
+                        placeholder="Busca una ruta: 1A, D o 14"
                         placeholderTextColor={theme.colors.textLight}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         autoCapitalize="none"
                         autoCorrect={false}
                         returnKeyType="search"
-                        onSubmitEditing={() => rutasFiltradas.length === 1
-                            ? irAlMapa(rutasFiltradas[0])
-                            : navigation.navigate('SearchResults', { query: searchQuery })}
+                        onSubmitEditing={() => {
+                            if (rutasFiltradas.length === 1) irAlMapa(rutasFiltradas[0]);
+                            else if (rutasFiltradas.length > 1) navigation.navigate('SearchResults', { query: searchQuery });
+                        }}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearIcon}>
@@ -74,15 +77,11 @@ export default function HomeScreen({ navigation }) {
                     )}
                 </View>
 
-                {searchQuery.trim().length > 0 && rutasFiltradas.length === 0 && (
-                    <TouchableOpacity style={styles.noResults} onPress={() => navigation.navigate('SearchResults', { query: searchQuery })}>
-                        <Text style={styles.noResultsText}>Ver resultados para “{searchQuery}”</Text>
-                    </TouchableOpacity>
-                )}
+                <Text style={globalStyles.sectionTitle}>{hasQuery ? 'Resultados' : 'Rutas disponibles'}</Text>
 
-                <View style={styles.sectionHeading}><Text style={globalStyles.sectionTitle}>Rutas disponibles</Text><Text style={styles.routeCount}>{pilotRoutes.length} rutas</Text></View>
-
-                {rutasFiltradas.length > 0 ? (
+                {isInitialLoading ? (
+                    <View style={styles.loadingState}><ActivityIndicator color={theme.colors.primary} /><Text style={styles.loadingText}>Cargando rutas…</Text></View>
+                ) : rutasFiltradas.length > 0 ? (
                     rutasFiltradas.map((item) => (
                         <RouteCard
                             key={item.id}
@@ -90,11 +89,7 @@ export default function HomeScreen({ navigation }) {
                             onPress={() => irAlMapa(item)}
                         />
                     ))
-                ) : (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>No se encontraron rutas.</Text>
-                    </View>
-                )}
+                ) : hasQuery ? <View style={styles.noResults}><Ionicons name="search-outline" size={23} color={theme.colors.textMuted} /><Text style={styles.noResultsTitle}>No encontramos esa ruta</Text><Text style={styles.noResultsText}>Prueba buscando 1A, D o 14.</Text></View> : <EmptyState icon="bus-outline" title="No pudimos cargar las rutas" message="Comprueba tu conexión e inténtalo nuevamente." actionLabel="Reintentar" onAction={refresh} />}
 
                 <LiveMapCard onPress={irAlMapaVivo} />
             </ScrollView>
@@ -108,10 +103,8 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 5 },
-    statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.success },
-    statusText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '600' },
-    locationButton: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primarySoft, borderWidth: 1, borderColor: '#CBEAF5' },
+    locationButton: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: theme.colors.primarySoft, borderWidth: 1, borderColor: '#CBEAF5' },
+    locationText: { color: theme.colors.primary, fontSize: 13, fontWeight: '800' },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -133,18 +126,9 @@ const styles = StyleSheet.create({
     clearIcon: {
         padding: 4,
     },
-    emptyContainer: {
-        alignItems: 'center',
-        paddingVertical: 20,
-    },
-    emptyText: {
-        color: theme.colors.textLight,
-        fontSize: 16,
-    },
-    noResults: { marginTop: 10, padding: 12, borderRadius: 10, backgroundColor: theme.colors.primarySoft },
-    noResultsText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '700' },
-    dataNotice: { padding: 12, marginBottom: 14, borderRadius: 10, backgroundColor: theme.colors.warningBg, borderWidth: 1, borderColor: theme.colors.warningBorder },
-    dataNoticeText: { color: theme.colors.warningText, fontSize: 13, lineHeight: 18 },
-    sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    routeCount: { marginTop: 24, color: theme.colors.textMuted, fontSize: 14, fontWeight: '700' },
+    loadingState: { minHeight: 160, alignItems: 'center', justifyContent: 'center', gap: 10 },
+    loadingText: { color: theme.colors.textMuted, fontSize: 14 },
+    noResults: { alignItems: 'center', gap: 5, paddingVertical: 28 },
+    noResultsTitle: { color: theme.colors.textDark, fontSize: 16, fontWeight: '800' },
+    noResultsText: { color: theme.colors.textMuted, fontSize: 14 },
 });

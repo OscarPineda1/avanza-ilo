@@ -2,28 +2,30 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/global-styles';
-import RouteDirectionBadge from './RouteDirectionBadge';
+import { getOfficialDirectionGuide } from '../services/official-stops';
 
 export default function RouteCard({ item, onPress }) {
-    const isCircuit = item.sequences?.some((sequence) => sequence.id === item.defaultSequenceId && sequence.kind === 'circuit');
+    const outward = getOfficialDirectionGuide(item.nombre, 'ida');
+    const returnTrip = getOfficialDirectionGuide(item.nombre, 'vuelta');
+    const connection = outward.destination && returnTrip.destination
+        ? `${returnTrip.destination} ↔ ${outward.destination}`
+        : `${item.origen} ↔ ${item.destino}`;
 
     return (
         <TouchableOpacity
             style={styles.routeCard}
             onPress={onPress}
             accessibilityRole="button"
-            accessibilityLabel={isCircuit
-                ? `Ver circuito de la ruta ${item.nombre}, inicia y termina en ${item.origen}`
-                : `Ver recorrido de la ruta ${item.nombre}, sentido ${item.origen} hacia ${item.destino}`}
+            accessibilityLabel={`Ver ruta ${item.nombre}, ${connection}`}
             activeOpacity={0.7}
         >
             <View style={[styles.routeIcon, { backgroundColor: `${item.color}14`, borderColor: `${item.color}35` }]}>
                 <Text style={[styles.routeIconText, { color: item.color }]}>{item.nombre}</Text>
             </View>
             <View style={styles.routeInfo}>
-                <View style={styles.titleRow}><Text style={styles.routeName}>Ruta {item.nombre}</Text><View style={[styles.status, { backgroundColor: `${item.color}1A` }]}><Text style={[styles.statusText, { color: item.color }]}>DISPONIBLE</Text></View></View>
-                <RouteDirectionBadge origin={item.origen} destination={item.destino} color={item.color} compact isCircuit={isCircuit} />
-                <Text style={styles.meta}>{item.tarifa || 'Tarifa por confirmar'} · {item.frecuencia ? `Cada ${item.frecuencia}` : 'Frecuencia por confirmar'}</Text>
+                <Text style={styles.routeName}>Ruta {item.nombre}</Text>
+                <View style={styles.directionRow}><Ionicons name="swap-horizontal" size={15} color={item.color} /><Text style={styles.directionText}>{connection}</Text></View>
+                <Text style={[styles.actionHint, { color: item.color }]}>Ver recorrido y paraderos</Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color={theme.colors.border} />
         </TouchableOpacity>
@@ -48,9 +50,8 @@ const styles = StyleSheet.create({
     },
     routeIconText: { fontSize: 22, fontWeight: 'bold' },
     routeInfo: { flex: 1 },
-    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
     routeName: { fontSize: 18, fontWeight: '800', color: theme.colors.textDark },
-    status: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
-    statusText: { fontSize: 10, fontWeight: '800' },
-    meta: { fontSize: 13, color: theme.colors.textLight, marginTop: 4, fontWeight: '600' },
+    directionRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 },
+    directionText: { flex: 1, fontSize: 13, color: theme.colors.textMuted, fontWeight: '600' },
+    actionHint: { fontSize: 12, marginTop: 5, fontWeight: '800' },
 });

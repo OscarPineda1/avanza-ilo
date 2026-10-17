@@ -8,6 +8,7 @@ import {
 } from '../src/services/routes';
 import { validateRouteCatalog } from '../src/services/route-catalog-validation';
 import { BASELINE_TRAVEL_PROFILE, buildDirectedRouteGraph, dijkstra, shortestPath } from '../src/services/graph';
+import { getOfficialDirectionGuide } from '../src/services/official-stops';
 import {
   readValidatedRouteDataset,
   saveValidatedRouteDataset,
@@ -30,6 +31,17 @@ test('HU-08/19: el catálogo maestro aprueba exclusivamente 1A, D y 14', () => {
   const routes = getAllRoutes();
   assert.deepEqual(routes.filter((route) => route.pilot).map((route) => route.nombre), ['1A', 'D', '14']);
   assert.equal(routes.some((route) => route.nombre === '12'), false);
+});
+
+test('UX: cada sentido se explica con origen y destino reconocibles', () => {
+  for (const routeName of ['1A', 'D', '14']) {
+    const outward = getOfficialDirectionGuide(routeName, 'ida');
+    const returnTrip = getOfficialDirectionGuide(routeName, 'vuelta');
+    assert.equal(outward.label, 'Hacia Mercado Pacocha');
+    assert.equal(outward.path, 'Óvalo Nuevo Ilo → Mercado Pacocha');
+    assert.equal(returnTrip.label, 'Hacia Óvalo Nuevo Ilo');
+    assert.equal(returnTrip.path, 'Mercado Pacocha → Óvalo Nuevo Ilo');
+  }
 });
 
 test('HU-05/08/10: catálogo, secuencias, referencias y pesos son válidos', () => {

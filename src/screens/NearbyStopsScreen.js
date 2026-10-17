@@ -19,7 +19,7 @@ export default function NearbyStopsScreen({ navigation }) {
     const groups = useMemo(() => [
         { direction: 'ida', ...getOfficialDirectionGuide(selectedRouteName, 'ida'), stops: stops.filter((item) => item.direction === 'ida') },
         { direction: 'vuelta', ...getOfficialDirectionGuide(selectedRouteName, 'vuelta'), stops: stops.filter((item) => item.direction === 'vuelta') },
-    ], [stops]);
+    ], [selectedRouteName, stops]);
 
     const chooseStop = (stop) => {
         if (!selectedRoute || !selectedSequence) return;
