@@ -1,7 +1,7 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 
-export class FirebaseConfigurationError extends Error {
+class FirebaseConfigurationError extends Error {
   constructor(message = 'La configuración pública de Firebase está incompleta.') {
     super(message);
     this.name = 'FirebaseConfigurationError';
@@ -21,7 +21,7 @@ function publicFirebaseConfig() {
   };
 }
 
-export function getFirebaseApp(): FirebaseApp {
+function getFirebaseApp(): FirebaseApp {
   const config = publicFirebaseConfig();
   if (!config.apiKey || !config.projectId || !config.appId) {
     throw new FirebaseConfigurationError();

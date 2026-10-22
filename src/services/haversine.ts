@@ -2,7 +2,7 @@ import type { LatLng } from './routes';
 
 const EARTH_RADIUS_METERS = 6371000;
 
-export function toRadians(degrees: number): number {
+function toRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }
 

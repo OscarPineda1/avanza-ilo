@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { normalizeFavoriteIdentifiers } from './favorites-core';
 
-export { normalizeFavoriteIdentifiers } from './favorites-core';
-
 const FAVORITES_KEY = '@avanza_ilo:favorites';
 
 export async function getFavoriteRouteNames(): Promise<string[]> {
@@ -18,7 +16,7 @@ export async function replaceFavoriteRouteIds(routeIds: string[]): Promise<void>
   await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(normalizeFavoriteIdentifiers(routeIds)));
 }
 
-export async function addFavoriteRoute(routeName: string): Promise<void> {
+async function addFavoriteRoute(routeName: string): Promise<void> {
   const current = await getFavoriteRouteNames();
   if (!current.includes(routeName)) {
     current.push(routeName);
@@ -26,7 +24,7 @@ export async function addFavoriteRoute(routeName: string): Promise<void> {
   }
 }
 
-export async function removeFavoriteRoute(routeName: string): Promise<void> {
+async function removeFavoriteRoute(routeName: string): Promise<void> {
   const current = await getFavoriteRouteNames();
   const updated = current.filter((name) => name !== routeName);
   await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));

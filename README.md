@@ -1,74 +1,47 @@
 # Avanza Ilo
 
-Prueba de concepto móvil para consultar los circuitos piloto 1A, D y 14, elegir un punto de espera y solicitar una estimación cloud sin telemetría vehicular.
+Aplicación móvil Expo para consultar las rutas 1A, D y 14, sus paraderos oficiales y el tiempo estimado de llegada mediante Firebase.
 
-## Alcance actual
+## Desarrollo rápido en Android
 
-- Catálogo versionado con rutas, secuencias y 22 paraderos oficiales proporcionados por el responsable del proyecto.
-- Pesos específicos de 3 o 5 minutos por paradero, aplicados como detención promedio después de la llegada.
-- Última caché íntegra para orientación estática sin conexión; el ETA queda desactivado.
-- Circuitos dirigidos completos; un cruce no crea conexiones ni recorridos inversos.
-- Selección manual de una referencia o de un punto sobre la polilínea, sin requerir GPS.
-- Grafo dirigido y Dijkstra sobre la secuencia completa.
-- Cloud Function HTTPS que ejecuta el motor temporal y elige llegadas candidatas cuando existe una fase de despacho sustentada.
-- Suite reproducible que incluye el ejemplo sintético 07:12 → 07:15.
-
-La versión preparada el 2026-10-16 incorpora pesos de detención por paradero. Su publicación productiva requiere conservar la línea base de velocidades y despachos validada y promover el nuevo snapshot a Firestore. El servicio cloud también requiere que la facturación del proyecto Firebase permanezca activa.
-
-## Requisitos
-
-- Node.js 20.19.4 o superior.
-- Expo SDK 54; la interfaz puede revisarse en Expo Go, pero Firebase App Check nativo requiere un development/release build.
-
-## Ejecución
+El proyecto usa módulos nativos de Firebase, por lo que debe abrirse con un development build y no con Expo Go.
 
 ```powershell
-Copy-Item .env.example .env
 npm ci
-npx expo start -c
+npm run build:development
 ```
 
-Completa la configuración pública de Firebase, el endpoint autorizado y Maps solo en `.env`. Ese archivo no se versiona.
-
-## Verificación
+Instala una sola vez el APK de desarrollo generado por EAS. Para ver los cambios posteriores en tiempo real:
 
 ```powershell
-npm run verify
-npm run test:emulators
-npm run demo:arrival
-npm run test:demo:emulators
+npm start
 ```
 
-`verify` ejecuta TypeScript, pruebas de app/algoritmo/Function y validación del catálogo. `test:emulators` comprueba Firestore, reglas y el endpoint con datos aislados. La arquitectura y los pasos pendientes de producción están en `docs/arquitectura-cloud.md`.
+Abre Avanza Ilo en el celular y escanea el QR, o presiona `a` para abrirla en el emulador de Android Studio. Los cambios de JavaScript y estilos usan recarga rápida; únicamente los cambios de configuración o dependencias nativas exigen crear otro development build.
 
-## Presentación con ETA activo
+La configuración local permanece en `.env` y `google-services.json`, ambos fuera de Git. Las compilaciones EAS leen las variables del entorno configurado en Expo.
 
-El emulador conserva exactamente el flujo `app → Function HTTPS → motor ETA → Firestore → respuesta`. No publica datos simulados en el proyecto real.
+## Comandos
 
 ```powershell
-# Terminal 1
-npm run demo:emulators
-
-# Terminal 2, con el emulador Android abierto y el development build instalado
-npm run demo:app
+npm run verify             # valida app, catálogo y Cloud Functions
+npm run test:emulators     # prueba la integración aislada con Firebase
+npm run android            # compila y abre localmente en un emulador conectado
+npm run build:apk          # genera el APK de producción
 ```
-
-El snapshot `2026-09-14-demo-oe1-oe2-v1` cubre todo el día para evitar un falso “fuera de servicio” durante la exposición. Sus únicos datos operativos agregados son despachos y pesos temporales simulados; empresa y tarifa continúan como pendientes en los maestros productivos.
 
 ## Estructura
 
 ```text
 src/
-├── components/   interfaz reutilizable
-├── navigation/   navegación de pantallas
-├── screens/      búsqueda, mapa y selección
-├── services/     catálogo, caché, cliente ETA, calibración y validación
-├── styles/       tema visual
-└── utils/        geometrías publicadas
-tests/            casos reproducibles del núcleo
-functions/        endpoint HTTPS y motor ETA ejecutado en servidor
-scripts/          validación y demostración del modelo
-docs/evidencias/  decisiones, resultados y límites
+├── components/       componentes visuales reutilizables
+├── context/          estado compartido de la aplicación
+├── data/routes/      geometrías oficiales de las rutas
+├── navigation/       navegación principal
+├── screens/          pantallas de la aplicación
+├── services/         catálogo, ubicación, caché, Firebase y ETA
+└── styles/           tema visual
+functions/            Cloud Function y motor ETA del servidor
+scripts/              validación del catálogo
+tests/                pruebas de la aplicación e integración
 ```
-
-Consulta [CONTRIBUTING.md](CONTRIBUTING.md) antes de crear commits.

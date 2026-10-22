@@ -1,1 +1,0 @@
-Aquí guardarás todas las imágenes, íconos locales y fuentes personalizadas.

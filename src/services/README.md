@@ -1,1 +1,0 @@
-El núcleo de tu conexión. Aquí crearás los archivos que se comunican con Firebase (Capa de Datos) y donde vivirán las funciones matemáticas de tu algoritmo de Dijkstra

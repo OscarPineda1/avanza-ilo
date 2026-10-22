@@ -117,35 +117,6 @@ export function buildDirectedRouteGraph(
   };
 }
 
-export function buildGraphFromStops(
-  stops: Stop[],
-  profile: TravelTimeProfile = BASELINE_TRAVEL_PROFILE
-): Graph {
-  const routeName = stops[0]?.routeName;
-  const sequenceId = stops[0]?.sequenceId;
-
-  if (
-    !routeName ||
-    !sequenceId ||
-    stops.some(
-      (stop) =>
-        stop.routeName !== routeName || stop.sequenceId !== sequenceId
-    )
-  ) {
-    throw new Error(
-      'El grafo solo puede construirse con paradas de una misma ruta y secuencia.'
-    );
-  }
-
-  return buildDirectedRouteGraph(
-    stops.map((stop) => stop.coordinate),
-    routeName,
-    sequenceId,
-    profile,
-    stops
-  );
-}
-
 export function dijkstra(graph: Graph, originIndex: number): number[] {
   if (!Number.isInteger(originIndex) || originIndex < 0 || originIndex >= graph.nodes.length) {
     throw new Error('El nodo de origen no existe en el grafo.');

@@ -19,7 +19,7 @@ const PARAMETERS: Record<string, ValidatedRouteParameters> = {
   '14': { headwayMinutes: 15, averageSpeedKmh: 25, stopPenaltyMinutes: 0 },
 };
 
-export function buildValidatedService(routeName: string): ServiceProfile {
+function buildValidatedService(routeName: string): ServiceProfile {
   const parameters = PARAMETERS[routeName];
   if (!parameters) throw new Error(`La ruta ${routeName} no pertenece al conjunto operativo validado.`);
   return {
@@ -34,7 +34,7 @@ export function buildValidatedService(routeName: string): ServiceProfile {
   };
 }
 
-export function buildValidatedTravelProfile(routeName: string): TravelTimeProfile {
+function buildValidatedTravelProfile(routeName: string): TravelTimeProfile {
   const parameters = PARAMETERS[routeName];
   if (!parameters) throw new Error(`La ruta ${routeName} no pertenece al conjunto operativo validado.`);
   return {

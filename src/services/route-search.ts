@@ -1,6 +1,6 @@
 import type { Route } from './routes';
 
-export function normalizeRouteQuery(value: string): string {
+function normalizeRouteQuery(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

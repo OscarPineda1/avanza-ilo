@@ -177,6 +177,17 @@ test('HU-12/22: el binario nativo inicializa App Check y conserva cierre seguro 
   assert.match(appCheck, /await initialization/);
 });
 
+test('Compatibilidad: Expo Go no intenta cargar Firebase App Check nativo', () => {
+  const appCheck = readFileSync('src/services/app-check.ts', 'utf8');
+
+  assert.match(appCheck, /ExecutionEnvironment\.StoreClient/);
+  assert.match(appCheck, /return 'unsupported'/);
+  assert.ok(
+    appCheck.indexOf('ExecutionEnvironment.StoreClient') <
+      appCheck.indexOf("import('@react-native-firebase/app')")
+  );
+});
+
 test('HU-08/17: el mapa no consulta ETA cuando el snapshot es solo cartográfico', () => {
   const mapScreen = readFileSync('src/screens/MapScreen.js', 'utf8');
   assert.match(mapScreen, /!metadata\.etaReady/);

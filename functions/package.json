@@ -10,7 +10,6 @@
     "build": "tsc -p tsconfig.json",
     "test": "tsx --test test/*.test.ts",
     "publish:emulator": "tsx scripts/publish-catalog.ts --target=emulator",
-    "publish:emulator:demo": "tsx scripts/publish-catalog.ts --target=emulator --scenario=demo",
     "publish:production": "tsx scripts/publish-catalog.ts --target=production --confirm-production",
     "publish:production:validated": "tsx scripts/publish-catalog.ts --target=production --scenario=validated-operational --confirm-production --confirm-validated-inputs"
   },

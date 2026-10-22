@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAllRoutes, ROUTE_CATALOG_METADATA } from '../../src/services/routes';
-import { DEMO_DATA_VERSION, DEMO_SOURCE, buildDemoRoutes } from '../../src/services/demo-scenario';
 import {
   VALIDATED_OPERATIONAL_DATA_VERSION,
   VALIDATED_OPERATIONAL_DECISION,
@@ -103,14 +102,7 @@ async function main(): Promise<void> {
   if (target === 'production' && (!process.env.GCLOUD_PROJECT || process.env.GCLOUD_PROJECT.startsWith('demo-'))) {
     throw new Error('GCLOUD_PROJECT debe identificar explícitamente el proyecto Firebase real autorizado.');
   }
-  const demoScenario = args.has('--scenario=demo');
   const validatedOperationalScenario = args.has('--scenario=validated-operational');
-  if (demoScenario && validatedOperationalScenario) {
-    throw new Error('Selecciona un único escenario de publicación.');
-  }
-  if (target === 'production' && demoScenario) {
-    throw new Error('El escenario de demostración solo puede publicarse en Firebase Emulator Suite.');
-  }
   if (target === 'production' && validatedOperationalScenario && !args.has('--confirm-validated-inputs')) {
     throw new Error('La línea base operativa requiere --confirm-validated-inputs como constancia de aprobación de pesos y despachos.');
   }
@@ -120,12 +112,10 @@ async function main(): Promise<void> {
     throw new Error('AVANZA_PUBLICATION_RESPONSIBLE es obligatorio para una publicación real auditable.');
   }
 
-  const catalogRoutes = demoScenario
-    ? buildDemoRoutes()
-    : validatedOperationalScenario
-      ? buildValidatedOperationalRoutes()
-      : getAllRoutes();
-  const etaReady = demoScenario || validatedOperationalScenario || catalogRoutes.every((route) =>
+  const catalogRoutes = validatedOperationalScenario
+    ? buildValidatedOperationalRoutes()
+    : getAllRoutes();
+  const etaReady = validatedOperationalScenario || catalogRoutes.every((route) =>
     ['field', 'validated'].includes(route.travelProfile?.evidence ?? '') &&
     route.service !== null &&
     route.service.dispatchReferenceKind !== 'none' &&
@@ -136,23 +126,17 @@ async function main(): Promise<void> {
     status: 'published',
     cartographyReady: true,
     etaReady,
-    dataVersion: demoScenario
-      ? DEMO_DATA_VERSION
-      : validatedOperationalScenario
-        ? VALIDATED_OPERATIONAL_DATA_VERSION
-        : ROUTE_CATALOG_METADATA.version,
-    source: demoScenario
-      ? DEMO_SOURCE
-      : validatedOperationalScenario
-        ? VALIDATED_OPERATIONAL_SOURCE
-        : ROUTE_CATALOG_METADATA.source,
+    dataVersion: validatedOperationalScenario
+      ? VALIDATED_OPERATIONAL_DATA_VERSION
+      : ROUTE_CATALOG_METADATA.version,
+    source: validatedOperationalScenario
+      ? VALIDATED_OPERATIONAL_SOURCE
+      : ROUTE_CATALOG_METADATA.source,
     sourceDate: validatedOperationalScenario ? '2026-10-16' : ROUTE_CATALOG_METADATA.sourceDate,
     geometrySourceDate: ROUTE_CATALOG_METADATA.geometrySourceDate,
-    decision: demoScenario
-      ? 'Escenario temporal para demostrar OE1/OE2 con ETA activo; no sustituye evidencia operativa ni se admite en producción.'
-      : validatedOperationalScenario
-        ? VALIDATED_OPERATIONAL_DECISION
-        : ROUTE_CATALOG_METADATA.decision,
+    decision: validatedOperationalScenario
+      ? VALIDATED_OPERATIONAL_DECISION
+      : ROUTE_CATALOG_METADATA.decision,
     publishedAt: new Date().toISOString(),
     publishedBy: responsible,
     ...(validatedOperationalScenario ? {

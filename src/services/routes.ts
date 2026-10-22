@@ -2,12 +2,12 @@ import { theme } from '../styles/theme';
 import {
   ruta1A_Tramo1_Coordenadas,
   ruta1A_Tramo2_Coordenadas,
-} from '../utils/ruta1a-my-maps';
-import { rutaD_Coordenadas } from '../utils/ruta-d-my-maps';
+} from '../data/routes/ruta1a-my-maps';
+import { rutaD_Coordenadas } from '../data/routes/ruta-d-my-maps';
 import {
   ruta14_Tramo1_Coordenadas,
   ruta14_Tramo2_Coordenadas,
-} from '../utils/ruta14-my-maps';
+} from '../data/routes/ruta14-my-maps';
 import type { Stop } from './stops';
 import { validateRouteCatalog } from './route-catalog-validation';
 import {
@@ -258,29 +258,3 @@ if (!bundledCatalogValidation.valid) {
 }
 
 export const getAllRoutes = (): Route[] => routes;
-
-export const getAvailableRoutes = (): Route[] => routes.filter((r) => r.available);
-
-export const getPilotRoutes = (): Route[] => routes.filter((r) => r.pilot);
-
-export const getRouteByName = (nombre: string): Route | undefined =>
-  routes.find((r) => r.nombre.toLowerCase() === nombre.toLowerCase());
-
-export const getRouteCoordinates = (
-  nombre: string,
-  sequenceId?: string
-): LatLng[] | null => getRouteSequence(nombre, sequenceId)?.coordinates ?? null;
-
-export const getRouteStops = (nombre: string, sequenceId?: string): Stop[] =>
-  getRouteSequence(nombre, sequenceId)?.stops ?? [];
-
-export function getRouteSequence(
-  nombre: string,
-  sequenceId?: string
-): RouteSequence | undefined {
-  const route = getRouteByName(nombre);
-  if (!route) return undefined;
-
-  const requestedId = sequenceId ?? route.defaultSequenceId;
-  return route.sequences.find((sequence) => sequence.id === requestedId);
-}

@@ -1,8 +1,9 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { configureAppCheckTokenProvider } from './eta';
 
-export type AppCheckBootstrapStatus =
+type AppCheckBootstrapStatus =
   | 'configured'
   | 'emulator'
   | 'unsupported';
@@ -21,6 +22,9 @@ export function initializeAppCheckProtection(): Promise<AppCheckBootstrapStatus>
   const initialization = (async () => {
     if (process.env.EXPO_PUBLIC_FIREBASE_USE_EMULATORS === 'true') return 'emulator';
     if (Platform.OS !== 'android' && Platform.OS !== 'ios') return 'unsupported';
+    if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
+      return 'unsupported';
+    }
 
     const [{ getApp }, appCheckModule] = await Promise.all([
       import('@react-native-firebase/app'),
